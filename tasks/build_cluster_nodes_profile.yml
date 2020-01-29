@@ -1,0 +1,23 @@
+- name: create virt-install template
+  vars:
+    vm_name: "{{ outer_item.name }}-{{ '%00x' |format(inner_item) }}"
+    cpu_size: "{{ outer_item.cpu_size }}"
+    memory_size: "{{ outer_item.memory_size }}"
+    hd_size: "{{ outer_item.hd_size }}"
+    extra_storage: "{{ outer_item.extra_storage }}"
+    vm_type: "{{ outer_item.vm_type }}"
+    last_octet: "{{ '%02x' |format(inner_item)|int + outer_item.ip_octet}}"
+    vm_ip: "{{ subnet.split('.')[:3] | join('.')}}.{{ '%02x' |format(inner_item)|int + outer_item.ip_octet}}"
+    vm_mac: "{{ mac_start }}{{ '%02x' % subnet.split('.')[1]|int }}:{{ '%02x' % subnet.split('.')[2]|int }}:{{ '%02x' % last_octet|int }}"
+  template:
+    src: virt-install-coreos.j2
+    dest: "{{ virtinstall_dir }}/{{ vm_name }}.sh"
+    mode: "u=rwx,g=rx,o=rx"
+    owner: "{{ admin_user }}"
+  loop: "{{ range(0, outer_item.qty|int)|list }}"
+  loop_control:
+    loop_var: inner_item
+    label: "building {{ vm_name }}"
+
+- debug:
+    var: virtinstall_dir
