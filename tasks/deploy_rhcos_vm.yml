@@ -1,0 +1,32 @@
+---
+- name: create extra qcow disk
+  vars:
+    disk_name: "{{ extra_disk_name }}_vd{{ disk_sequence[item | int + count ] }}.qcow2"
+  command: >
+    dd if=/dev/zero of={{ disk_name }} bs=1 count=0  seek={{ item.size }}
+  args:
+    creates: "{{ disk_name }}"
+  loop: "{{ extra_storage }}"
+  loop_control:
+    index_var: count
+    label: "{{ disk_name }}"
+  when: item.enable
+  register: extra_disk_created
+
+- debug:
+    msg: "{{ extra_disk_created }}"
+    verbosity: 2
+
+- name: Attach External Disk
+  vars:
+    disk_name: "{{ extra_disk_name }}_vd{{ disk_sequence[item | int + count ] }}.qcow2"
+    disk: "vd{{ disk_sequence[item | int + count ] }}"
+  command: >
+    /usr/local/bin/attach-libvirt-disk "{{ vm_name }}" "{{ disk_name }}" "{{ disk }}"
+  register: attached_disk
+  loop: "{{ extra_storage }}"
+  loop_control:
+    index_var: count
+    label: "{{ disk_name }}"
+  when: item.enable
+  changed_when: '"Disk attached successfully" in attached_disk.stdout'
