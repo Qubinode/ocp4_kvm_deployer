@@ -1,24 +1,43 @@
 ---
-- name: get total number of masters
-  set_fact:
-    master_count: "{{ item.qty }}"
-    master_ip_octet: "{{ item.ip_octet }}"
-  loop: "{{ ocp4_instances }}"
-  when: item.name == "master"
 
-- name: get total number of computes
-  set_fact:
-    compute_count: "{{ item.qty }}"
-    compute_ip_octet: "{{ item.ip_octet }}"
-  loop: "{{ ocp4_instances }}"
-  when: item.name == "compute"
+- name: get a list of all libvirt networks
+  virt_net:
+    command: list_nets
+  register: libvirt_nets
+  tags: [ deploy_nodes, libvirt_net ]
 
-- name: create libvirt network
-  template:
-    src: nat_network.xml.j2
-    dest: /tmp/network.xml
-#  virt_net:
-#    name: "{{ libvirt_network_name }}"
-#    command: define
-#    xml: '{{ (lookup("template", "nat_network.xml.j2")) }}'
-#
+- name: stop the legacy ocp42 network if it exists
+  virt_net:
+    state: inactive
+    name: "{{ item }}"
+  loop: "{{ libvirt_nets.list_nets }}"
+  when: item == old_libvirt_net
+  tags: [ deploy_nodes, libvirt_net ]
+
+- name: remove the legacy ocp42 network if it exists
+  virt_net:
+    command: undefine
+    name: "{{ item }}"
+  loop: "{{ libvirt_nets.list_nets }}"
+  when: item == old_libvirt_net
+  tags: [ deploy_nodes, libvirt_net ]
+
+- name: create {{ libvirt_network_name }} libvirt network
+  virt_net:
+    name: "{{ libvirt_network_name }}"
+    command: define
+    xml: '{{ (lookup("template", "nat_network.xml.j2")) }}'
+  tags: [ deploy_nodes, libvirt_net ]
+
+- name: start {{ libvirt_network_name }} libvirt network
+  virt_net:
+    name: "{{ libvirt_network_name }}"
+    state: active
+    autostart: yes
+  tags: [ deploy_nodes, libvirt_net ]
+
+- name: autostart {{ libvirt_network_name }} libvirt network
+  virt_net:
+    name: "{{ libvirt_network_name }}"
+    autostart: yes
+  tags: [ deploy_nodes, libvirt_net ]

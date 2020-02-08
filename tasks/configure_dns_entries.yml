@@ -1,8 +1,3 @@
-#  environment:
-#    IPA_HOST: "{{idm_hostname}}.{{ domain }}"
-#    IPA_USER: "{{ idm_admin_user }}"
-#    IPA_PASS: "{{ idm_admin_pwd }}"
-
 - fail: msg="Bailing out. this play requires 'idm_server_ip'  your idm server ip"
   when: idm_server_ip |length == 0
 

@@ -1,41 +1,13 @@
 ---
 # tasks file for ocp4-rhcos-vms
-- name: Create the directory to store the virt-install scripts
-  file:
-    path: "{{ virtinstall_dir }}"
-    state: directory
-    owner: "{{ admin_user }}"
-  register: create_virtinstall_dir
+- name: import tasks pre_tasks.yml
+  import_tasks: pre_tasks.yml
 
-- name: include build_cluster_nodes_profile.yml
-  include_tasks: build_cluster_nodes_profile.yml
-  loop: "{{ ocp4_instances }}"
-  loop_control:
-    loop_var: outer_item
-    label: outer_item.name
+- name: import tasks tear_down.yml
+  import_tasks: tear_down.yml
+  when: tear_down|bool
 
-- name: include deploy_libvirt_network.yml
-  include_tasks: deploy_libvirt_network.yml
+- name: import task deploy.yml
+  import_tasks: deploy.yml
+  when: not tear_down|bool
 
-- name: get {{ ocp4_lb_container }} container info
-  shell: podman inspect -f {%raw%}"{{.State.Status}}"{%endraw%} {{ ocp4_lb_container }}
-  register: container_result
-  failed_when: false
-  changed_when: false
-
-- name: set {{ ocp4_lb_container }} container state
-  set_fact:
-    container_exited: "{{ true if container_result.stdout is defined and container_result.stdout == 'exited' else false }}"
-    container_running: "{{ true if container_result.stdout is defined and container_result.stdout == 'running' else false }}"
-    container_exist: "{{ true if container_result.stdout is defined and container_result.stdout != '' else false }}"
-
-- name: include configure_lb.yml
-  include: configure_lb.yml
-  when: not container_exist|bool and not tear_down|bool
-
-#- name: deploy treeinfo file
-#  template:
-#    src: treeinfo.j2
-#    dest: "{{ virtinstall_dir }}/.treeinfo"
-#    mode: "u=rw,g=r,o=r"
-#    owner: "{{ admin_user }}"
