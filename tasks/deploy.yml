@@ -1,0 +1,133 @@
+---
+- name: check for user pull-secret 
+  stat: 
+    path: "{{ ocp4_pull_secret }}"
+  register: pull_secret_file
+  tags: [ setup ]
+
+- name: fail if pull secret does
+  fail:
+    msg: "Please download your pull-secret from https://cloud.redhat.com/openshift/install/metal/user-provisioned to {{ ocp4_pull_secret }}"
+  when: pull_secret_file.stat.exists == False
+  tags: [ setup ]
+
+- name: enable required firewall ports
+  firewalld:
+    port: "{{ item }}"
+    permanent: yes
+    state: enabled
+    immediate: yes
+  loop: "{{ ocp4_firewall_ports }}"
+  tags: [ setup ]
+
+- name: import tasks install_podman.yml
+  import_tasks: install_podman.yml
+
+- name: import tasks ocp4_tools.yml
+  import_tasks: ocp4_tools.yml
+
+- name: import tasks create_ignitions.yml
+  import_tasks: create_ignitions.yml
+  
+- name: Create OpenShift 4 load balancer
+  import_role:
+    name: openshift-4-loadbalancer
+    tasks_from: create.yml
+  vars:
+    lb_name: "{{ ocp4_lb_container }}"
+    lb_api: "{{ tmp_api | join(',') }}"
+    lb_api_listen: "{{ tmp_api_listen | join(',') }}"
+    lb_ingress_http: "{{ tmp_ingress_http | join(',') }}"
+    lb_ingress_http_listen: "{{ tmp_ingress_http_listen | join(',') }}"
+    lb_ingress_https: "{{ tmp_ingress_https | join(',') }}"
+    lb_ingress_https_listen: "{{ tmp_ingress_https_listen | join(',') }}"
+    lb_machine_config_server: "{{ tmp_machine_config_server | join(',') }}"
+    lb_machine_config_server_listen: "{{ tmp_machine_config_server_listen | join(',') }}"
+  when: not container_exist|bool and not tear_down|bool
+  tags: [ lb, deploy_nodes ]
+
+- name: Create OpenShift 4 bootstrap webserver
+  import_role:
+    name: ocp4-bootstrap-webserver
+  tags: [ webserver, deploy_nodes ]
+
+- name: import task download_rhcos_files.yml
+  import_tasks: download_rhcos_files.yml
+  when: not tear_down|bool 
+  
+- name: Create the directory to store the virt-install scripts
+  file:
+    path: "{{ virtinstall_dir }}"
+    state: directory
+    owner: "{{ admin_user }}"
+  register: create_virtinstall_dir
+  tags: [ deploy_nodes ]
+
+- name: deploy treeinfo file
+  template:
+    src: treeinfo.j2
+    dest: "{{ virtinstall_dir }}/.treeinfo"
+    mode: "u=rw,g=r,o=r"
+    owner: "{{ admin_user }}"
+  tags: [ deploy_nodes, rhcos ]
+
+- name: import tasks deploy_libvirt_network.yml
+  import_tasks: deploy_libvirt_network.yml
+
+- name: import tasks configure_dns_entries.yml
+  import_tasks: configure_dns_entries.yml
+  tags: [ deploy_nodes, idm ]
+
+- name: include build_cluster_nodes_profile.yml
+  include_tasks: build_cluster_nodes_profile.yml
+  loop: "{{ ocp4_instances }}"
+  loop_control:
+    loop_var: outer_item
+    label: outer_item.name
+  tags: [ deploy_nodes, rhcos, node_profile ]
+
+- name: list all libvirt vms
+  virt:
+    command: list_vms
+  register: all_vms
+  tags: [ deploy_nodes, rhcos ]
+
+- name: initialize and empty list of all the ocp4 nodes
+  set_fact:
+    ocp4_nodes: [ 'bootstrap' ]
+  tags: [ deploy_nodes, rhcos ]
+
+- name: add master nodes to ocp4 nodes list 
+  vars:
+    vm_name: "master-{{ '%00x' |format(item) }}"
+  set_fact:
+    ocp4_nodes: "{{ ocp4_nodes + [ vm_name ] }}"
+  loop: "{{ range(0, master_count|int)|list }}"
+  delay: 10
+  tags: [ deploy_nodes, rhcos]
+
+- name: add compute nodes to ocp4 nodes list 
+  vars:
+    vm_name: "compute-{{ '%00x' |format(item) }}"
+  set_fact: 
+    ocp4_nodes: "{{ ocp4_nodes + [ vm_name ] }}"
+  loop: "{{ range(0, compute_count|int)|list }}"
+  delay: 10
+  tags: [ deploy_nodes, rhcos]
+
+- name: deploy ocp4 nodes
+  vars:
+    vm_name: "{{ item }}"
+  command: "{{ virtinstall_dir }}/{{ vm_name }}.sh"
+  when: vm_name not in all_vms.list_vms
+  loop: "{{ ocp4_nodes }}"
+  delay: 10
+  tags: [ deploy_nodes, rhcos ]
+
+- name: include wait_for_vm_shutdown.yml
+  include_tasks: wait_for_vm_shutdown.yml
+  loop: "{{ ocp4_nodes }}"
+  loop_control:
+    loop_var: vm_name
+    label: vm_name
+  tags: [ deploy_nodes, rhcos, rhcos_wait ]

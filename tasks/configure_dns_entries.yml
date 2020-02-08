@@ -1,13 +1,15 @@
 - fail: msg="Bailing out. this play requires 'idm_server_ip'  your idm server ip"
   when: idm_server_ip |length == 0
+  tags: idm
 
 - name: set dns record state
   set_fact:
     record_state: "{{ 'absent' if dns_teardown|bool else 'present' }}"
-
+  tags: idm
+  
 - name: add bootstrap to dns forward zone
   vars:
-    ip: "{{ vn_subnet.split('.')[:3] | join('.')}}.2"
+    ip: "{{ ocp4_nat_gateway.split('.')[:3] | join('.')}}.2"
     name: bootstrap
     ptr: 2
   set_fact:
@@ -16,7 +18,7 @@
 
 - name: add bootstrap to reverse forward zone
   vars:
-    ip: "{{ vn_subnet.split('.')[:3] | join('.')}}.2"
+    ip: "{{ ocp4_nat_gateway.split('.')[:3] | join('.')}}.2"
     name: "bootstrap"
     ptr: 2
   set_fact:
@@ -25,7 +27,7 @@
 
 - name: add api-int to dns records list
   vars:
-    ip: "{{ vn_subnet.split('.')[:3] | join('.')}}.1"
+    ip: "{{ ocp4_nat_gateway.split('.')[:3] | join('.')}}.1"
     name: api-int
     ptr: 1
   set_fact:
@@ -43,9 +45,9 @@
 
 - name: set  master nodes forward zone records
   vars:
-    ip: "{{ vn_subnet.split('.')[:3] | join('.')}}.{{ 10 + item|int }}"
+    ip: "{{ ocp4_nat_gateway.split('.')[:3] | join('.')}}.{{ master_ip_octet|int + item|int }}"
     name: "master-{{ item }}"
-    ptr: "{{ 10 + item|int }}"
+    ptr: "{{ master_ip_octet|int + item|int }}"
   set_fact:
     records: "{{ records|default([]) + [ {'hostname': name, 'ipaddr': ip, 'ptr_record': ptr} ] }}"
   with_sequence: start=0 end="{{ master_count|int - 1 }}" stride=1
@@ -53,9 +55,9 @@
 
 - name: set  master nodes reverse zone records
   vars:
-    ip: "{{ vn_subnet.split('.')[:3] | join('.')}}.{{ 10 + item|int }}"
+    ip: "{{ ocp4_nat_gateway.split('.')[:3] | join('.')}}.{{ master_ip_octet|int + item|int }}"
     name: "master-{{ item }}"
-    ptr: "{{ 10 + item|int }}"
+    ptr: "{{ master_ip_octet|int + item|int }}"
   set_fact:
     reverse_records: "{{ reverse_records|default([]) + [ {'hostname': name, 'ipaddr': ip, 'ptr_record': ptr} ] }}"
   with_sequence: start=0 end="{{ master_count|int - 1 }}" stride=1
@@ -63,7 +65,7 @@
 
 - name: set etcd nodes forward zone records
   vars:
-    ip: "{{ vn_subnet.split('.')[:3] | join('.')}}.{{ 10 + item|int }}"
+    ip: "{{ ocp4_nat_gateway.split('.')[:3] | join('.')}}.{{ 10 + item|int }}"
     name: "etcd-{{ item }}"
     ptr: "{{ 10 + item|int }}"
   set_fact:
@@ -73,9 +75,9 @@
 
 - name:  set compute nodes forward zone records
   vars:
-    ip: "{{ vn_subnet.split('.')[:3] | join('.')}}.{{ 13 + item|int }}"
+    ip: "{{ ocp4_nat_gateway.split('.')[:3] | join('.')}}.{{ compute_ip_octet|int + item|int }}"
     name: "compute-{{ item }}"
-    ptr: "{{ 13 + item|int }}"
+    ptr: "{{ compute_ip_octet|int + item|int }}"
   set_fact:
     records: "{{ records|default([]) + [ {'hostname': name, 'ipaddr': ip, 'ptr_record': ptr} ] }}"
   with_sequence: start=0 end="{{ compute_count|int - 1 }}" stride=1
@@ -83,9 +85,9 @@
 
 - name:  set compute nodes reverse zone records
   vars:
-    ip: "{{ vn_subnet.split('.')[:3] | join('.')}}.{{ 13 + item|int }}"
+    ip: "{{ ocp4_nat_gateway.split('.')[:3] | join('.')}}.{{ compute_ip_octet|int + item|int }}"
     name: "compute-{{ item }}"
-    ptr: "{{ 13 + item|int }}"
+    ptr: "{{ compute_ip_octet|int + item|int }}"
   set_fact:
     reverse_records: "{{ reverse_records|default([]) + [ {'hostname': name, 'ipaddr': ip, 'ptr_record': ptr} ] }}"
   with_sequence: start=0 end="{{ compute_count|int - 1 }}" stride=1
