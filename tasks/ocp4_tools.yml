@@ -1,0 +1,59 @@
+---
+- name: check if /usr/local/bin/oc exists
+  stat:
+    path: /usr/local/bin/oc
+  register: oc_client_cmd
+  tags: [ setup, tools, client ]
+
+- name: check for the version of oc client
+  command: /usr/local/bin/oc version | grep '{{ ocp4_version }}'
+  register: oc_client_version
+  when: oc_client_cmd.stat.exists == True
+  changed_when: false
+  tags: [ setup, tools, client ]
+
+- name: Download OpenShift 4 client
+  get_url:
+    url: "{{ ocp4_release_url }}/{{ ocp4_client }}"
+    dest: "/tmp/{{ ocp4_client }}"
+  register: dl_ocp4_client
+  when: oc_client_version.rc != 0 or oc_client_cmd.stat.exists == False
+  tags: [ setup, tools, client ]
+
+- name: Download OpenShift 4 installer
+  get_url:
+    url: "{{ ocp4_release_url }}/{{ ocp4_installer }}"
+    dest: "/tmp/{{ ocp4_installer }}"
+  register: dl_ocp4_installer
+  when: oc_client_version.rc != 0 or oc_client_cmd.stat.exists == False
+  tags: [ setup, tools, installer ]
+
+- name: Extract ocp client into /usr/local/bin/oc
+  unarchive:
+    src: "/tmp/{{ ocp4_client }}"
+    dest: /usr/local/bin
+  register: extract_ocp_client
+  when: dl_ocp4_client.changed
+  tags: [ setup, tools, client ]
+
+- name: Extract openshift installer into /usr/local/bin/openshift-install
+  unarchive:
+    src:  "/tmp/{{ ocp4_installer }}"
+    dest:  /usr/local/bin
+  register: extract_ocp_installer
+  when: dl_ocp4_installer.changed
+  tags: [ setup, tools, installer ]
+
+- name: Remove openshift client tar file
+  file: 
+    path: "/tmp/{{ ocp4_client }}"
+    state: absent
+  when: extract_ocp_client.changed
+  tags: [ setup, tools, client ]
+
+- name: Remove openshift installer  tar file
+  file: 
+    path: "/tmp/{{ ocp4_installer }}"
+    state: absent
+  when: extract_ocp_installer.changed
+  tags: [ setup , tools, installer]

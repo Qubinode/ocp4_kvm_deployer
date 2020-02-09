@@ -42,14 +42,14 @@ admin_user: admin
 #gateway: 192.168.50.1
 mask: 255.255.255.0
 mac_start: "52:54:00:"
-cluster_name: ocp43
+cluster_name: qbn
 dns_domain: lab.example
 dns_server_ip: 172.24.24.10
 libvirt_network_name: qubinat
 bootstrap_webserver_ip: 172.24.24.3
 rhcos_metal_bios: "http://{{ bootstrap_webserver_ip }}:8080/pub/{{ ocp4_dependencies_version }}/images/{{ coreos_metal_bios }}"
 rhcos_ignition_url: "http://{{ bootstrap_webserver_ip }}:8080/pub/{{ ocp4_dependencies_version }}/ignitions"
-rhcos_ignition: "http://{{ rhcos_ignition_url}}/{{ vm_type }}.ign"
+rhcos_ignition: "{{ rhcos_ignition_url}}/{{ vm_type }}.ign"
 ocp4_dependencies_version: 4.3
 coreos_metal_bios: "rhcos-{{ ocp4_image_version }}-x86_64-metal-bios.raw.gz"
 ocp4_image_version: 4.3.0

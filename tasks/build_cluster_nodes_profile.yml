@@ -1,14 +1,14 @@
 - name: create virt-install template
   vars:
-    #vm_name: "{{ outer_item.name }}-{{ '%00x' |format(inner_item) }}"
     vm_name:  "{{ outer_item.name if outer_item.name == 'bootstrap' else outer_item.name + '-' + '%00x'|format(inner_item) }}"
     cpu_size: "{{ outer_item.cpu_size }}"
     memory_size: "{{ outer_item.memory_size }}"
     hd_size: "{{ outer_item.hd_size }}"
     extra_storage: "{{ outer_item.extra_storage }}"
     vm_type: "{{ outer_item.vm_type }}"
-    last_octet: "{{ '%02x' |format(inner_item)|int + outer_item.ip_octet}}"
-    vm_ip: "{{ ocp4_nat_subnet.split('.')[:3] | join('.')}}.{{ '%02x' |format(inner_item)|int + outer_item.ip_octet}}"
+    last_octet: "{{ '%02x' |format(inner_item)|int + outer_item.ip_octet }}"
+    ip_address: "{{ ocp4_nat_subnet.split('.')[:3] | join('.')}}.{{ '%02x' |format(inner_item)|int + outer_item.ip_octet}}"
+    vm_ip: "{{ '192.168.50.2' if outer_item.name == 'bootstrap' else ip_address }}"
     vm_mac: "{{ mac_start }}{{ '%02x' % ocp4_nat_subnet.split('.')[1]|int }}:{{ '%02x' % ocp4_nat_subnet.split('.')[2]|int }}:{{ '%02x' % last_octet|int }}"
   template:
     src: virt-install-coreos.j2
