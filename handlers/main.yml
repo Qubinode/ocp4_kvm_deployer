@@ -1,2 +1,6 @@
 ---
 # handlers file for ocp4-rhcos-vms
+- name: restart nfs
+  service:
+    name: nfs-server
+    state: restarted

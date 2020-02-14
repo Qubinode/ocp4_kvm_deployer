@@ -1,7 +1,7 @@
-Role Name
-=========
+ocp4-kvm-deployer
+=================
 
-A brief description of the role goes here.
+This role will deploy OCP4 on a kvm host.
 
 Requirements
 ------------

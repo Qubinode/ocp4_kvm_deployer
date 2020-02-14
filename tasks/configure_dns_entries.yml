@@ -161,7 +161,7 @@
     body:
       method: dnsrecord_add
       params:
-      - - "{{ domain }}."
+      - - "{{ idm_dns_forward_zone }}"
         - "{{ dns_wildcard }}"
       - a_part_ip_address: "{{ kvm_host_ip }}"
         a_extra_create_reverse: false
@@ -182,7 +182,7 @@
     body:
       method: dnsrecord_add
       params:
-      - - "{{ domain }}."
+      - - "{{ idm_dns_forward_zone }}"
         - "{{ dns_wildcard }}"
       - a_part_ip_address: "{{ nat_gateway }}"
         a_extra_create_reverse: false
