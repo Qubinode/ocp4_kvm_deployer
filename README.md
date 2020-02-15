@@ -68,6 +68,11 @@ Example Playbook
       IPA_HOST: "{{idm_hostname}}.{{ domain }}"
       IPA_USER: "{{ idm_admin_user }}"
       IPA_PASS: "{{ idm_admin_pwd }}"
+
+    tasks:
+    - name: run the role ocp4-kvm-deployer
+      import_role:
+        name: ocp4-kvm-deployer
 ```
 
 Additional Details About The Role
