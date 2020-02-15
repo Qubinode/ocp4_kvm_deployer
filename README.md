@@ -18,8 +18,8 @@ Dependencies
 
 Roles:
 
-  - openshift-4-loadbalancer
-  - ocp4-bootstrap-webserver
+  - [openshift-4-loadbalancer](https://github.com/Qubinode/openshift-4-loadbalancer)
+  - [ocp4-bootstrap-webserver](https://github.com/Qubinode/ocp4-bootstrap-webserver)
 
 Example Playbook
 ----------------
