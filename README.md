@@ -21,11 +21,54 @@ A list of other roles hosted on Galaxy should go here, plus any details in regar
 Example Playbook
 ----------------
 
-Including an example of how to use your role (for instance, with variables passed in as parameters) is always nice for users too:
+```
+  - name: Configure OpenShift 4.x deployment Enviornment
+    hosts: localhost
+    become: yes
+    vars:
+      admin_user: admin
+      ocp4_version: 4.3.0
+      ocp4_dependencies_version: "{{ ocp4_version[:3] }}"
+      ocp4_image_version: "{{ ocp4_version[:3] + '.0' }}"
+      project_dir: /home/admin/qubinode-installer
+      pull_secret: "{{ project_dir }}/pull-secret.txt"
+      vm_public_key: "/home/{{ admin_user }}/.ssh/id_rsa.pub"
+      openshift_install_folder: ocp4
+      openshift_install_dir: "{{ project_dir }}/{{ openshift_install_folder }}"
+      ignition_files_dir: "{{ openshift_install_dir }}"
+      ssh_ocp4_public_key: "{{ lookup('file', vm_public_key) }}"
+      podman_webserver: qbn-httpd
+      rhcos_webserver_img_name: rhcos-webserver
+      dest_ignitions_web_directory: "{{ webserver_directory }}/{{ ocp4_dependencies_version }}/ignitions/"
+      webserver_directory: /opt/qubinode_webserver
+      webserver_dependencies: "{{ webserver_directory }}/{{ ocp4_dependencies_version }}"
+      webserver_images: "{{ webserver_directory }}/{{ ocp4_dependencies_version }}/images"
+      coreos_installer_kernel: "rhcos-{{ ocp4_image_version }}-x86_64-installer-kernel"
+      coreos_installer_initramfs: "rhcos-{{ ocp4_image_version }}-x86_64-installer-initramfs.img"
+      coreos_metal_bios: "rhcos-{{ ocp4_image_version }}-x86_64-metal.raw.gz"
+      openshift_mirror: http://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/{{ ocp4_dependencies_version }}/{{ ocp4_image_version }}
+      coreos_tmp_dir: /tmp/build_coreos_container
+      tear_down: false
+      virtinstall_dir: "{{ project_dir }}/rhcos-install/"
+      domain: lunchnet.example
+      public_domain: "{{ domain }}"
+      ocp4_cluster_domain: "cloud.{{ domain }}"
+      idm_hostname: qbn-dns01
+      idm_admin_user: admin
+      idm_admin_pwd: "pasword1507"
+      idm_server_ip: 192.168.11.1
+      dns_teardown: false
+      idm_dns_forward_zone: "{{ ocp4_cluster_domain }}"
+      idm_dns_reverse_zone: "50.168.192.in-addr.arpa."
+      ipa_host: qbn-dns01.lunchnet.example
+      dns_wildcard: "*.apps.{{ cluster_name }}"
+      nat_gateway: "192.168.50.1"
 
-    - hosts: servers
-      roles:
-         - { role: username.rolename, x: 42 }
+    environment:
+      IPA_HOST: "{{idm_hostname}}.{{ domain }}"
+      IPA_USER: "{{ idm_admin_user }}"
+      IPA_PASS: "{{ idm_admin_pwd }}"
+```
 
 Additional Details About The Role
 ----------------------------------
@@ -85,7 +128,7 @@ Dependancy roles:
 22. wait_for_vm_shutdown.yml: wait for the bootstrap node to shutdown
 23. destroy the bootstrap node
 
-pull_secret_request: https://cloud.redhat.com/openshift/install/metal/user-provisioned
+
 
 Example Usage:
 
