@@ -1,4 +1,5 @@
 ---
+# tasks file for ocp4-kvm-deployer
 - name: Setting Ingress information and machine configuration for bootstrap nodes and other machines
   set_fact:
     tmp_api: "[ '{{ bootstrap_ip }}:6443' ]"
@@ -65,3 +66,17 @@
     lb_machine_config_server: "{{ tmp_machine_config_server | join(',') }}"
     lb_machine_config_server_listen: "{{ tmp_machine_config_server_listen | join(',') }}"
   tags: [ always ]  
+
+- name: ensure the jq command is installed from ocp4 repos
+  shell: |
+    if ! rpm -qa | grep -q 'jq-'
+    then
+        sudo subscription-manager repos --enable rhel-7-server-ose-4.3-rpms
+        rpmdir=$(mktemp -d)
+        sudo yumdownloader --resolve --destdir=${rpmdir} oniguruma jq
+        sudo subscription-manager repos --disable rhel-7-server-ose-4.3-rpms
+        sudo yum -y install ${rpmdir}/*.rpm
+     fi
+  changed_when: jq_command_install.stdout != ""
+  register: jq_command_install
+  tags: [ deploy_nodes, rhcos, postinstall ]

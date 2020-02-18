@@ -1,8 +1,5 @@
 ---
-# delete folder virtinstall_dir
-# delte network libvirt_network_name
-# delete vms
-
+# tasks file for ocp4-kvm-deployer
 - name: Remove load balancer container
   import_role:
     name: openshift-4-loadbalancer
@@ -30,7 +27,6 @@
     path: "{{ openshift_install_dir }}"
     state: absent
   tags: [ lb ]
-
 
 - name: import tasks build_vm_list.yml
   import_tasks: build_vm_list.yml
@@ -104,7 +100,7 @@
   when: item == libvirt_network_name
   tags: [ deploy_nodes, libvirt_net ]
 
-- name: enusre {{ virtinstall_dir }} is removed
+- name: ensure {{ virtinstall_dir }} is removed
   file:
     path: "{{ virtinstall_dir }}"
     state: absent

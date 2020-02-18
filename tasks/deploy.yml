@@ -7,7 +7,7 @@
 
 - name: fail if pull secret does
   fail:
-    msg: "Please download your pull-secret from https://cloud.redhat.com/openshift/install/metal/user-provisioned to {{ ocp4_pull_secret }}"
+    msg: "Please download your pull-secret from {{ pull_secret_request }} to {{ ocp4_pull_secret }}"
   when: pull_secret_file.stat.exists == False
   tags: [ setup ]
 
@@ -29,7 +29,7 @@
 - name: import tasks create_ignitions.yml
   import_tasks: create_ignitions.yml
   
-- name: Create OpenShift 4 load balancer
+- name: deploy the podman container load balancer for OCP4
   import_role:
     name: openshift-4-loadbalancer
     tasks_from: create.yml
@@ -46,7 +46,7 @@
   when: not container_exist|bool and not tear_down|bool
   tags: [ lb, deploy_nodes ]
 
-- name: Create OpenShift 4 bootstrap webserver
+- name: deploy the podman container for hosting the required files for bootstrap
   import_role:
     name: ocp4-bootstrap-webserver
   tags: [ webserver, deploy_nodes ]
@@ -63,7 +63,7 @@
   register: create_virtinstall_dir
   tags: [ deploy_nodes ]
 
-- name: deploy treeinfo file
+- name: deploy a generated treeinfo that defines the location of the kernel and ramdisks
   template:
     src: treeinfo.j2
     dest: "{{ virtinstall_dir }}/.treeinfo"
@@ -131,25 +131,6 @@
     continue_install: "{{ true if bootstrap_complete.stderr.find('It is now safe to remove the bootstrap resources') != -1 else false }}"
 #  when: bootstrap_complete.stderr.find('It is now safe to remove the bootstrap resources') != -1
   tags: [ deploy_nodes, bootstrap, postinstall ]
-
-- name: ensure the jq command is installed from ocp4 repos
-  shell: |
-    if ! rpm -qa | grep -q 'jq-'
-    then
-        sudo subscription-manager repos --enable rhel-7-server-ose-4.3-rpms
-        rpmdir=$(mktemp -d)
-        sudo yumdownloader --resolve --destdir=${rpmdir} oniguruma jq
-        sudo subscription-manager repos --disable rhel-7-server-ose-4.3-rpms
-        sudo yum -y install ${rpmdir}/*.rpm
-     fi
-  changed_when: jq_command_install.stdout != ""
-  register: jq_command_install
-  tags: [ deploy_nodes, rhcos, postinstall ]
-
-- debug:
-    var: jq_command_install
-  tags: [ deploy_nodes, rhcos, postinstall ]
-  when: continue_install|bool
 
 - name: list all libvirt vms
   virt:

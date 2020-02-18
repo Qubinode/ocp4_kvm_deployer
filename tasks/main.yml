@@ -1,5 +1,5 @@
 ---
-# tasks file for ocp4-rhcos-vms
+# tasks file for ocp4-kvm-deployer
 - name: import tasks pre_tasks.yml
   import_tasks: pre_tasks.yml
 

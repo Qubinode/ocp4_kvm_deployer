@@ -56,6 +56,7 @@ ocp4_image_version: 4.3.0
 kvm_host_libvirt_dir: /var/lib/libvirt/images
 libvirt_network_mode: nat
 libivrt_network_domain: compute.local
+pull_secret_request: https://cloud.redhat.com/openshift/install/metal/user-provisioned
 
 ocp4_instances:
   - name: master
