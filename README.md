@@ -1,7 +1,7 @@
 ocp4-kvm-deployer
 =================
 
-This role will deploy OCP4 on a kvm host.
+This role will deploy OCP4 on a kvm host. It was develop to support the [Qubinode Installer](https://github.com/Qubinode/qubinode-installer).
 
 Requirements
 ------------
