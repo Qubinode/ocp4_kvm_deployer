@@ -6,12 +6,12 @@ This role will deploy OCP4 on a kvm host.
 Requirements
 ------------
 
-Any pre-requisites that may not be covered by Ansible itself or the role should be mentioned here. For instance, if the role uses the EC2 module, it may be a good idea to mention in this section that the boto package is required.
+This role depends on Red Hat IdM as the DNS server. PR's are welcome to support other DNS servers.
 
 Role Variables
 --------------
 
-A description of the settable variables for this role should go here, including any variables that are in defaults/main.yml, vars/main.yml, and any variables that can/should be set via parameters to the role. Any variables that are read from other roles and/or the global scope (ie. hostvars, group vars, etc.) should be mentioned here as well.
+Please see example playbook.
 
 Dependencies
 ------------
@@ -118,7 +118,7 @@ Dependancy roles:
 4. ocp4_tools.yml: ensure the ocp4 tools such as the oc command and the openshift installer are installed
 5. create_ignitions.yml: generate ignitions files based on the number of masters and workers specified for this cluster
 6. deploy the container load balancer
-7. deploy the container webserver that servers up the files for bootstrap 
+7. deploy the container webserver that servers up the files for bootstrap
 8. download_rhcos_files.yml: download the files required to bootstrap rhcos
 9. create directory to store the generated virt-install scripts for rhcos
 10. deploy a generated treeinfo that defines the location of the kernel and ramdisks
