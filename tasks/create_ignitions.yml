@@ -66,6 +66,6 @@
      path: "{{ openshift_install_dir}}"
      state: directory
      recurse: yes
-     owner: "{{ admin_user }}"
-     group: "{{ admin_user }}"
+     owner: "{{ local_user_account }}"
+     group: "{{ local_user_account }}"
    tags: [ ignitions, deploy_nodes ]

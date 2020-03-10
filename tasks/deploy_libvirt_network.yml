@@ -1,5 +1,4 @@
 ---
-
 - name: get a list of all libvirt networks
   virt_net:
     command: list_nets

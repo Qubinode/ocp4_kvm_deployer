@@ -1,3 +1,4 @@
+---
 - name: create virt-install template
   vars:
     vm_name:  "{{ outer_item.name if outer_item.name == 'bootstrap' else outer_item.name + '-' + '%00x'|format(inner_item) }}"
@@ -14,7 +15,7 @@
     src: virt-install-coreos.j2
     dest: "{{ virtinstall_dir }}/{{ vm_name }}.sh"
     mode: "u=rwx,g=rx,o=rx"
-    owner: "{{ admin_user }}"
+    owner: "{{ local_user_account }}"
   loop: "{{ range(0, outer_item.qty|int)|list }}"
   loop_control:
     loop_var: inner_item

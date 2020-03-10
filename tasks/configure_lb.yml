@@ -1,3 +1,4 @@
+---
 - name: show lb_api
   debug:
     msg: "{{ tmp_api | join(',') }}"

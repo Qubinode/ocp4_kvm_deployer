@@ -25,19 +25,19 @@ Example Playbook
 ----------------
 
 ```
-  - name: Configure OpenShift 4.x deployment Enviornment
+  - name: Deploy OpenShift 4.x Cluster
     hosts: localhost
     become: yes
     vars:
-      admin_user: admin
+      local_user_account: admin
       ocp4_version: 4.3.0
       ocp4_dependencies_version: "{{ ocp4_version[:3] }}"
       ocp4_image_version: "{{ ocp4_version[:3] + '.0' }}"
-      project_dir: /home/admin/qubinode-installer
-      pull_secret: "{{ project_dir }}/pull-secret.txt"
-      vm_public_key: "/home/{{ admin_user }}/.ssh/id_rsa.pub"
+      installation_working_dir: /home/admin/qubinode-installer
+      pull_secret: "{{ installation_working_dir }}/pull-secret.txt"
+      vm_public_key: "/home/{{ local_user_account }}/.ssh/id_rsa.pub"
       openshift_install_folder: ocp4
-      openshift_install_dir: "{{ project_dir }}/{{ openshift_install_folder }}"
+      openshift_install_dir: "{{ installation_working_dir }}/{{ openshift_install_folder }}"
       ignition_files_dir: "{{ openshift_install_dir }}"
       ssh_ocp4_public_key: "{{ lookup('file', vm_public_key) }}"
       podman_webserver: qbn-httpd
@@ -52,25 +52,25 @@ Example Playbook
       openshift_mirror: http://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/{{ ocp4_dependencies_version }}/{{ ocp4_image_version }}
       coreos_tmp_dir: /tmp/build_coreos_container
       tear_down: false
-      virtinstall_dir: "{{ project_dir }}/rhcos-install/"
-      domain: lunchnet.example
-      public_domain: "{{ domain }}"
-      ocp4_cluster_domain: "cloud.{{ domain }}"
-      idm_hostname: qbn-dns01
-      idm_admin_user: admin
-      idm_admin_pwd: "pasword1507"
-      idm_server_ip: 192.168.11.1
+      virtinstall_dir: "{{ installation_working_dir }}/rhcos-install/"
+      internal_domain_name: lunchnet.example
+      external_domain_name: "{{ internal_domain_name }}"
+      ocp4_cluster_domain: "cloud.{{ internal_domain_name }}"
+      idm_server_shortname: qbn-dns01
+      user_idm_admin: admin
+      user_idm_password: "password"
+      idm_server_ipaddr: 192.168.11.1
       dns_teardown: false
       idm_dns_forward_zone: "{{ ocp4_cluster_domain }}"
       idm_dns_reverse_zone: "50.168.192.in-addr.arpa."
-      ipa_host: qbn-dns01.lunchnet.example
+      idm_server_fqdn: qbn-dns01.lunchnet.example
       dns_wildcard: "*.apps.{{ cluster_name }}"
       nat_gateway: "192.168.50.1"
 
     environment:
-      IPA_HOST: "{{idm_hostname}}.{{ domain }}"
-      IPA_USER: "{{ idm_admin_user }}"
-      IPA_PASS: "{{ idm_admin_pwd }}"
+      IPA_HOST: "{{idm_server_shortname}}.{{ internal_domain_name }}"
+      IPA_USER: "{{ user_idm_admin }}"
+      IPA_PASS: "{{ user_idm_password }}"
 
     tasks:
     - name: run the role ocp4-kvm-deployer

@@ -9,7 +9,7 @@
   file:
     path: "{{ webserver_directory }}"
     state: directory
-    owner: "{{ admin_user }}"
+    owner: "{{ local_user_account }}"
   register: create_webdir
   when: webserver_dir.stat.exists == False
   tags: [ download, webserver ]
@@ -24,7 +24,7 @@
   file:
     path: "{{ virtinstall_dir }}"
     state: directory
-    owner: "{{ admin_user }}"
+    owner: "{{ local_user_account }}"
   register: create_webdir
   when: virtinstall_directory.stat.exists == False
   tags: [ download, virtinstall, deploy_nodes, webserver ]
@@ -33,21 +33,21 @@
   file:
     path: "{{ webserver_dependencies }}"
     state: directory
-    owner: "{{ admin_user }}"
+    owner: "{{ local_user_account }}"
   tags: [ download, webserver ]
 
 - name: Create a images directory
   file:
     path: "{{ webserver_images }}"
     state: directory
-    owner: "{{ admin_user }}"
+    owner: "{{ local_user_account }}"
   tags: [ download, webserver ]
 
 - name: Create ignition directory
   file:
     path: "{{ dest_ignitions_web_directory }}"
     state: directory
-    owner: "{{ admin_user }}"
+    owner: "{{ local_user_account }}"
   tags: [ download, ignitions, webserver ]
 
 - name: download the installer-initramfs.img metal-bios.raw.gz installer-kernel

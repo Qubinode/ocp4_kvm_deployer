@@ -1,5 +1,6 @@
-- fail: msg="Bailing out. this play requires 'idm_server_ip'  your idm server ip"
-  when: idm_server_ip |length == 0
+---
+- fail: msg="Bailing out. this play requires 'idm_server_ipaddr'  your idm server ip"
+  when: idm_server_ipaddr |length == 0
   tags: idm
 
 - name: add bootstrap to dns forward zone
@@ -134,15 +135,15 @@
 - name: Generate IPA Session Cookie
   vars:
   uri:
-    url: "https://{{ ipa_host }}/ipa/session/login_password"
+    url: "https://{{ idm_server_fqdn }}/ipa/session/login_password"
     validate_certs: no
     method: POST
     status_code: 200
     headers:
       Content-Type: "application/x-www-form-urlencoded"
       Accept: "text/plain"
-      Referer: "https://{{ ipa_host }}/ipa"
-    body: "user={{ idm_admin_user }}&password={{ idm_admin_pwd }}"
+      Referer: "https://{{ idm_server_fqdn }}/ipa"
+    body: "user={{ user_idm_admin }}&password={{ user_idm_password }}"
   register: ipa_session
   run_once: true
   when: not dns_teardown|bool
@@ -150,14 +151,14 @@
 
 - name:  Create Wildcard for Applications
   uri:
-    url: "https://{{ ipa_host }}/ipa/session/json"
+    url: "https://{{ idm_server_fqdn }}/ipa/session/json"
     validate_certs: no
     method: POST
     status_code: 200
     headers:
       Cookie: "{{ ipa_session.set_cookie }}"
       Accept: "application/json"
-      Referer: "https://{{ ipa_host }}/ipa"
+      Referer: "https://{{ idm_server_fqdn }}/ipa"
     body:
       method: dnsrecord_add
       params:
@@ -171,14 +172,14 @@
 
 - name:  Create Wildcard for Applications
   uri:
-    url: "https://{{ ipa_host }}/ipa/session/json"
+    url: "https://{{ idm_server_fqdn }}/ipa/session/json"
     validate_certs: no
     method: POST
     status_code: 200
     headers:
       Cookie: "{{ ipa_session.set_cookie }}"
       Accept: "application/json"
-      Referer: "https://{{ ipa_host }}/ipa"
+      Referer: "https://{{ idm_server_fqdn }}/ipa"
     body:
       method: dnsrecord_add
       params:
@@ -192,14 +193,14 @@
 
 - name: Create SRV Records
   uri:
-    url: "https://{{ ipa_host }}/ipa/session/json"
+    url: "https://{{ idm_server_fqdn }}/ipa/session/json"
     validate_certs: no
     method: POST
     status_code: 200
     headers:
       Cookie: "{{ ipa_session.set_cookie }}"
       Accept: "application/json"
-      Referer: "https://{{ ipa_host }}/ipa"
+      Referer: "https://{{ idm_server_fqdn }}/ipa"
     body:
       method: dnsrecord_add
       params:

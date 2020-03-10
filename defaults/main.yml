@@ -4,7 +4,7 @@
 tear_down: false
 ocp4_pull_secret: /home/admin/qubinode-installer/pull-secret.txt
 
-# OCP release info 
+# OCP release info
 ocp4_version: 4.3.0
 ocp4_release_dir: latest
 ocp4_release_url: "https://mirror.openshift.com/pub/openshift-v4/clients/ocp/{{ ocp4_release_dir }}/"
@@ -33,11 +33,12 @@ bootstrap_node_name: bootstrap
 # Ignition creation variables
 openshift_install_dir: ""
 pull_secret: ""
-public_domain: lab.example
+external_domain_name: lab.example
+internal_domain_name: lab.example
 ssh_ocp4_public_key: ""
 
 virtinstall_dir: /tmp/rhcos
-admin_user: admin
+local_user_account: admin
 #subnet: 192.168.50.0
 #gateway: 192.168.50.1
 mask: 255.255.255.0

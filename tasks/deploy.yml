@@ -59,7 +59,7 @@
   file:
     path: "{{ virtinstall_dir }}"
     state: directory
-    owner: "{{ admin_user }}"
+    owner: "{{ local_user_account }}"
   register: create_virtinstall_dir
   tags: [ deploy_nodes ]
 
@@ -68,7 +68,7 @@
     src: treeinfo.j2
     dest: "{{ virtinstall_dir }}/.treeinfo"
     mode: "u=rw,g=r,o=r"
-    owner: "{{ admin_user }}"
+    owner: "{{ local_user_account }}"
   tags: [ deploy_nodes, rhcos ]
 
 - name: import tasks deploy_libvirt_network.yml
