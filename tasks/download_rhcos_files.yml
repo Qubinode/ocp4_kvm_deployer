@@ -10,6 +10,7 @@
     path: "{{ webserver_directory }}"
     state: directory
     owner: "{{ local_user_account }}"
+    group: "{{ local_user_account }}"
   register: create_webdir
   when: webserver_dir.stat.exists == False
   tags: [ download, webserver ]
@@ -25,6 +26,7 @@
     path: "{{ virtinstall_dir }}"
     state: directory
     owner: "{{ local_user_account }}"
+    group: "{{ local_user_account }}"
   register: create_webdir
   when: virtinstall_directory.stat.exists == False
   tags: [ download, virtinstall, deploy_nodes, webserver ]
@@ -34,6 +36,7 @@
     path: "{{ webserver_dependencies }}"
     state: directory
     owner: "{{ local_user_account }}"
+    group: "{{ local_user_account }}"
   tags: [ download, webserver ]
 
 - name: Create a images directory
@@ -41,6 +44,7 @@
     path: "{{ webserver_images }}"
     state: directory
     owner: "{{ local_user_account }}"
+    group: "{{ local_user_account }}"
   tags: [ download, webserver ]
 
 - name: Create ignition directory
@@ -48,12 +52,15 @@
     path: "{{ dest_ignitions_web_directory }}"
     state: directory
     owner: "{{ local_user_account }}"
+    group: "{{ local_user_account }}"
   tags: [ download, ignitions, webserver ]
 
 - name: download the installer-initramfs.img metal-bios.raw.gz installer-kernel
   get_url:
     url: "{{ openshift_mirror }}/{{ item }}"
     dest: "{{ webserver_images }}/{{ item }}"
+    owner: "{{ local_user_account }}"
+    group: "{{ local_user_account }}"
   with_items:
     - "{{ coreos_installer_kernel }}"
     - "{{ coreos_installer_initramfs }}"
@@ -67,12 +74,16 @@
   copy:
     src: "{{ webserver_images }}/{{ coreos_installer_kernel }}"
     dest: "{{ virtinstall_dir }}/vmlinuz"
+    owner: "{{ local_user_account }}"
+    group: "{{ local_user_account }}"
   tags: [ download, virtinstall, deploy_nodes, webserver ]
 
 - name: copy {{ coreos_installer_initramfs }} to {{ virtinstall_dir }}/initramfs.img
   copy:
     src: "{{ webserver_images }}/{{ coreos_installer_initramfs }}"
     dest: "{{ virtinstall_dir }}/initramfs.img"
+    owner: "{{ local_user_account }}"
+    group: "{{ local_user_account }}"
   tags: [ download, virtinstall, deploy_nodes, webserver ]
 
 - name: get the status of the ignition files are available
@@ -96,6 +107,8 @@
   copy:
     src: "{{ ignition_files_dir }}/{{ item }}.ign"
     dest: "{{ dest_ignitions_web_directory }}/{{ item }}.ign"
+    owner: "{{ local_user_account }}"
+    group: "{{ local_user_account }}"
   with_items:
     - master
     - worker

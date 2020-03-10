@@ -36,14 +36,16 @@
      - tmp_config: "{{ temp_install_config.stat.checksum }}"
      - deployed_config: "{{ config_file_check.stat.checksum }}"
    set_fact:
-     deploy_ocp4_configs: false
-   when: config_file_check.stat.exists
+     deploy_ocp4_configs: "{{ true if tmp_config == deployed_config else false }}"
+   #when: tmp_config != deployed_config
    tags: [ ignitions, deploy_nodes ]
 
  - name: Create ocp4 install config file {{ openshift_install_dir }}/install-config.yaml
    template:
      src: install-config.yaml.j2
      dest: "{{ openshift_install_dir }}/install-config.yaml"
+     owner: "{{ local_user_account }}"
+     group: "{{ local_user_account }}"
    when: deploy_ocp4_configs|bool
    tags: [ ignitions, deploy_nodes ]
 

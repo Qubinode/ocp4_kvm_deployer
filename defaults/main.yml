@@ -5,9 +5,9 @@ tear_down: false
 ocp4_pull_secret: /home/admin/qubinode-installer/pull-secret.txt
 
 # OCP release info
-ocp4_version: 4.3.0
+ocp4_version: 4.3.3
 ocp4_release_dir: latest
-ocp4_release_url: "https://mirror.openshift.com/pub/openshift-v4/clients/ocp/{{ ocp4_release_dir }}/"
+ocp4_release_url: "https://mirror.openshift.com/pub/openshift-v4/clients/ocp/{{ ocp4_release_dir }}"
 
 openshift_install_folder: ocp4
 ocp4_client: "openshift-client-linux-{{ ocp4_version }}.tar.gz"
@@ -22,6 +22,7 @@ bootstrap_ip: "{{ ocp4_nat_subnet.split('.')[:3] | join('.')}}.2"
 ocp4_lb_container: qbn-lb
 lb_name: "{{ ocp4_lb_container }}"
 old_libvirt_net: ocp42
+deploy_ocp4_configs: yes
 
 # ocp4 nodes attributes
 master_count: 3
