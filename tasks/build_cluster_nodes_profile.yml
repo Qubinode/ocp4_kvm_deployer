@@ -8,7 +8,7 @@
     extra_storage: "{{ outer_item.extra_storage }}"
     vm_type: "{{ outer_item.vm_type }}"
     last_octet: "{{ '%02x' |format(inner_item)|int + outer_item.ip_octet }}"
-    ip_address: "{{ ocp4_nat_subnet.split('.')[:3] | join('.')}}.{{ '%02x' |format(inner_item)|int + outer_item.ip_octet}}"
+    ip_address: "{{ ocp4_nat_subnet.split('.')[:3] | join('.') }}.{{ '%02x' |format(inner_item)|int + outer_item.ip_octet }}"
     vm_ip: "{{ '192.168.50.2' if outer_item.name == 'bootstrap' else ip_address }}"
     vm_mac: "{{ mac_start }}{{ '%02x' % ocp4_nat_subnet.split('.')[1]|int }}:{{ '%02x' % ocp4_nat_subnet.split('.')[2]|int }}:{{ '%02x' % last_octet|int }}"
   template:

@@ -21,7 +21,7 @@
     name: ocp4-bootstrap-webserver
     tasks_from: tear_down.yml
   tags: [ webserver ]
-  
+
 - name: remove the ocp4 installation directory {{ openshift_install_dir }}
   file:
     path: "{{ openshift_install_dir }}"

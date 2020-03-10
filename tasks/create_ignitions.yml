@@ -20,7 +20,7 @@
    template:
      src: install-config.yaml.j2
      dest: /tmp/install-config.yaml
-   when: config_file_check.stat.exists == True
+   when: config_file_check.stat.exists
    changed_when: false
    tags: [ ignitions, deploy_nodes ]
 
@@ -28,7 +28,7 @@
    stat:
      path: /tmp/install-config.yaml
    register: temp_install_config
-   when: config_file_check.stat.exists == True
+   when: config_file_check.stat.exists
    tags: [ ignitions, deploy_nodes ]
 
  - name: compare {{ openshift_install_dir }}/install-config.yaml.original and /tmp/install-config.yaml
@@ -37,7 +37,7 @@
      - deployed_config: "{{ config_file_check.stat.checksum }}"
    set_fact:
      deploy_ocp4_configs: false
-   when: config_file_check.stat.exists == true
+   when: config_file_check.stat.exists
    tags: [ ignitions, deploy_nodes ]
 
  - name: Create ocp4 install config file {{ openshift_install_dir }}/install-config.yaml
@@ -46,7 +46,7 @@
      dest: "{{ openshift_install_dir }}/install-config.yaml"
    when: deploy_ocp4_configs|bool
    tags: [ ignitions, deploy_nodes ]
-    
+
  - name: Save ocp4 install-config {{ openshift_install_dir }}/install-config.yaml.original from deletion
    copy:
      dest: "{{ openshift_install_dir }}/install-config.yaml.original"
@@ -57,13 +57,13 @@
  - name: Create ignition files
    command: "/usr/local/bin/openshift-install --dir={{ openshift_install_dir }} create ignition-configs"
    args:
-     creates: "{{ openshift_install_dir}}/.openshift_install_state.json"
+     creates: "{{ openshift_install_dir }}/.openshift_install_state.json"
    when: deploy_ocp4_configs|bool
    tags: [ ignitions, deploy_nodes ]
 
- - name: "Recursively change ownership of {{ openshift_install_dir}}"
+ - name: "Recursively change ownership of {{ openshift_install_dir }}"
    file:
-     path: "{{ openshift_install_dir}}"
+     path: "{{ openshift_install_dir }}"
      state: directory
      recurse: yes
      owner: "{{ local_user_account }}"

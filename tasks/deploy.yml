@@ -1,6 +1,6 @@
 ---
-- name: check for user pull-secret 
-  stat: 
+- name: check for user pull-secret
+  stat:
     path: "{{ ocp4_pull_secret }}"
   register: pull_secret_file
   tags: [ setup ]
@@ -8,7 +8,7 @@
 - name: fail if pull secret does
   fail:
     msg: "Please download your pull-secret from {{ pull_secret_request }} to {{ ocp4_pull_secret }}"
-  when: pull_secret_file.stat.exists == False
+  when: pull_secret_file.stat.exists
   tags: [ setup ]
 
 - name: enable required firewall ports
@@ -28,7 +28,7 @@
 
 - name: import tasks create_ignitions.yml
   import_tasks: create_ignitions.yml
-  
+
 - name: deploy the podman container load balancer for OCP4
   import_role:
     name: openshift-4-loadbalancer
@@ -53,8 +53,8 @@
 
 - name: import task download_rhcos_files.yml
   import_tasks: download_rhcos_files.yml
-  when: not tear_down|bool 
-  
+  when: not tear_down|bool
+
 - name: Create the directory to store the virt-install scripts
   file:
     path: "{{ virtinstall_dir }}"
@@ -112,7 +112,7 @@
 - name: continue ocp4 bootstrap
   vars:
     vm_name: "{{ item }}"
-  virt: 
+  virt:
     name: "{{ vm_name }}"
     state: running
   loop: "{{ ocp4_nodes }}"
@@ -123,6 +123,7 @@
   command: |
     /usr/local/bin/openshift-install wait-for bootstrap-complete --dir "{{ openshift_install_dir }}" --log-level debug
   register: bootstrap_complete
+  changed_when: false
   tags: [ deploy_nodes, bootstrap, postinstall ]
 
 # BEGINS POST BOOTSTRAP STEPS
@@ -166,4 +167,4 @@
 
 #- name: import tasks nfs_server.yml
 #  import_tasks: nfs_server.yml
-#  tags: [ deploy_nodes, rhcos, postinstall, nfs ] 
+#  tags: [ deploy_nodes, rhcos, postinstall, nfs ]

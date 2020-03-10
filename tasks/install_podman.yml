@@ -38,7 +38,7 @@
     dest: "/etc/subuid"
     content: |
       {{ lookup('env','USER') }}:100000:65536
-  when: subuid_setting.stat.exists == True
+  when: subuid_setting.stat.exists
   tags: [ podman ]
 
 - name: Create /etc/subgid for non root podman exec
@@ -46,5 +46,5 @@
     dest: "/etc/subgid"
     content: |
       {{ lookup('env','USER') }}:100000:65536
-  when: ssubgid_setting.stat.exists == True 
+  when: ssubgid_setting.stat.exists
   tags: [ podman ]

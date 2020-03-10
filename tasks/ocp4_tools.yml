@@ -8,7 +8,7 @@
 - name: check for the version of oc client
   command: /usr/local/bin/oc version | grep '{{ ocp4_version }}'
   register: oc_client_version
-  when: oc_client_cmd.stat.exists == True
+  when: oc_client_cmd.stat.exists
   changed_when: false
   tags: [ setup, tools, client ]
 
@@ -45,14 +45,14 @@
   tags: [ setup, tools, installer ]
 
 - name: Remove openshift client tar file
-  file: 
+  file:
     path: "/tmp/{{ ocp4_client }}"
     state: absent
   when: extract_ocp_client.changed
   tags: [ setup, tools, client ]
 
 - name: Remove openshift installer  tar file
-  file: 
+  file:
     path: "/tmp/{{ ocp4_installer }}"
     state: absent
   when: extract_ocp_installer.changed

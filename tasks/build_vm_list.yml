@@ -10,7 +10,7 @@
     ocp4_nodes: [ 'bootstrap' ]
   tags: [ deploy_nodes, rhcos, bootstrap ]
 
-- name: add master nodes to ocp4 nodes list 
+- name: add master nodes to ocp4 nodes list
   vars:
     vm_name: "master-{{ '%00x' |format(item) }}"
   set_fact:
@@ -19,10 +19,10 @@
   delay: 10
   tags: [ deploy_nodes, rhcos, bootstrap]
 
-- name: add compute nodes to ocp4 nodes list 
+- name: add compute nodes to ocp4 nodes list
   vars:
     vm_name: "compute-{{ '%00x' |format(item) }}"
-  set_fact: 
+  set_fact:
     ocp4_nodes: "{{ ocp4_nodes + [ vm_name ] }}"
   loop: "{{ range(0, compute_count|int)|list }}"
   delay: 10

@@ -3,7 +3,7 @@
   yum:
     name: nfs-utils
     state: present
-  tags: [ postinstall, nfs ] 
+  tags: [ postinstall, nfs ]
 
 - name: Open up firewall ports
   firewalld:
@@ -19,7 +19,7 @@
     - 32700/tcp
     - 2049/tcp
     - 2049/udp
-  tags: [ postinstall, nfs ] 
+  tags: [ postinstall, nfs ]
 
 - name: Create NFS export directory
   file:
@@ -30,7 +30,7 @@
     group: nfsnobody
   notify:
     - restart nfs
-  tags: [ postinstall, nfs ] 
+  tags: [ postinstall, nfs ]
 
 - name: Copy NFS export conf file
   copy:
@@ -38,7 +38,7 @@
     dest: /etc/exports
   notify:
     - restart nfs
-  tags: [ postinstall, nfs ] 
+  tags: [ postinstall, nfs ]
 
 - name: Starting NFS services
   service:
@@ -50,7 +50,7 @@
     - nfs-server
     - nfs-lock
     - nfs-idmap
-  tags: [ postinstall, nfs ] 
+  tags: [ postinstall, nfs ]
 
 - name: Copying over nfs-provisioner rbac
   copy:
@@ -59,7 +59,7 @@
     owner: root
     group: root
     mode: 0666
-  tags: [ postinstall, nfs ] 
+  tags: [ postinstall, nfs ]
 
 - name: Copying over nfs-provisioner deployment
   template:
@@ -68,7 +68,7 @@
     owner: root
     group: root
     mode: 0666
-  tags: [ postinstall, nfs ] 
+  tags: [ postinstall, nfs ]
 
 - name: Copying over nfs-provisioner storageclass
   copy:
@@ -77,21 +77,21 @@
     owner: root
     group: root
     mode: 0666
-  tags: [ postinstall, nfs ] 
+  tags: [ postinstall, nfs ]
 
 - name: Copying over a sample PVC file for NFS
   copy:
     src: templates/registry-pvc.yaml
     dest: /usr/local/src/registry-pvc.yaml
     mode: '0555'
-  tags: [ postinstall, nfs ] 
+  tags: [ postinstall, nfs ]
 
 - name: Copying over a NFS persistant volume claim
   copy:
     src: templates/nfs-volume-claim.j2
     dest: /usr/local/src/nfs-volume-claim.yml
     mode: '0555'
-  tags: [ postinstall, nfs ] 
+  tags: [ postinstall, nfs ]
 
 
 - name: setup nfs storage class
@@ -103,7 +103,7 @@
   environment:
     KUBECONFIG: "{{ openshift_install_dir }}/auth/kubeconfig"
   register: deploy_nfs_server
-  tags: [ deploy_nodes, rhcos, postinstall, nfs ] 
+  tags: [ deploy_nodes, rhcos, postinstall, nfs ]
 
 - name: setup nfs volume claim
   shell: |
@@ -123,8 +123,8 @@
   environment:
     KUBECONFIG: "{{ openshift_install_dir }}/auth/kubeconfig"
   register: create_nfs_claim
-  tags: [ deploy_nodes, rhcos, postinstall, nfs ] 
+  tags: [ deploy_nodes, rhcos, postinstall, nfs ]
 
 - debug:
     var: create_nfs_claim
-  tags: [ deploy_nodes, rhcos, postinstall, nfs ] 
+  tags: [ deploy_nodes, rhcos, postinstall, nfs ]
