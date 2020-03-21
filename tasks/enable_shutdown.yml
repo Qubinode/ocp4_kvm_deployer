@@ -6,16 +6,19 @@
       mode: '0755'
     become: true
     become_user: "{{ local_user_account }}"
+    tags: [ postinstall, enable_shutdown ]
 
   - name: setup kubeconfig
     copy:
       src: "{{ project_dir }}/ocp4/auth/kubeconfig"
       dest: "/home/{{ local_user_account  }}/.kube/config"
+    tags: [ postinstall, enable_shutdown ]
 
   - name: get all operators
     shell: oc get clusteroperators --no-headers=true | awk '{print $1}'
     register: all_operators
     changed_when: False
+    tags: [ postinstall, enable_shutdown ]
 
   - name: check if daemonset kubelet-bootstrap-cred-manager was deployed
     shell: |
@@ -23,6 +26,7 @@
     register: bootstrap_cred_manager
     changed_when: False
     ignore_errors: yes
+    tags: [ postinstall, enable_shutdown ]
 
   - name: enable cluster to stop and sesume cluster VMs
     block:
@@ -66,3 +70,4 @@
        until: not operator_status.stdout | bool
        changed_when: False
     when: bootstrap_cred_manager.rc != 0
+    tags: [ postinstall, enable_shutdown ]
