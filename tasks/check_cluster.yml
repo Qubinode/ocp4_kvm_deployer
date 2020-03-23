@@ -1,0 +1,37 @@
+---
+- name: deploy qubinode-ocp4-status script
+  template:
+    src: templates/qubinode-ocp4-status.j2
+    dest: /usr/local/bin/qubinode-ocp4-status
+    group: "{{ local_user_account }}"
+    owner: "{{ local_user_account }}"
+    mode: u=rwx,g=rx,o=rx
+  become: yes
+
+- name: check the bootstrap status
+  command: |
+    /usr/local/bin/openshift-install wait-for bootstrap-complete --dir "{{ openshift_install_dir }}" --log-level debug
+  register: bootstrap_complete
+  changed_when: false
+  tags: [ deploy_nodes, bootstrap, postinstall ]
+
+- name: check the cluster install status
+  command: |
+    /usr/local/bin/openshift-install wait-for install-complete --dir "{{ openshift_install_dir }}" --log-level debug
+  register: bootstrap_complete
+  changed_when: false
+  tags: [ deploy_nodes, bootstrap, postinstall ]
+
+- name: set bootstrap status
+  set_fact:
+    bootstrap_status: "{{ true if bootstrap_complete.stderr.find('It is now safe to remove the bootstrap resources') != -1 else false }}"
+  tags: [ deploy_nodes, bootstrap, postinstall ]
+
+- name: set openshift-install status
+  set_fact:
+    cluster_install_status: "{{ true if bootstrap_complete.stderr.find('Login to the console with user:') != -1 else false }}"
+  tags: [ deploy_nodes, bootstrap, postinstall ]
+
+- name: show status
+  debug:
+    var: cluster_install_status
