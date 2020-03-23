@@ -13,13 +13,7 @@
     /usr/local/bin/openshift-install wait-for bootstrap-complete --dir "{{ openshift_install_dir }}" --log-level debug
   register: bootstrap_complete
   changed_when: false
-  tags: [ deploy_nodes, bootstrap, postinstall ]
-
-- name: check the cluster install status
-  command: |
-    /usr/local/bin/openshift-install wait-for install-complete --dir "{{ openshift_install_dir }}" --log-level debug
-  register: bootstrap_complete
-  changed_when: false
+  ignore_errors: yes
   tags: [ deploy_nodes, bootstrap, postinstall ]
 
 - name: set bootstrap status
@@ -27,11 +21,44 @@
     bootstrap_status: "{{ true if bootstrap_complete.stderr.find('It is now safe to remove the bootstrap resources') != -1 else false }}"
   tags: [ deploy_nodes, bootstrap, postinstall ]
 
-- name: set openshift-install status
-  set_fact:
-    cluster_install_status: "{{ true if bootstrap_complete.stderr.find('Login to the console with user:') != -1 else false }}"
+- name: check the cluster install status
+  command: |
+    /usr/local/bin/openshift-install wait-for install-complete --dir "{{ openshift_install_dir }}" --log-level debug
+  register: install_complete
+  ignore_errors: yes
+  changed_when: false
+  when: bootstrap_status|bool
   tags: [ deploy_nodes, bootstrap, postinstall ]
 
-- name: show status
+- name: set openshift-install status
+  set_fact:
+    cluster_install_status: "{{ true if install_complete.stderr.find('Login to the console with user:') != -1 else false }}"
+  tags: [ deploy_nodes, bootstrap, postinstall ]
+  when: bootstrap_status|bool
+
+- name: check cluster operators status
+  command: |
+    /usr/local/bin/qubinode-ocp4-status
+  register: cluster_operators_status
+  changed_when: false
+  ignore_errors: yes
+  tags: [ deploy_nodes, bootstrap, postinstall ]
+  when: cluster_install_status|bool
+
+- name: set cluster operators status
+  set_fact:
+    is_cluster_up: "{{ true if cluster_operators_status.stdout.find('All cluster operators are up') != -1 else false }}"
+    is_cluster_down: "{{ true if cluster_operators_status.stdout.find('Timeout waiting for all cluster operators to come up') != -1 else false }}"
+  tags: [ deploy_nodes, bootstrap, postinstall ]
+  when: cluster_install_status|bool
+
+  - name: cluster down message
+  fail:
+    msg: "OCP4 Cluster is deployed but it appears not all operators are up! Run /usr/local/bin/qubinode-ocp4-status for more details."
+  when: is_cluster_down|bool
+
+- name: cluster up message
   debug:
-    var: cluster_install_status
+    msg: "OCP4 Cluster is up!"
+  when: is_cluster_up|bool
+

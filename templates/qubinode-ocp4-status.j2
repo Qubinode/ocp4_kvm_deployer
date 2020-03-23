@@ -9,6 +9,9 @@ TOTAL_OPERATORS=$(oc get clusteroperators --no-headers=true | awk '{print $1}' |
 OPERATORS=$(oc get clusteroperators --no-headers=true | awk '{print $1}')
 sp="/-\|"
 sc=0
+COLOR_RED=`tput setaf 1`
+COLOR_GREEN=`tput setaf 2`
+COLOR_RESET=`tput sgr0`
 
 {% raw %}
 spin() {
@@ -40,18 +43,34 @@ endspin
 
 if [ $SLEEP_FOR -eq $TIMEOUT ]
 then
-    printf "%s\n" "    Timeout waiting for all cluster operators to come up"
-    RC=1
+    for operator in $(echo $OPERATORS)
+    do
+        STATUS=$(oc get clusteroperator $operator -o=jsonpath='{range .status.conditions[*]}{.type}{" "}{.status}{" "}{.message}{"\n"}{end}'|awk '/Available/ {print $2}')
+        if [ $STATUS != "True" ]
+        then
+            printf "%s\n" "*************************************"
+            printf "%s\n" "${COLOR_RED}FAILLED OPERATOR${COLOR_RESET} ${COLOR_GREEN}$operator${COLOR_RESET} ${COLOR_RED}STATUS${COLOR_RESET}"
+            oc get clusteroperator $operator
+            printf "%s\n" ""
+            oc get clusteroperator $operator -o=jsonpath='{range .status.conditions[*]}{.type}{" "}{.status}{" "}{.message}{"\n"}{end}'
+            printf "%s\n" "*************************************"
+            printf "%s\n" ""
+        fi
+    done
+
+    oc get nodes
+    printf "%s\n" ""
+    printf "%s\n" "    ${COLOR_RED}Timeout waiting for all cluster operators to come up${COLOR_RESET}"
+    printf "%s\n" ""
 else
-    printf "%s\n" "    All cluster operators are up"
+    printf "%s\n" "    ${COLOR_GREEN}All cluster operators are up${COLOR_RESET}"
     oc get nodes -o wide --no-headers=true| awk 'BEGIN{printf("    %-3s%-40s%-16s%-8s%-7s\n","#","FQDN","External IP","ROLE","STATUS")}{printf("    %-3s%-40s%-16s%-8s%-7s\n",NR,$1,$6,$3,$2)}'
     printf "%s\n" ""
     printf "%s\n" ""
-    printf "%s\n" "    Console: https://console-openshift-console.apps.{{ cluster_name }}.{{ ocp4_cluster_domain }}"
-    printf "%s\n" "    Username: kubeadmin"
-    printf "%s\n" "    Password: $KUBEADMIN_PASS"
+    printf "%s\n" "    ${COLOR_GREEN}Console: https://console-openshift-console.apps.{{ cluster_name }}.{{ ocp4_cluster_domain }}"${COLOR_RESET}
+    printf "%s\n" "    ${COLOR_GREEN}Username: kubeadmin"${COLOR_RESET}
+    printf "%s\n" "    ${COLOR_GREEN}Password: $KUBEADMIN_PASS"${COLOR_RESET}
     printf "%s\n" ""
-
 fi
 
 exit $RC
