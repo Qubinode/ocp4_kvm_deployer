@@ -8,7 +8,7 @@
 - name: fail if pull secret does
   fail:
     msg: "Please download your pull-secret from {{ pull_secret_request }} to {{ ocp4_pull_secret }}"
-  when: pull_secret_file.stat.exists
+  when: not pull_secret_file.stat.exists
   tags: [ setup ]
 
 - name: enable required firewall ports
