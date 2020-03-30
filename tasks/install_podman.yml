@@ -1,15 +1,22 @@
 ---
+- name: Verifiy podman is installed
+  stat:
+    path: "/usr/bin/podman"
+  register: podman_is_installed
+
 - name: Enable rhel-7-server-extras-rpms repository
   rhsm_repository:
     name: rhel-7-server-extras-rpms
     state: enabled
   tags: [ podman, pkg ]
+  when: "not podman_is_installed.stat.exists"
 
 - name: install podman, buildah, skopeo
   yum:
     name: "{{ podman_pkgs }}"
     state: present
   tags: [ podman, pkg ]
+  when: "not podman_is_installed.stat.exists"
 
 - name: activate namespaces
   become: True
@@ -20,18 +27,21 @@
     state: present
     reload: yes
   tags: [ podman ]
+  when: "not podman_is_installed.stat.exists"
 
 - name: check if subuid file exists
   stat:
     path: /etc/subuid
   register: subuid_setting
   tags: [ podman ]
+  when: "not podman_is_installed.stat.exists"
 
 - name: check if subgid file exists
   stat:
     path: /etc/subgid
   register: ssubgid_setting
   tags: [ podman ]
+  when: "not podman_is_installed.stat.exists"
 
 - name: Create /etc/subuid for non root podman exec
   copy:
@@ -40,6 +50,7 @@
       {{ lookup('env','USER') }}:100000:65536
   when: subuid_setting.stat.exists
   tags: [ podman ]
+  when: "not podman_is_installed.stat.exists"
 
 - name: Create /etc/subgid for non root podman exec
   copy:
@@ -48,3 +59,4 @@
       {{ lookup('env','USER') }}:100000:65536
   when: ssubgid_setting.stat.exists
   tags: [ podman ]
+  when: "not podman_is_installed.stat.exists"

@@ -14,17 +14,25 @@
 - name: check for the version of oc client
   command: /usr/local/bin/oc version | grep "{{ ocp4_version }}"
   register: oc_client_version
-  when: oc_client_cmd.stat.exists
   changed_when: false
   tags: [ setup, tools, client, ignitions ]
+  ignore_errors: yes
 
-- name: set the status on the existence of the oc and openshift-install tool
+- name: Set tools are missing variable
   vars:
     current_version: "Client Version: {{ ocp4_version }}"
   set_fact:
-    tools_missing: "{{ true if not oc_client_cmd.stat.exists or not openshift_install_cmd.stat.exists else false }}"
+    tools_missing: true
+  tags: [ setup, tools, client, ignitions ]
+  when: not oc_client_cmd.stat.exists or not oc_client_cmd.stat.exists
+
+- name: Check if OpenShift Versions match
+  vars:
+    current_version: "Client Version: {{ ocp4_version }}"
+  set_fact:
     oc_version_match: "{{ true if oc_client_version.stdout == current_version else false }}"
   tags: [ setup, tools, client, ignitions ]
+  when:  oc_client_cmd.stat.exists and oc_client_cmd.stat.exists
 
 - name: check if the oc client tool version is matches {{ ocp4_version }}
   set_fact:

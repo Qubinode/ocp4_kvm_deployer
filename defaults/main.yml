@@ -12,6 +12,7 @@ ocp4_release_url: "https://mirror.openshift.com/pub/openshift-v4/clients/ocp/{{ 
 openshift_install_folder: ocp4
 ocp4_client: "openshift-client-linux-{{ ocp4_version }}.tar.gz"
 ocp4_installer: "openshift-install-linux-{{ ocp4_version }}.tar.gz"
+tools_missing: false
 
 # Networking info
 ocp4_nat_subnet: 192.168.50.0
@@ -120,3 +121,20 @@ podman_pkgs:
   - skopeo
   - slirp4netns
   - nfs-utils
+
+
+# Defaults for NFS Provisioner role
+provision_nfs_server: true
+nfs_server_directory_path: /export
+provision_nfs_provisoner: true
+configure_registry: false
+nfs_server_ip:  changeme
+registry_pvc_size: 100Gi
+storage_class_result: true
+openshift_token: 1234567890
+openshift_url: https://master.example.com:6443 #https://master.example.com for openshift 3
+openshift_version: ocp4
+project_namespace: nfs-provisioner
+set_as_default: true
+delete_deployment: false
+insecure_skip_tls_verify: true
