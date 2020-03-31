@@ -131,6 +131,7 @@
 - name: "Install Status"
   debug:
     msg: "{{ install_status }}"
+  register: continue_install
   tags: [ deploy_nodes, bootstrap, postinstall ]
 
 - name: Remove /tmp/bootstrap-complete.log
@@ -139,12 +140,6 @@
     state: absent
   tags: [ deploy_nodes, bootstrap, postinstall ]
 
-# BEGINS POST BOOTSTRAP STEPS
-- name: set continue installation status
-  set_fact:
-    continue_install: "{{ true if bootstrap_complete.stderr.find('It is now safe to remove the bootstrap resources') != -1 else false }}"
-#  when: bootstrap_complete.stderr.find('It is now safe to remove the bootstrap resources') != -1
-  tags: [ deploy_nodes, bootstrap, postinstall ]
 
 - name: list all libvirt vms
   virt:
@@ -159,14 +154,14 @@
     name: "{{ vm_name }}"
     state: shutdown
   register: shutdown_vms
-  when: continue_install|bool and vm_name in all_vms.list_vms
+  when: not continue_install.failed |bool and vm_name in all_vms.list_vms
   tags: [ deploy_nodes, rhcos, postinstall ]
 
 - name: include wait_for_vm_shutdown.yml
   vars:
     vm_name: bootstrap
   include_tasks: wait_for_vm_shutdown.yml
-  when: continue_install|bool and shutdown_vms.changed
+  when: not continue_install.failed |bool and shutdown_vms.changed
   tags: [ deploy_nodes, rhcos, postinstall ]
 
 - name: destroy bootstrap node
@@ -175,7 +170,7 @@
   virt:
     name: "{{ vm_name }}"
     command: undefine
-  when: continue_install|bool and vm_name in all_vms.list_vms
+  when: not continue_install.failed |bool and vm_name in all_vms.list_vms
   tags: [ deploy_nodes, rhcos, postinstall ]
 
 - name: Waiting for Installation to Complete
@@ -186,7 +181,7 @@
   retries: 120
   delay: 30
 
-- name: "Install Complete"
+- name: "Install is complete detailed information is below."
   debug:
     msg: "Install is compelte {{ install_status.stdout }}"
 
@@ -194,7 +189,20 @@
   include_tasks: enable_shutdown.yml
   tags: [ postinstall, enable_shutdown ]
 
+- pause:
+    prompt: "OpenShift Installation has completed. It is recommened you deploy nfs-provisoner to enable the image registiry. Would you like to continue? (yes/no)?"
+  register: configure_registry
+  delegate_to: localhost
+
+- name: "Test Complete"
+  debug:
+    var: configure_registry
 
 - name: import tasks nfs_server.yml
   import_tasks: nfs_server.yml
+  when:  hostvars['localhost'].configure_registry.user_input | bool
   tags: [ deploy_nodes, rhcos, postinstall, nfs ]
+
+- name: "Install Complete"
+  debug:
+    msg: "Install is compelte to view login information cat /tmp/install-compelte.log or see ansible logs above."

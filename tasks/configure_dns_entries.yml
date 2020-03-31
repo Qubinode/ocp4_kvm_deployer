@@ -4,6 +4,10 @@
   when: idm_server_ipaddr |length == 0
   tags: idm
 
+
+- name: loop through vm types
+  include_tasks: check_dns_entries.yml
+
 - name: add bootstrap to dns forward zone
   vars:
     ip: "{{ ocp4_nat_gateway.split('.')[:3] | join('.') }}.2"
