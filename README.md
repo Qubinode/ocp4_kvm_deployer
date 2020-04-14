@@ -136,7 +136,10 @@ Dependancy roles:
 22. wait_for_vm_shutdown.yml: wait for the bootstrap node to shutdown
 23. destroy the bootstrap node
 
-
+Configure nfs provisioner
+```
+ansible-playbook playbooks/deploy_ocp4.yml --start-at-task="Waiting for Installation to Complete"
+```
 
 Example Usage:
 

@@ -190,7 +190,7 @@
   tags: [ postinstall, enable_shutdown ]
 
 - pause:
-    prompt: "OpenShift Installation has completed. It is recommened you deploy nfs-provisoner to enable the image registiry. Would you like to continue? (yes/no)?"
+    prompt: "OpenShift Installation has completed. We will now install nfs provisioner. This will be used for the image registry. [Press Enter]"
   register: configure_registry
   delegate_to: localhost
 
@@ -200,7 +200,6 @@
 
 - name: import tasks nfs_server.yml
   import_tasks: nfs_server.yml
-  when:  hostvars['localhost'].configure_registry.user_input | bool
   tags: [ deploy_nodes, rhcos, postinstall, nfs ]
 
 - name: "Install Complete"

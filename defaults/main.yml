@@ -81,10 +81,10 @@ ocp4_instances:
     memory_size: 16192
     cpu_size: 4
     extra_storage:
-      - size: 10G
+      - size: 50G
         name: vdb
         enable: true
-      - size: 50G
+      - size: 100G
         name: vdc
         enable: true
     qty: "{{ compute_count }}"
