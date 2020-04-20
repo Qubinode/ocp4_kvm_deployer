@@ -1,0 +1,24 @@
+apiVersion: "local.storage.openshift.io/v1"
+kind: "LocalVolume"
+metadata:
+  name: "local-disks"
+  namespace: "local-storage"
+  annotations:
+    storageclass.kubernetes.io/is-default-class: 'True'
+spec:
+  nodeSelector:
+    nodeSelectorTerms:
+    - matchExpressions:
+        - key: kubernetes.io/hostname
+          operator: In
+          values:
+{% for compute in ocp4_compute_nodes %}
+{% if 'compute' in compute %}
+            - {{ compute }}.{{cluster_name }}.{{ ocp4_cluster_domain }}
+{% endif %}
+{% endfor %}
+  storageClassDevices:
+    - storageClassName: "localblock-sc"
+      volumeMode: Block
+      devicePaths:
+        - {{ localstorage_mount_path }}
