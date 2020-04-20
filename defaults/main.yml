@@ -1,8 +1,9 @@
 ---
 # defaults file for ocp4-rhcos-vms
-
+admin_user: admin
+project_dir:  /home/{{ admin_user }}/qubinode-installer/
 tear_down: false
-ocp4_pull_secret: /home/admin/qubinode-installer/pull-secret.txt
+ocp4_pull_secret: /home/{{ admin_user }}/qubinode-installer/pull-secret.txt
 
 # OCP release info
 ocp4_version: 4.3.3
@@ -26,7 +27,7 @@ old_libvirt_net: ocp42
 deploy_ocp4_configs: yes
 
 # ocp4 nodes attributes
-master_count: 3
+master_count: 3s
 compute_count: 3
 master_ip_octet: 10
 compute_ip_octet: 20
@@ -122,6 +123,11 @@ podman_pkgs:
   - slirp4netns
   - nfs-utils
 
+# localstorage
+localstorage_version: '4.3'
+localstorage_filesystem: true
+localstorage_block: false
+localstorage_mount_path: /dev/vdc1
 
 # Defaults for NFS Provisioner role
 provision_nfs_server: true

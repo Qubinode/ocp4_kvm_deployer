@@ -66,6 +66,10 @@ Example Playbook
       idm_server_fqdn: qbn-dns01.lunchnet.example
       dns_wildcard: "*.apps.{{ cluster_name }}"
       nat_gateway: "192.168.50.1"
+      localstorage_version: '4.3'
+      localstorage_filesystem: true
+      localstorage_block: false
+      localstorage_mount_path: /dev/vdc1
 
     environment:
       IPA_HOST: "{{idm_server_shortname}}.{{ internal_domain_name }}"
@@ -161,9 +165,12 @@ ansible-playbook rhcos.yml -t webserver
 ansible-playbook rhcos.yml -t lb
 ansible-playbook rhcos.yml -t libvirt_net
 ansible-playbook rhcos.yml -t deploy_vms
+ansible-playbook rhcos.yml -t nfs
+ansible-playbook rhcos.yml -t lcoalstorage
 ```
 Dependancy roles:
   - openshift-4-loadbalancer
+  - nfs-provisioner-role
 
 License
 -------

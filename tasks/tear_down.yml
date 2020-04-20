@@ -112,3 +112,7 @@
     path: "{{ openshift_install_dir }}"
     state: absent
   tags: [ deploy_nodes, rhcos ]
+
+- name: import configure-local-storage.yml
+  import_tasks: configure-local-storage.yml
+  tags: [ localstorage ]
