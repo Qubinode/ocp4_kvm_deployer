@@ -67,3 +67,8 @@
     msg: "OCP4 Cluster is up!"
   when: is_cluster_up|bool and not is_cluster_down|bool
 
+- name: run the cluster status command
+  command: /usr/local/bin/qubinode-ocp4-status
+  ignore_errors: yes
+  register: cluster_status_cmd
+  when: is_cluster_up|bool
