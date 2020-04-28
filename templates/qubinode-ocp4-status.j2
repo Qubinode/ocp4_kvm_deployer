@@ -5,8 +5,8 @@ SLEEP_FOR=0
 TIMEOUT=30
 RC=0
 KUBEADMIN_PASS=$(cat {{ project_dir }}/ocp4/auth/kubeadmin-password)
-TOTAL_OPERATORS=$(oc get clusteroperators --no-headers=true | awk '{print $1}' | wc -l)
-OPERATORS=$(oc get clusteroperators --no-headers=true | awk '{print $1}')
+TOTAL_OPERATORS=$(/usr/local/bin/oc get clusteroperators --no-headers=true | awk '{print $1}' | wc -l)
+OPERATORS=$(/usr/local/bin/oc get clusteroperators --no-headers=true | awk '{print $1}')
 sp="/-\|"
 sc=0
 COLOR_RED=`tput setaf 1`
@@ -30,7 +30,7 @@ do
     for operator in $(echo $OPERATORS)
     do
         spin
-        STATUS=$(oc get clusteroperator $operator -o=jsonpath='{range .status.conditions[*]}{.type}{" "}{.status}{" "}{.message}{"\n"}{end}'|awk '/Available/ {print $2}')
+        STATUS=$(/usr/local/bin/oc get clusteroperator $operator -o=jsonpath='{range .status.conditions[*]}{.type}{" "}{.status}{" "}{.message}{"\n"}{end}'|awk '/Available/ {print $2}')
         if [ $STATUS == "True" ]
         then
             COUNT=$(($COUNT + 1))
@@ -45,26 +45,26 @@ if [ $SLEEP_FOR -eq $TIMEOUT ]
 then
     for operator in $(echo $OPERATORS)
     do
-        STATUS=$(oc get clusteroperator $operator -o=jsonpath='{range .status.conditions[*]}{.type}{" "}{.status}{" "}{.message}{"\n"}{end}'|awk '/Available/ {print $2}')
+        STATUS=$(/usr/local/bin/oc get clusteroperator $operator -o=jsonpath='{range .status.conditions[*]}{.type}{" "}{.status}{" "}{.message}{"\n"}{end}'|awk '/Available/ {print $2}')
         if [ $STATUS != "True" ]
         then
             printf "%s\n" "*************************************"
             printf "%s\n" "${COLOR_RED}FAILLED OPERATOR${COLOR_RESET} ${COLOR_GREEN}$operator${COLOR_RESET} ${COLOR_RED}STATUS${COLOR_RESET}"
-            oc get clusteroperator $operator
+            /usr/local/bin/oc get clusteroperator $operator
             printf "%s\n" ""
-            oc get clusteroperator $operator -o=jsonpath='{range .status.conditions[*]}{.type}{" "}{.status}{" "}{.message}{"\n"}{end}'
+            /usr/local/bin/oc get clusteroperator $operator -o=jsonpath='{range .status.conditions[*]}{.type}{" "}{.status}{" "}{.message}{"\n"}{end}'
             printf "%s\n" "*************************************"
             printf "%s\n" ""
         fi
     done
 
-    oc get nodes
+    /usr/local/bin/oc get nodes
     printf "%s\n" ""
     printf "%s\n" "    ${COLOR_RED}Timeout waiting for all cluster operators to come up${COLOR_RESET}"
     printf "%s\n" ""
 else
     printf "%s\n" "    ${COLOR_GREEN}All cluster operators are up${COLOR_RESET}"
-    oc get nodes -o wide --no-headers=true| awk 'BEGIN{printf("    %-3s%-40s%-16s%-8s%-7s\n","#","FQDN","External IP","ROLE","STATUS")}{printf("    %-3s%-40s%-16s%-8s%-7s\n",NR,$1,$6,$3,$2)}'
+    /usr/local/bin/oc get nodes -o wide --no-headers=true| awk 'BEGIN{printf("    %-3s%-40s%-16s%-8s%-7s\n","#","FQDN","External IP","ROLE","STATUS")}{printf("    %-3s%-40s%-16s%-8s%-7s\n",NR,$1,$6,$3,$2)}'
     printf "%s\n" ""
     printf "%s\n" ""
     printf "%s\n" "    ${COLOR_GREEN}Console: https://console-openshift-console.apps.{{ cluster_name }}.{{ ocp4_cluster_domain }}"${COLOR_RESET}
