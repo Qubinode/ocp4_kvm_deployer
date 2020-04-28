@@ -1,7 +1,12 @@
 ---
 # tasks file for ocp4-kvm-deployer
+
+- name: check if cluster is deployed and report state of cluster
+  import_tasks: check_cluster.yml
+
 - name: import tasks pre_tasks.yml
   import_tasks: pre_tasks.yml
+  when: not is_cluster_up|bool
 
 - name: import tasks tear_down.yml
   import_tasks: tear_down.yml

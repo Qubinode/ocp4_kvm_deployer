@@ -7,6 +7,7 @@
     owner: "{{ local_user_account }}"
     mode: u=rwx,g=rx,o=rx
   become: yes
+  tags: cluster_status
 
 - name: check the bootstrap status
   command: |
@@ -14,12 +15,12 @@
   register: bootstrap_complete
   changed_when: false
   ignore_errors: yes
-  tags: [ deploy_nodes, bootstrap, postinstall ]
+  tags: [ deploy_nodes, bootstrap, postinstall, cluster_status ]
 
 - name: set bootstrap status
   set_fact:
     bootstrap_status: "{{ true if bootstrap_complete.stderr.find('It is now safe to remove the bootstrap resources') != -1 else false }}"
-  tags: [ deploy_nodes, bootstrap, postinstall ]
+  tags: [ deploy_nodes, bootstrap, postinstall, cluster_status ]
 
 - name: check the cluster install status
   command: |
@@ -28,12 +29,12 @@
   ignore_errors: yes
   changed_when: false
   when: bootstrap_status|bool
-  tags: [ deploy_nodes, bootstrap, postinstall ]
+  tags: [ deploy_nodes, bootstrap, postinstall, cluster_status ]
 
 - name: set openshift-install status
   set_fact:
     cluster_install_status: "{{ true if install_complete.stderr.find('Login to the console with user:') != -1 else false }}"
-  tags: [ deploy_nodes, bootstrap, postinstall ]
+  tags: [ deploy_nodes, bootstrap, postinstall, cluster_status ]
   when: bootstrap_status|bool
 
 - name: check cluster operators status
@@ -42,30 +43,33 @@
   register: cluster_operators_status
   changed_when: false
   ignore_errors: yes
-  tags: [ deploy_nodes, bootstrap, postinstall ]
+  tags: [ deploy_nodes, bootstrap, postinstall, cluster_status ]
   when: cluster_install_status|bool
 
 - name: set cluster operators status
   set_fact:
     is_cluster_up: "{{ true if cluster_operators_status.stdout.find('All cluster operators are up') != -1 else false }}"
     is_cluster_down: "{{ true if cluster_operators_status.stdout.find('Timeout waiting for all cluster operators to come up') != -1 else false }}"
-  tags: [ deploy_nodes, bootstrap, postinstall ]
+  tags: [ deploy_nodes, bootstrap, postinstall, cluster_status ]
   when: cluster_install_status|bool
 
 - name: fail if bootstrap process was attempted 
   fail:
     msg: "It appears an installation of the cluster has been attempted. Run /usr/local/bin/qubinode-ocp4-status for more details."
   when: bootstrap_status|bool and not is_cluster_up|bool
+  tags: cluster_status
 
 - name: cluster down message
   fail:
     msg: "OCP4 Cluster is deployed but it appears not all operators are up! Run /usr/local/bin/qubinode-ocp4-status for more details."
   when: is_cluster_down|bool and not is_cluster_up|bool
+  tags: cluster_status
 
 - name: cluster is already up
   debug:
     msg: "OCP4 Cluster is up!"
   when: is_cluster_up|bool and not is_cluster_down|bool
+  tags: cluster_status
 
 #- name: run the cluster status command
 #  command: /usr/local/bin/qubinode-ocp4-status
