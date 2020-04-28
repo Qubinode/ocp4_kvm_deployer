@@ -52,13 +52,18 @@
   tags: [ deploy_nodes, bootstrap, postinstall ]
   when: cluster_install_status|bool
 
+- name: fail if bootstrap process was attempted 
+  fail:
+    msg: "It appears an installation of the cluster has been attempted. Run /usr/local/bin/qubinode-ocp4-status for more details."
+  when: bootstrap_status|bool and not is_cluster_up|bool
+
 - name: cluster down message
   fail:
     msg: "OCP4 Cluster is deployed but it appears not all operators are up! Run /usr/local/bin/qubinode-ocp4-status for more details."
-  when: is_cluster_down|bool
+  when: is_cluster_down|bool and not is_cluster_up|bool
 
-- name: cluster up message
+- name: cluster is already up
   debug:
     msg: "OCP4 Cluster is up!"
-  when: is_cluster_up|bool
+  when: is_cluster_up|bool and not is_cluster_down|bool
 

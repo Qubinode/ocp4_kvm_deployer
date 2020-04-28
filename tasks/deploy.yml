@@ -1,4 +1,11 @@
 ---
+- name: import check_cluster.yml
+  import_tasks: check_cluster.yml
+
+- name: End play if the OCP cluster is up
+  meta: end_play
+  when: is_cluster_up|bool
+
 - name: check for user pull-secret
   stat:
     path: "{{ ocp4_pull_secret }}"
@@ -181,31 +188,9 @@
   retries: 120
   delay: 30
 
-- name: "Install is complete detailed information is below."
+- name: "The OCP install has completed"
   debug:
     msg: "Install is compelte {{ install_status.stdout }}"
 
-- name: include enable_shutdown.yml
-  include_tasks: enable_shutdown.yml
-  tags: [ postinstall, enable_shutdown ]
-
-- pause:
-    prompt: "OpenShift Installation has completed. We will now install nfs provisioner. This will be used for the image registry. [Press Enter]"
-  register: configure_registry
-  delegate_to: localhost
-
-- name: "Test Complete"
-  debug:
-    var: configure_registry
-
-- name: import tasks nfs_server.yml
-  import_tasks: nfs_server.yml
-  tags: [ deploy_nodes, rhcos, postinstall, nfs ]
-
-- name: import configure-local-storage.yml
-  import_tasks: configure-local-storage.yml
-  tags: [ localstorage ]
-
-- name: "Install Complete"
-  debug:
-    msg: "Install is compelte to view login information cat /tmp/install-compelte.log or see ansible logs above."
+- name: import check_cluster.yml
+  import_tasks: check_cluster.yml
