@@ -17,10 +17,14 @@
   ignore_errors: yes
   tags: [ deploy_nodes, bootstrap, postinstall, cluster_status ]
 
+- set_fact:
+    bootstrap_status: false
+
 - name: set bootstrap status
   set_fact:
     bootstrap_status: "{{ true if bootstrap_complete.stderr.find('It is now safe to remove the bootstrap resources') != -1 else false }}"
   tags: [ deploy_nodes, bootstrap, postinstall, cluster_status ]
+  when: bootstrap_complete.stderr is defined
 
 - name: check the cluster install status
   command: |
