@@ -15,6 +15,9 @@ ocp4_client: "openshift-client-linux-{{ ocp4_version }}.tar.gz"
 ocp4_installer: "openshift-install-linux-{{ ocp4_version }}.tar.gz"
 tools_missing: false
 
+# set to true to startup cluster
+startup_cluster: no
+
 # Networking info
 ocp4_nat_subnet: 192.168.50.0
 ocp4_nat_gateway: "{{ ocp4_nat_subnet.split('.')[:3] | join('.')}}.1"
@@ -27,7 +30,7 @@ old_libvirt_net: ocp42
 deploy_ocp4_configs: yes
 
 # ocp4 nodes attributes
-master_count: 3s
+master_count: 3
 compute_count: 3
 master_ip_octet: 10
 compute_ip_octet: 20

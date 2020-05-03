@@ -51,7 +51,7 @@
     lb_ingress_https_listen: "{{ tmp_ingress_https_listen | join(',') }}"
     lb_machine_config_server: "{{ tmp_machine_config_server | join(',') }}"
     lb_machine_config_server_listen: "{{ tmp_machine_config_server_listen | join(',') }}"
-  when: not is_cluster_up|bool or (container_exist is defined and not container_exist|bool and not tear_down|bool)
+  when: (container_exist is defined and not container_exist|bool) and not tear_down|bool
   tags: [ lb, deploy_nodes ]
 
 - name: deploy the podman container for hosting the required files for bootstrap
