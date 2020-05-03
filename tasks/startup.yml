@@ -85,3 +85,15 @@
     msg: "Was not able to confirm all {{ compute_count }} compute nodes are up"
   when: master_nodes_count.stdout|int != master_count|int
   tags: [ deploy_nodes, rhcos, bootstrap, startup]
+
+- name: ensure compute nodes are set to schedulable
+  vars:
+    vm_name: "compute-{{ '%00x' |format(item) }}"
+  shell: >
+    /usr/local/bin/oc adm uncordon "{{ vm_name }}"
+  register: schedule_state
+  ignore_errors: yes
+  loop: "{{ range(0, compute_count|int)|list }}"
+  delay: 10
+  when: vm_name in all_vms.list_vms
+  tags: [ deploy_nodes, rhcos, bootstrap, startup]

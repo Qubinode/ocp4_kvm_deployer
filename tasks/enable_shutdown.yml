@@ -1,8 +1,8 @@
 ---
-- name: Copying over  nfs-provisioner rbac
+- name: create /tmp/kubelet-bootstrap-cred-manager-ds.yaml
   template:
     src: files/kubelet-bootstrap-cred-manager-ds.yaml
-    dest:  "/home/admin/qubinode-installer/rhcos-install/kubelet-bootstrap-cred-manager-ds.yaml"
+    dest:  "/tmp/kubelet-bootstrap-cred-manager-ds.yaml"
     owner: root
     group: root
     mode: 0666
@@ -25,11 +25,11 @@
     KUBECONFIG: "{{ openshift_install_dir }}/auth/kubeconfig"
   tags: [ postinstall, enable_shutdown ]
 
-- name: enable cluster to stop and sesume cluster VMs
+- name: enable cluster to stop and resume cluster VMs
   block:
    - name: apply daemonset openshift-machine-config-operator
      shell: |
-       /usr/local/bin/oc apply -f /home/admin/qubinode-installer/rhcos-install/kubelet-bootstrap-cred-manager-ds.yaml
+       /usr/local/bin/oc apply -f /tmp/kubelet-bootstrap-cred-manager-ds.yaml
      register: applied_daemonset
      changed_when: False
      ignore_errors: yes

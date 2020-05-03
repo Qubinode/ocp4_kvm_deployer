@@ -12,7 +12,11 @@
 
 - name: import task deploy.yml
   import_tasks: deploy.yml
-  when: not tear_down|bool
+  when: not tear_down|bool and not startup_cluster|bool
+
+- name: import task post_install.yml
+  import_tasks: post_install.yml
+  when: not tear_down|bool and not startup_cluster|bool
 
 - name: import startup task
   import_tasks: startup.yml
