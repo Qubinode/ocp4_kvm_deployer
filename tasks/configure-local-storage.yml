@@ -5,12 +5,13 @@
     owner: "{{ admin_user }}"
     group: "{{ admin_user }}"
     mode: 0666
+  when: not tear_down
 
 - name: Create  local storage project and operator
   command: "/usr/local/bin/oc create -f {{ openshift_install_dir }}/localstorage-operator.yaml"
-  when: not tear_down
   environment:
     KUBECONFIG: "{{ openshift_install_dir }}/auth/kubeconfig"
+  when: not tear_down
 
 - name: list all libvirt vms
   virt:
@@ -41,9 +42,9 @@
 
 - name: Provision the local volumes for filesystem
   command: "/usr/local/bin/oc create -f {{ openshift_install_dir }}/localstorage-filesystem.yaml"
-  when: not tear_down and localstorage_filesystem
   environment:
     KUBECONFIG: "{{ openshift_install_dir }}/auth/kubeconfig"
+  when: not tear_down and localstorage_filesystem
 
 - name: Copying over localstorage block template
   template:
@@ -56,9 +57,9 @@
 
 - name: Provision the local volumes for block storage
   command: "/usr/local/bin/oc create -f {{ openshift_install_dir }}/localstorage-block.yaml"
-  when: not tear_down and localstorage_block
   environment:
     KUBECONFIG: "{{ openshift_install_dir }}/auth/kubeconfig"
+  when: not tear_down and localstorage_block
 
 - name: Remove the local volumes for filesystem
   command: "/usr/local/bin/oc delete -f {{ openshift_install_dir }}/localstorage-filesystem.yaml"
@@ -76,4 +77,5 @@
   command: "/usr/local/bin/oc delete -f {{ openshift_install_dir }}/localstorage-operator.yaml"
   environment:
     KUBECONFIG: "{{ openshift_install_dir }}/auth/kubeconfig"
+  ignore_errors: yes
   when: tear_down  | bool

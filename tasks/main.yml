@@ -5,6 +5,7 @@
 
 - name: check if cluster is deployed and report state of cluster
   import_tasks: check_cluster.yml
+  when: not tear_down|bool
 
 - name: import tasks tear_down.yml
   import_tasks: tear_down.yml
@@ -12,11 +13,11 @@
 
 - name: import task deploy.yml
   import_tasks: deploy.yml
-  when: not tear_down|bool and not startup_cluster|bool
+  when: not tear_down|bool and cluster_status == 'not deployed'
 
 - name: import task post_install.yml
   import_tasks: post_install.yml
-  when: not tear_down|bool and not startup_cluster|bool
+  when: not tear_down|bool and cluster_status == 'not deployed'
 
 - name: import startup task
   import_tasks: startup.yml

@@ -4,9 +4,12 @@
   set_fact:
     tmp_api: "[ '{{ bootstrap_ip }}:6443' ]"
     tmp_api_listen: "[ '{{ listen_address }}:6443' ]"
+    tmp_ingress_http: "[]"
+    tmp_ingress_http_listen: "['{{ listen_address }}:80', '{{ ocp4_nat_gateway }}:80' ]"
     tmp_ingress_https: "[]"
     tmp_ingress_https_listen: "['{{ listen_address }}:443', '{{ ocp4_nat_gateway }}:443' ]"
-    mp_machine_config_server_listen: "['{{ listen_address }}:22623', '{{ ocp4_nat_gateway }}:22623']"
+    tmp_machine_config_server: "[ '{{ bootstrap_ip }}:22623' ]"
+    tmp_machine_config_server_listen: "['{{ listen_address }}:22623', '{{ ocp4_nat_gateway }}:22623']"
   tags: [ setup, deploy_nodes, rhcos, bootstrap, idm]
 
 - name: Setting Ingress information and machine configuration for internal API Server

@@ -6,13 +6,13 @@ tear_down: false
 ocp4_pull_secret: /home/{{ admin_user }}/qubinode-installer/pull-secret.txt
 
 # OCP release info
-ocp4_version: 4.3.3
+ocp4_release: 4.3.3
 ocp4_release_dir: latest
 ocp4_release_url: "https://mirror.openshift.com/pub/openshift-v4/clients/ocp/{{ ocp4_release_dir }}"
 
 openshift_install_folder: ocp4
-ocp4_client: "openshift-client-linux-{{ ocp4_version }}.tar.gz"
-ocp4_installer: "openshift-install-linux-{{ ocp4_version }}.tar.gz"
+ocp4_client: "openshift-client-linux-{{ ocp4_release }}.tar.gz"
+ocp4_installer: "openshift-install-linux-{{ ocp4_release }}.tar.gz"
 tools_missing: false
 
 # set to true to startup cluster

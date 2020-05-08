@@ -30,9 +30,9 @@ Example Playbook
     become: yes
     vars:
       local_user_account: admin
-      ocp4_version: 4.3.0
-      ocp4_dependencies_version: "{{ ocp4_version[:3] }}"
-      ocp4_image_version: "{{ ocp4_version[:3] + '.0' }}"
+      ocp4_release: 4.3.0
+      ocp4_dependencies_version: "{{ ocp4_release[:3] }}"
+      ocp4_image_version: "{{ ocp4_release[:3] + '.0' }}"
       installation_working_dir: /home/admin/qubinode-installer
       pull_secret: "{{ installation_working_dir }}/pull-secret.txt"
       vm_public_key: "/home/{{ local_user_account }}/.ssh/id_rsa.pub"
