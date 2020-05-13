@@ -76,23 +76,21 @@
       environment:
         KUBECONFIG: "{{ openshift_install_dir }}/auth/kubeconfig"
       when: localstorage_block
-  when: not tear_down and not operator_deployed
+  when: not operator_deployed
 
-- name: Remove the local volumes for filesystem
-  command: "/usr/local/bin/oc delete -f {{ openshift_install_dir }}/localstorage-filesystem.yaml"
-  environment:
-    KUBECONFIG: "{{ openshift_install_dir }}/auth/kubeconfig"
-  when: tear_down | bool and localstorage_filesystem
+#- name: Remove the local volumes for filesystem
+#  command: "/usr/local/bin/oc delete -f {{ openshift_install_dir }}/localstorage-filesystem.yaml"
+#  environment:
+#    KUBECONFIG: "{{ openshift_install_dir }}/auth/kubeconfig"
 
-- name: Remove the local volumes for block
-  command: "/usr/local/bin/oc delete -f {{ openshift_install_dir }}/localstorage-block.yaml"
-  environment:
-    KUBECONFIG: "{{ openshift_install_dir }}/auth/kubeconfig"
-  when: tear_down | bool and localstorage_block
-
-- name: Remove  local storage project and operator
-  command: "/usr/local/bin/oc delete -f {{ openshift_install_dir }}/localstorage-operator.yaml"
-  environment:
-    KUBECONFIG: "{{ openshift_install_dir }}/auth/kubeconfig"
-  ignore_errors: yes
-  when: tear_down  | bool
+#- name: Remove the local volumes for block
+#  command: "/usr/local/bin/oc delete -f {{ openshift_install_dir }}/localstorage-block.yaml"
+#  environment:
+#    KUBECONFIG: "{{ openshift_install_dir }}/auth/kubeconfig"
+#
+#- name: Remove  local storage project and operator
+#  command: "/usr/local/bin/oc delete -f {{ openshift_install_dir }}/localstorage-operator.yaml"
+#  environment:
+#    KUBECONFIG: "{{ openshift_install_dir }}/auth/kubeconfig"
+#  ignore_errors: yes
+#  when: tear_down  | bool
