@@ -6,13 +6,12 @@
   stat:
     path: "{{ ocp4_pull_secret }}"
   register: pull_secret_file
-  when: not is_cluster_up|bool
   tags: [ setup ]
 
 - name: fail if pull secret does
   fail:
     msg: "Please download your pull-secret from {{ pull_secret_request }} to {{ ocp4_pull_secret }}"
-  when: not is_cluster_up|bool and not pull_secret_file.stat.exists
+  when: not pull_secret_file.stat.exists
   tags: [ setup ]
 
 - name: enable required firewall ports
@@ -22,20 +21,19 @@
     state: enabled
     immediate: yes
   loop: "{{ ocp4_firewall_ports }}"
-  when: not is_cluster_up|bool
   tags: [ setup ]
 
 - name: import tasks install_podman.yml
   import_tasks: install_podman.yml
-  when: not is_cluster_up|bool
 
 - name: import tasks ocp4_tools.yml
   import_tasks: ocp4_tools.yml
-  when: not is_cluster_up|bool
 
 - name: import tasks create_ignitions.yml
   import_tasks: create_ignitions.yml
-  when: not is_cluster_up|bool
+
+- name: import tasks deploy_libvirt_network.yml
+  import_tasks: deploy_libvirt_network.yml
 
 - name: deploy the podman container load balancer for OCP4
   import_role:
@@ -57,12 +55,10 @@
 - name: deploy the podman container for hosting the required files for bootstrap
   import_role:
     name: ocp4-bootstrap-webserver
-  when: not is_cluster_up|bool
   tags: [ webserver, deploy_nodes ]
 
 - name: import task download_rhcos_files.yml
   import_tasks: download_rhcos_files.yml
-  when: not tear_down|bool and not is_cluster_up|bool
 
 - name: Create the directory to store the virt-install scripts
   file:
@@ -70,7 +66,6 @@
     state: directory
     owner: "{{ local_user_account }}"
   register: create_virtinstall_dir
-  when: not is_cluster_up|bool
   tags: [ deploy_nodes ]
 
 - name: deploy a generated treeinfo that defines the location of the kernel and ramdisks
@@ -79,16 +74,10 @@
     dest: "{{ virtinstall_dir }}/.treeinfo"
     mode: "u=rw,g=r,o=r"
     owner: "{{ local_user_account }}"
-  when: not is_cluster_up|bool
   tags: [ deploy_nodes, rhcos ]
-
-- name: import tasks deploy_libvirt_network.yml
-  import_tasks: deploy_libvirt_network.yml
-  when: not is_cluster_up|bool
 
 - name: import tasks configure_dns_entries.yml
   import_tasks: configure_dns_entries.yml
-  when: not is_cluster_up|bool
   tags: [ deploy_nodes, idm ]
 
 - name: include build_cluster_nodes_profile.yml
@@ -97,19 +86,17 @@
   loop_control:
     loop_var: outer_item
     label: outer_item.name
-  when: not is_cluster_up|bool
   tags: [ deploy_nodes, rhcos, node_profile ]
 
 - name: import tasks build_vm_list.yml
   import_tasks: build_vm_list.yml
-  when: not is_cluster_up|bool
   tags: [ deploy_nodes, rhcos, bootstrap ]
 
 - name: deploy ocp4 nodes
   vars:
     vm_name: "{{ item }}"
   command: "{{ virtinstall_dir }}/{{ vm_name }}.sh"
-  when: vm_name not in all_vms.list_vms and not is_cluster_up|bool
+  when: vm_name not in all_vms.list_vms
   loop: "{{ ocp4_nodes }}"
   delay: 10
   register: deploy_ocp4_nodes
@@ -121,7 +108,7 @@
   loop_control:
     loop_var: vm_name
     label: vm_name
-  when: deploy_ocp4_nodes.changed and not is_cluster_up|bool
+  when: deploy_ocp4_nodes.changed
   tags: [ deploy_nodes, rhcos, rhcos_wait ]
 
 - name: continue ocp4 bootstrap
@@ -132,32 +119,23 @@
     state: running
   loop: "{{ ocp4_nodes }}"
   delay: 10
-  when: not is_cluster_up|bool
   tags: [ deploy_nodes, bootstrap ]
 
 - name: Waiting for bootstrap Complete
   shell: |
-    /usr/local/bin/openshift-install  --dir "{{ openshift_install_dir }}"  wait-for bootstrap-complete --log-level debug 2>&1 | tee /tmp/bootstrap-complete.log &
+    /usr/local/bin/openshift-install  --dir "{{ openshift_install_dir }}"  wait-for bootstrap-complete --log-level debug 2>&1 | tee "{{ project_dir }}/ocp4/bootstrap-complete.log" &
   register: install_status
   until: "'Bootstrap status: complete' in install_status.stdout"
   retries: 120
   delay: 30
-  when: not is_cluster_up|bool
   tags: [ deploy_nodes, bootstrap, postinstall ]
 
 - name: "Install Status"
   debug:
     msg: "{{ install_status }}"
   register: continue_install
-  when: not is_cluster_up|bool
   tags: [ deploy_nodes, bootstrap, postinstall ]
 
-- name: Remove /tmp/bootstrap-complete.log
-  file:
-    path: /tmp/bootstrap-complete.log
-    state: absent
-  when: not is_cluster_up|bool
-  tags: [ deploy_nodes, bootstrap, postinstall ]
 
 - name: list all libvirt vms
   virt:
@@ -165,45 +143,71 @@
   register: all_vms
   tags: [ deploy_nodes, rhcos, postinstall, bootstrap_shut ]
 
-- name: shutdown bootstrap nodes
-  vars:
-    vm_name: bootstrap
-  virt:
-    name: "{{ vm_name }}"
-    state: shutdown
-  register: shutdown_vms
-  when: vm_name in all_vms.list_vms and (continue_install.failed is defined and not continue_install.failed |bool) or (vm_name in all_vms.list_vms and is_cluster_up|bool)
-  tags: [ deploy_nodes, rhcos, postinstall, bootstrap_shut ]
+#- name: shutdown bootstrap nodes
+#  vars:
+#    vm_name: bootstrap
+#  virt:
+#    name: "{{ vm_name }}"
+#    state: shutdown
+#  register: shutdown_vms
+#  when: vm_name in all_vms.list_vms and (continue_install.failed is defined and not continue_install.failed |bool) or vm_name in all_vms.list_vms
+#  tags: [ deploy_nodes, rhcos, postinstall, bootstrap_shut ]
+#
+#- name: include wait_for_vm_shutdown.yml
+#  vars:
+#    vm_name: bootstrap
+#  include_tasks: wait_for_vm_shutdown.yml
+#  when: vm_name in all_vms.list_vms and (continue_install.failed is defined and not continue_install.failed |bool) or vm_name in all_vms.list_vms and (shutdown_vms.changed is defined and shutdown_vms.changed)
+#  tags: [ deploy_nodes, rhcos, postinstall, bootstrap_shut]
+#
+#- name: destroy bootstrap node
+#  vars:
+#    vm_name: bootstrap
+#  virt:
+#    name: "{{ vm_name }}"
+#    command: undefine
+#  when: vm_name in all_vms.list_vms and (continue_install.failed is defined and not continue_install.failed |bool) or vm_name in all_vms.list_vms
+#  tags: [ deploy_nodes, rhcos, postinstall, bootstrap_shut ]
 
-- name: include wait_for_vm_shutdown.yml
-  vars:
-    vm_name: bootstrap
-  include_tasks: wait_for_vm_shutdown.yml
-  when: vm_name in all_vms.list_vms and (continue_install.failed is defined and not continue_install.failed |bool) or vm_name in all_vms.list_vms and (shutdown_vms.changed is defined and shutdown_vms.changed or is_cluster_up|bool)
-  tags: [ deploy_nodes, rhcos, postinstall, bootstrap_shut]
+#- name: Remove /tmp/bootstrap-complete.log
+#  file:
+#    path: "{{ project_dir }}/ocp4/bootstrap-complete.log"
+#    state: absent
+#  tags: [ deploy_nodes, bootstrap, postinstall ]
 
-- name: destroy bootstrap node
-  vars:
-    vm_name: bootstrap
-  virt:
-    name: "{{ vm_name }}"
-    command: undefine
-  when: vm_name in all_vms.list_vms and (continue_install.failed is defined and not continue_install.failed |bool) or (vm_name in all_vms.list_vms and is_cluster_up|bool)
-  tags: [ deploy_nodes, rhcos, postinstall, bootstrap_shut ]
+- name: ensure kube folder exist
+  file:
+    path: "/home/{{ local_user_account  }}/.kube/"
+    state: directory
+    mode: '0755'
+  become: true
+  become_user: "{{ local_user_account }}"
+  tags: [ postinstall, enable_shutdown ]
+  
+- name: setup kubeconfig
+  copy:
+    src: "{{ project_dir }}/ocp4/auth/kubeconfig"
+    dest: "/home/{{ local_user_account  }}/.kube/config"
+  tags: [ postinstall, enable_shutdown ]
 
 - name: Waiting for Installation to Complete
   shell: |
+    /usr/local/bin/oc get csr -ojson | jq -r '.items[] | select(.status == {} ) | .metadata.name' | xargs /usr/localbin/oc adm certificate approve
     /usr/local/bin/openshift-install --dir "{{ openshift_install_dir }}"  wait-for install-complete --log-level debug 2>&1 | tee /tmp/install-complete.log &
   register: install_status
   until: "'Install complete!' in install_status.stdout"
   retries: 120
-  delay: 30 
-  when: not is_cluster_up|bool
+  delay: 30
+  environment:
+    KUBECONFIG: "{{ openshift_install_dir }}/auth/kubeconfig"
+  tags: [ complete_install ]
 
-- name: "The OCP install has completed"
-  debug:
-    msg: "Install is compelte {{ install_status.stdout }}"
-  when: not is_cluster_up|bool
-
-- name: import check_cluster.yml
-  import_tasks: check_cluster.yml
+- name: report on cluster status
+  block:
+    - name: "The OCP install has completed"
+      debug:
+        msg: "Install is compelte {{ install_status.stdout }}"
+    - name: import check_cluster.yml
+      import_tasks: check_cluster.yml
+  when: "'Install complete!' in install_status.stdout"
+  tags: [ complete_install ]

@@ -84,22 +84,6 @@
   register: libvirt_nets
   tags: [ deploy_nodes, libvirt_net ]
 
-- name: stop the ocp4 nat libvirt network
-  virt_net:
-    state: inactive
-    name: "{{ item }}"
-  loop: "{{ libvirt_nets.list_nets }}"
-  when: item == libvirt_network_name
-  tags: [ deploy_nodes, libvirt_net ]
-
-- name: remove the ocp4 nat libvirt network
-  virt_net:
-    command: undefine
-    name: "{{ item }}"
-  loop: "{{ libvirt_nets.list_nets }}"
-  when: item == libvirt_network_name
-  tags: [ deploy_nodes, libvirt_net ]
-
 - name: ensure {{ virtinstall_dir }} is removed
   file:
     path: "{{ virtinstall_dir }}"
@@ -116,3 +100,19 @@
 - name: import configure-local-storage.yml
   import_tasks: configure-local-storage.yml
   tags: [ localstorage ]
+
+- name: stop the ocp4 nat libvirt network
+  virt_net:
+    state: inactive
+    name: "{{ item }}"
+  loop: "{{ libvirt_nets.list_nets }}"
+  when: item == libvirt_network_name
+  tags: [ deploy_nodes, libvirt_net ]
+
+- name: remove the ocp4 nat libvirt network
+  virt_net:
+    command: undefine
+    name: "{{ item }}"
+  loop: "{{ libvirt_nets.list_nets }}"
+  when: item == libvirt_network_name
+  tags: [ deploy_nodes, libvirt_net ]

@@ -1,8 +1,8 @@
 ---
- - name: deploy ocp4 configs default state
-   set_fact:
-     deploy_ocp4_configs: true
-   tags: [ ignitions, deploy_nodes ]
+# - name: deploy ocp4 configs default state
+#   set_fact:
+#     deploy_ocp4_configs: true
+#   tags: [ ignitions, deploy_nodes ]
 
  - name: create the directory {{ openshift_install_dir }} to store the ignition files
    file:
@@ -16,6 +16,13 @@
      dest: "{{ openshift_install_dir }}/install-config.yaml"
      owner: "{{ local_user_account }}"
      group: "{{ local_user_account }}"
+   when: deploy_ocp4_configs|bool
+   tags: [ ignitions, deploy_nodes ]
+
+ - name: stash the generated {{ openshift_install_dir }}/install-config.yaml
+   copy:
+     src: "{{ openshift_install_dir }}/install-config.yaml"
+     dest: "{{ openshift_install_dir }}/install-config.yaml.bkup"
    when: deploy_ocp4_configs|bool
    tags: [ ignitions, deploy_nodes ]
 

@@ -30,7 +30,7 @@ do
     for operator in $(echo $OPERATORS)
     do
         spin
-        STATUS=$(/usr/local/bin/oc get clusteroperator $operator -o=jsonpath='{range .status.conditions[*]}{.type}{" "}{.status}{" "}{.message}{"\n"}{end}'|awk '/Available/ {print $2}')
+        STATUS=$(/usr/local/bin/oc get clusteroperator $operator -o=jsonpath='{range .status.conditions[*]}{.type}{" "}{.status}{" "}{.message}{"\n"}{end}'|awk '/Available/ {print $2}'|grep -o True)
         if [ $STATUS == "True" ]
         then
             COUNT=$(($COUNT + 1))

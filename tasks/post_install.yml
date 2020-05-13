@@ -1,7 +1,9 @@
 ---
 - name: include enable_shutdown.yml
-  include_tasks: enable_shutdown.yml
+  import_tasks: enable_shutdown.yml
   tags: [ postinstall, enable_shutdown ]
+
+- meta: end_play
 
 - name: import tasks nfs_server.yml
   import_tasks: nfs_server.yml

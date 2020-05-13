@@ -1,23 +1,38 @@
 ---
 # tasks file for ocp4-kvm-deployer
-- name: import tasks pre_tasks.yml
-  import_tasks: pre_tasks.yml
 
-- name: check if cluster is deployed and report state of cluster
-  import_tasks: check_cluster.yml
+- name: cluster deployment
+  block:
+    - name: import tasks pre_tasks.yml
+      import_tasks: pre_tasks.yml
+    
+    - name: check if cluster is deployed and report state of cluster
+      import_tasks: check_cluster.yml
+      when: check_existing_cluster|bool
+    
+    - name: import task deploy.yml
+      import_tasks: deploy.yml
+      when: deploy_cluster|bool
+
+    - name: import tasks nfs_server.yml
+      import_tasks: nfs_server.yml
+      when: cluster_deployed_msg == 'deployed'
+      tags: [ deploy_nodes, rhcos, postinstall, nfs ]
+
+    - name: enable shutdown before 24hrs lasped
+      import_tasks: enable_shutdown.yml
+      when: cluster_shutdown_before_cert_rotate|bool
+    
+    - name: import configure-local-storage.yml
+      import_tasks: configure-local-storage.yml
+      tags: [ localstorage, deploy_nodes, rhcos, postinstall ]
+      when: configure_local_storage|bool and cluster_deployed_msg == 'deployed'
+
   when: not tear_down|bool
 
 - name: import tasks tear_down.yml
   import_tasks: tear_down.yml
   when: tear_down|bool
-
-- name: import task deploy.yml
-  import_tasks: deploy.yml
-  when: not tear_down|bool and cluster_status == 'not deployed'
-
-- name: import task post_install.yml
-  import_tasks: post_install.yml
-  when: not tear_down|bool and cluster_status == 'not deployed'
 
 - name: import startup task
   import_tasks: startup.yml

@@ -7,7 +7,7 @@
     owner: "{{ local_user_account }}"
     mode: u=rwx,g=rx,o=rx
   become: yes
-  tags: cluster_status
+  tags: [ complete_install, check_cluster_status ]
 
 - name: check the bootstrap status
   command: |
@@ -15,12 +15,12 @@
   register: bootstrap_complete
   changed_when: false
   ignore_errors: yes
-  tags: [ deploy_nodes, bootstrap, postinstall, cluster_status ]
+  tags: [ deploy_nodes, bootstrap, postinstall, check_cluster_status, complete_install ]
 
 - name: set bootstrap status
   set_fact:
     bootstrap_complete: "{{ true if bootstrap_complete.stderr is defined and bootstrap_complete.stderr.find('It is now safe to remove the bootstrap resources') != -1 else false }}"
-  tags: [ deploy_nodes, bootstrap, postinstall, cluster_status ]
+  tags: [ deploy_nodes, bootstrap, postinstall, check_cluster_status, complete_install ]
 
 - name: check the cluster install status
   command: |
@@ -29,12 +29,12 @@
   ignore_errors: yes
   changed_when: false
   when: bootstrap_complete|bool
-  tags: [ deploy_nodes, bootstrap, postinstall, cluster_status ]
+  tags: [ deploy_nodes, bootstrap, postinstall, check_cluster_status, complete_install ]
 
 - name: set openshift-install status
   set_fact:
     cluster_install_status: "{{ true if install_complete.stderr is defined and install_complete.stderr.find('Login to the console with user:') != -1 else false }}"
-  tags: [ deploy_nodes, bootstrap, postinstall, cluster_status ]
+  tags: [ deploy_nodes, bootstrap, postinstall, check_cluster_status, complete_install ]
 
 - name: check cluster operators status
   command: |
@@ -42,15 +42,23 @@
   register: cluster_operators_status
   changed_when: false
   ignore_errors: yes
-  tags: [ deploy_nodes, bootstrap, postinstall, cluster_status ]
+  environment:
+    KUBECONFIG: "{{ openshift_install_dir }}/auth/kubeconfig"
   when: bootstrap_complete is defined and cluster_install_status|bool
+  tags: [ deploy_nodes, bootstrap, postinstall, check_cluster_status, complete_install ]
 
 - name: set cluster operators status
   set_fact:
     is_cluster_deployed: "{{ false if cluster_operators_status.stdout is not defined else true }}"
     is_cluster_up: "{{ true if cluster_operators_status.stdout is defined and cluster_operators_status.stdout.find('All cluster operators are up') != -1 else false }}"
     is_cluster_timeout: "{{ true if cluster_operators_status.stdout is defined and cluster_operators_status.stdout.find('Timeout waiting for all cluster operators to come up') != -1 else false }}"
-  tags: [ deploy_nodes, bootstrap, postinstall, cluster_status ]
+  tags: [ deploy_nodes, bootstrap, postinstall, check_cluster_status, complete_install ]
+
+- name: set cluster deployed message
+  set_fact:
+    cluster_deployed_msg: "deployed"
+  when: is_cluster_deployed|bool
+  tags: [ deploy_nodes, bootstrap, postinstall, check_cluster_status, complete_install ]
 
 - name: show variable status
   debug:
@@ -60,33 +68,22 @@
       - "is_cluster_timeout {{ is_cluster_timeout }}"
       - "cluster_operators_status {{ cluster_operators_status }}"
       - "is_cluster_deployed {{ is_cluster_deployed }}"
+      - "cluster_deployed_msg {{ cluster_deployed_msg }}"
+  tags: [ deploy_nodes, bootstrap, postinstall, check_cluster_status, complete_install ]
 
 - name: fail if bootstrap process was attempted 
   fail:
     msg: "It appears an installation of the cluster has been attempted. Run /usr/local/bin/qubinode-ocp4-status for more details."
   when: bootstrap_complete|bool and not is_cluster_up|bool
-  tags: cluster_status
+  tags: [ complete_install, check_cluster_status ]
 
 - name: fail when the cluster status timed out
   fail:
     msg: "OCP4 Cluster is deployed but it appears not all operators are up! Run /usr/local/bin/qubinode-ocp4-status for more details."
   when: is_cluster_timeout|bool and not is_cluster_up|bool
-  tags: cluster_status
-
-- name: set cluster deployed status
-  set_fact:
-    cluster_status: "not deployed"
-  when: not is_cluster_deployed|bool
-  tags: cluster_status
-
-- name: set cluster status
-  set_fact:
-    cluster_status: up
-  when: is_cluster_up|bool
-  tags: cluster_status
+  tags: [ complete_install, check_cluster_status ]
 
 - name: show the status of the ocp4 cluster
   debug:
-    msg: "The OCP4 cluster is {{ cluster_status }}."
-  tags: cluster_status
-
+    msg: "The OCP4 cluster is {{ cluster_deployed_msg }}."
+  tags: [ deploy_nodes, bootstrap, postinstall, check_cluster_status, complete_install ]

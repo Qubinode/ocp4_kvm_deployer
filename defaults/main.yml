@@ -2,12 +2,11 @@
 # defaults file for ocp4-rhcos-vms
 admin_user: admin
 project_dir:  /home/{{ admin_user }}/qubinode-installer/
-tear_down: false
 ocp4_pull_secret: /home/{{ admin_user }}/qubinode-installer/pull-secret.txt
 
 # OCP release info
 ocp4_release: 4.3.3
-ocp4_release_dir: latest
+ocp4_release_dir: "{{ ocp4_release }}"
 ocp4_release_url: "https://mirror.openshift.com/pub/openshift-v4/clients/ocp/{{ ocp4_release_dir }}"
 
 openshift_install_folder: ocp4
@@ -15,8 +14,26 @@ ocp4_client: "openshift-client-linux-{{ ocp4_release }}.tar.gz"
 ocp4_installer: "openshift-install-linux-{{ ocp4_release }}.tar.gz"
 tools_missing: false
 
+# set to true to tear down the cluster
+tear_down: no
+
+# set to no to not deploy cluster
+deploy_cluster: yes
+
 # set to true to startup cluster
 startup_cluster: no
+
+# set to false to stop checking of existing cluster
+check_existing_cluster: yes
+
+# cluster deployed message
+cluster_deployed_msg: "not deployed"
+
+# Allow cluster to be shutdown without waiting 24hrs
+cluster_shutdown_before_cert_rotate: no
+
+# set to configure local storaage
+configure_local_storage: no
 
 # Networking info
 ocp4_nat_subnet: 192.168.50.0
@@ -44,6 +61,7 @@ internal_domain_name: lab.example
 ssh_ocp4_public_key: ""
 
 virtinstall_dir: /tmp/rhcos
+
 local_user_account: admin
 #subnet: 192.168.50.0
 #gateway: 192.168.50.1
