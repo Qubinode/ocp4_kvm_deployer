@@ -27,7 +27,6 @@
       import_tasks: configure-local-storage.yml
       tags: [ localstorage, deploy_nodes, rhcos, postinstall ]
       when: configure_local_storage|bool and cluster_deployed_msg == 'deployed'
-
   when: not tear_down|bool
 
 - name: import tasks tear_down.yml

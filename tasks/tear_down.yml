@@ -19,7 +19,7 @@
 - name: remove OpenShift 4 bootstrap webserver
   import_role:
     name: ocp4-bootstrap-webserver
-    tasks_from: tear_down.yml
+    tasks_from: main.yml
   tags: [ webserver ]
 
 - name: remove the ocp4 installation directory {{ openshift_install_dir }}
@@ -96,10 +96,6 @@
     path: "{{ openshift_install_dir }}"
     state: absent
   tags: [ deploy_nodes, rhcos ]
-
-- name: import configure-local-storage.yml
-  import_tasks: configure-local-storage.yml
-  tags: [ localstorage ]
 
 - name: stop the ocp4 nat libvirt network
   virt_net:
