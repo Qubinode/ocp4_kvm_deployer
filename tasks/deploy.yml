@@ -192,7 +192,7 @@
 
 - name: Waiting for Installation to Complete
   shell: |
-    /usr/local/bin/oc get csr -ojson | jq -r '.items[] | select(.status == {} ) | .metadata.name' | xargs /usr/localbin/oc adm certificate approve
+    /usr/local/bin/oc get csr -ojson | jq -r '.items[] | select(.status == {} ) | .metadata.name' | xargs /usr/local/bin/oc adm certificate approve
     /usr/bin/timeout 10 /usr/local/bin/openshift-install --dir "{{ openshift_install_dir }}"  wait-for install-complete --log-level debug 2>&1 | tee -a /tmp/install-complete.log
   register: install_status
   until: "'Install complete!' in install_status.stdout"
