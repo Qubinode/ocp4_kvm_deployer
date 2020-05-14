@@ -1,0 +1,32 @@
+---
+- name: list all libvirt vms
+  virt:
+    command: list_vms
+  register: all_vms
+  tags: [ deploy_nodes, rhcos, postinstall, bootstrap_shut ]
+
+- name: shutdown bootstrap nodes
+  vars:
+    vm_name: bootstrap
+  virt:
+    name: "{{ vm_name }}"
+    state: shutdown
+  register: shutdown_vms
+  when: vm_name in all_vms.list_vms
+  tags: [ deploy_nodes, rhcos, postinstall, bootstrap_shut ]
+
+- name: include wait_for_vm_shutdown.yml
+  vars:
+    vm_name: bootstrap
+  include_tasks: wait_for_vm_shutdown.yml
+  when: vm_name in all_vms.list_vms and (shutdown_vms.changed is defined and shutdown_vms.changed)
+  tags: [ deploy_nodes, rhcos, postinstall, bootstrap_shut]
+
+- name: destroy bootstrap node
+  vars:
+    vm_name: bootstrap
+  virt:
+    name: "{{ vm_name }}"
+    command: undefine
+  when: vm_name in all_vms.list_vms
+  tags: [ deploy_nodes, rhcos, postinstall, bootstrap_shut ]
