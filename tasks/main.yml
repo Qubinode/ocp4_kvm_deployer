@@ -16,7 +16,7 @@
 
     - name: import tasks nfs_server.yml
       import_tasks: nfs_server.yml
-      when: cluster_deployed_msg == 'deployed'
+      when: cluster_deployed_msg == 'deployed' and configure_nfs_storage|bool
       tags: [ deploy_nodes, rhcos, postinstall, nfs ]
 
     - name: import tasks destroy_bootstrap_node.yml

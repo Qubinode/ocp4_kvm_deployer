@@ -1,5 +1,11 @@
 ---
 # tasks file for ocp4-kvm-deployer
+- name: remove OpenShift 4 bootstrap webserver
+  import_role:
+    name: ocp4-bootstrap-webserver
+    tasks_from: main.yml
+  tags: [ webserver ]
+
 - name: Remove load balancer container
   import_role:
     name: openshift-4-loadbalancer
@@ -15,12 +21,6 @@
     lb_machine_config_server: "{{ tmp_machine_config_server | join(',') }}"
     lb_machine_config_server_listen: "{{ tmp_machine_config_server_listen | join(',') }}"
   tags: [ lb ]
-
-- name: remove OpenShift 4 bootstrap webserver
-  import_role:
-    name: ocp4-bootstrap-webserver
-    tasks_from: main.yml
-  tags: [ webserver ]
 
 - name: remove the ocp4 installation directory {{ openshift_install_dir }}
   file:
@@ -112,3 +112,9 @@
   loop: "{{ libvirt_nets.list_nets }}"
   when: item == libvirt_network_name
   tags: [ deploy_nodes, libvirt_net ]
+
+- name: removing using kubeconfig
+  file:
+    path: "/home/{{ local_user_account  }}/.kube/config"
+    state: absent
+  tags: [ lb ]
