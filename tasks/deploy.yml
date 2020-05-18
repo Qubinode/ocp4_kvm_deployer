@@ -148,9 +148,9 @@
 - name: setup kubeconfig
   copy:
     src: "{{ project_dir }}/ocp4/auth/kubeconfig"
-    dest: "/home/{{ local_user_account  }}/.kube/config"
-    owner: "{{ local_user_account  }}"
-    group: "{{ {{ local_user_account  }}"
+    dest: "/home/{{ local_user_account }}/.kube/config"
+    owner: "{{ local_user_account }}"
+    group: "{{ local_user_account }}"
     backup: yes
   tags: [ postinstall, enable_shutdown ]
 

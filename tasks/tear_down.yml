@@ -115,6 +115,6 @@
 
 - name: removing using kubeconfig
   file:
-    path: "/home/{{ local_user_account  }}/.kube/config"
+    path: "/home/{{ local_user_account }}/.kube/config"
     state: absent
   tags: [ lb ]
