@@ -29,9 +29,10 @@ until [[ $COUNT -eq $TOTAL_OPERATORS || $SLEEP_FOR -eq $TIMEOUT ]]
 do
     for operator in $(echo $OPERATORS)
     do
-        spin
+        #spin
+        printf "%s\n" "        Checking $operator status"
         STATUS=$(/usr/local/bin/oc get clusteroperator $operator -o=jsonpath='{range .status.conditions[*]}{.type}{" "}{.status}{" "}{.message}{"\n"}{end}'|awk '/Available/ {print $2}'|grep -o True)
-        if [ $STATUS == "True" ]
+        if [ "A${STATUS}" == "ATrue" ]
         then
             COUNT=$(($COUNT + 1))
         fi
@@ -46,7 +47,7 @@ then
     for operator in $(echo $OPERATORS)
     do
         STATUS=$(/usr/local/bin/oc get clusteroperator $operator -o=jsonpath='{range .status.conditions[*]}{.type}{" "}{.status}{" "}{.message}{"\n"}{end}'|awk '/Available/ {print $2}')
-        if [ $STATUS != "True" ]
+        if [ "A${STATUS}" == "ATrue" ]
         then
             printf "%s\n" "*************************************"
             printf "%s\n" "${COLOR_RED}FAILLED OPERATOR${COLOR_RESET} ${COLOR_GREEN}$operator${COLOR_RESET} ${COLOR_RED}STATUS${COLOR_RESET}"
