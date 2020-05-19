@@ -69,7 +69,8 @@ Example Playbook
       localstorage_version: '4.3'
       localstorage_filesystem: true
       localstorage_block: false
-      localstorage_mount_path: /dev/vdc1
+      localstorage_block_disk: /dev/vdc
+      localstorage_fs_disk: /dev/vdb
 
     environment:
       IPA_HOST: "{{idm_server_shortname}}.{{ internal_domain_name }}"

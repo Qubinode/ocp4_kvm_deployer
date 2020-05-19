@@ -154,7 +154,8 @@ podman_pkgs:
 localstorage_version: '4.3'
 localstorage_filesystem: true
 localstorage_block: false
-localstorage_mount_path: /dev/vdc1
+localstorage_block_disk: /dev/vdc
+localstorage_fs_disk: /dev/vdb
 
 # Defaults for NFS Provisioner role
 provision_nfs_server: true
