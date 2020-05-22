@@ -1,18 +1,6 @@
-- name: check if localstorage operator is already deployed
-  shell: /usr/local/bin/oc get all -n local-storage
-  register: local_storage_status
-  ignore_errors: yes
-  changed_when: False
-  environment:
-    KUBECONFIG: "{{ openshift_install_dir }}/auth/kubeconfig"
-
-- set_fact:
-    operator_deployed: yes
-    
-- name: set the local storage operator status
-  set_fact:
-    operator_deployed: no
-  when: "'No resources found in local-storage namespace' in local_storage_status.stderr"
+---
+- name: check local-storage
+  include: configure-local-storage-checks.yml
 
 - name: deploy the localstorage operator
   block:
@@ -23,74 +11,76 @@
         owner: "{{ admin_user }}"
         group: "{{ admin_user }}"
         mode: 0666
-    
+
     - name: Create and Subscribe to the local-storage Catalog
       command: "/usr/local/bin/oc apply -f {{ openshift_install_dir }}/localstorage-operator.yaml"
       environment:
         KUBECONFIG: "{{ openshift_install_dir }}/auth/kubeconfig"
-    
-    - name: list all libvirt vms
-      virt:
-        command: list_vms
-      register: all_vms
-      tags: [ deploy_nodes, rhcos, bootstrap ]
-    
-    - name: initialize and empty list of all the ocp4 nodes
-      set_fact:
-        ocp4_compute_nodes: [ '' ]
-      tags: [ deploy_nodes, rhcos ]
-    
-    - name: add compute nodes to ocp4 nodes list
-      vars:
-        vm_name: "compute-{{ '%00x' |format(item) }}"
-      set_fact:
-        ocp4_compute_nodes: "{{ ocp4_compute_nodes + [ vm_name ] }}"
-      loop: "{{ range(0, compute_count|int)|list }}"
-    
-    - name: Copying over localstorage customer resource filesystem template
-      template:
-        src: templates/localstorage-filesystem.yaml.j2
-        dest:  "{{ openshift_install_dir }}/localstorage-filesystem.yaml"
-        owner: "{{ admin_user }}"
-        group: "{{ admin_user }}"
-        mode: 0666
-      when: localstorage_filesystem
-    
-    - name: Provision the localstroage custom resource type filesystem
-      command: "/usr/local/bin/oc create -f {{ openshift_install_dir }}/localstorage-filesystem.yaml"
+
+    - name: wait for local-storage pods
+      command: oc -n local-storage get pods
+      register: local_storage_pod_out
+      retries: 5
+      delay: 1
+      until: local_storage_pod_out.stdout.find("Running") != -1
       environment:
         KUBECONFIG: "{{ openshift_install_dir }}/auth/kubeconfig"
-      when: localstorage_filesystem
-    
-    - name: Copying over localstorage custom resource block template
-      template:
-        src: templates/localstorage-block.yaml.j2
-        dest:  "{{ openshift_install_dir }}/localstorage-block.yaml"
-        owner: "{{ admin_user }}"
-        group: "{{ admin_user }}"
-        mode: 0666
-      when: localstorage_block
-    
-    - name: Provision the localstorage custom resource block storage
-      command: "/usr/local/bin/oc create -f {{ openshift_install_dir }}/localstorage-block.yaml"
-      environment:
-        KUBECONFIG: "{{ openshift_install_dir }}/auth/kubeconfig"
-      when: localstorage_block
-  when: not operator_deployed
+  when: not namespace_exist and not local_storage_operator_exist
 
-#- name: Remove the local volumes for filesystem
-#  command: "/usr/local/bin/oc delete -f {{ openshift_install_dir }}/localstorage-filesystem.yaml"
-#  environment:
-#    KUBECONFIG: "{{ openshift_install_dir }}/auth/kubeconfig"
+- name: check local-storage
+  include: configure-local-storage-checks.yml
 
-#- name: Remove the local volumes for block
-#  command: "/usr/local/bin/oc delete -f {{ openshift_install_dir }}/localstorage-block.yaml"
-#  environment:
-#    KUBECONFIG: "{{ openshift_install_dir }}/auth/kubeconfig"
-#
-#- name: Remove  local storage project and operator
-#  command: "/usr/local/bin/oc delete -f {{ openshift_install_dir }}/localstorage-operator.yaml"
-#  environment:
-#    KUBECONFIG: "{{ openshift_install_dir }}/auth/kubeconfig"
-#  ignore_errors: yes
-#  when: tear_down  | bool
+- name: list all libvirt vms
+  virt:
+    command: list_vms
+  changed_when: False
+  register: all_vms
+  tags: [ deploy_nodes, rhcos, bootstrap ]
+
+- name: initialize and empty list of all the ocp4 nodes
+  set_fact:
+    ocp4_compute_nodes: [ '' ]
+  tags: [ deploy_nodes, rhcos ]
+
+- name: add compute nodes to ocp4 nodes list
+  vars:
+    vm_name: "compute-{{ '%00x' |format(item) }}"
+  set_fact:
+    ocp4_compute_nodes: "{{ ocp4_compute_nodes + [ vm_name ] }}"
+  loop: "{{ range(0, compute_count|int)|list }}"
+
+- name: provision local volumes
+  block:
+    - name: create a filesystem local volume resource
+      block:
+        - name: Copying over localstorage customer resource filesystem template
+          template:
+            src: templates/localstorage-filesystem.yaml.j2
+            dest:  "{{ openshift_install_dir }}/localstorage-filesystem.yaml"
+            owner: "{{ admin_user }}"
+            group: "{{ admin_user }}"
+            mode: 0666
+    
+        - name: Provision the localstroage custom resource type filesystem
+          command: "/usr/local/bin/oc create -f {{ openshift_install_dir }}/localstorage-filesystem.yaml"
+          environment:
+            KUBECONFIG: "{{ openshift_install_dir }}/auth/kubeconfig"
+      when: localstorage_filesystem and localvol_filesystem_sc.rc != 0
+
+    - name: create a block local volume resource
+      block:
+        - name: Copying over localstorage custom resource block template
+          template:
+            src: templates/localstorage-block.yaml.j2
+            dest:  "{{ openshift_install_dir }}/localstorage-block.yaml"
+            owner: "{{ admin_user }}"
+            group: "{{ admin_user }}"
+            mode: 0666
+          when: localstorage_block
+    
+        - name: Provision the localstorage custom resource block storage
+          command: "/usr/local/bin/oc create -f {{ openshift_install_dir }}/localstorage-block.yaml"
+          environment:
+            KUBECONFIG: "{{ openshift_install_dir }}/auth/kubeconfig"
+      when: localstorage_block and localvol_block_sc.rc != 0
+  when: namespace_exist and local_storage_operator_exist
