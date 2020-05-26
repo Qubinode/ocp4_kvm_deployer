@@ -25,6 +25,13 @@ endspin() {
 {% endraw %}
 
 printf "%s\n" "    Varifying all Cluster operators are UP!"
+if [ -z  $KUBEADMIN_PASS ];
+then
+  echo "OpenShift Cluster is not installed on machine"
+  echo "Please run ./qubinode-installer -p ocp4"
+  exit 0
+fi
+
 until [[ $COUNT -eq $TOTAL_OPERATORS || $SLEEP_FOR -eq $TIMEOUT ]]
 do
     for operator in $(echo $OPERATORS)
