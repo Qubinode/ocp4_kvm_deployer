@@ -1,5 +1,11 @@
 ---
 # tasks file for ocp4-kvm-deployer
+- name: remove OpenShift 4 bootstrap webserver
+  import_role:
+    name: ocp4-bootstrap-webserver
+    tasks_from: main.yml
+  tags: [ webserver ]
+
 - name: Remove load balancer container
   import_role:
     name: openshift-4-loadbalancer
@@ -15,12 +21,6 @@
     lb_machine_config_server: "{{ tmp_machine_config_server | join(',') }}"
     lb_machine_config_server_listen: "{{ tmp_machine_config_server_listen | join(',') }}"
   tags: [ lb ]
-
-- name: remove OpenShift 4 bootstrap webserver
-  import_role:
-    name: ocp4-bootstrap-webserver
-    tasks_from: tear_down.yml
-  tags: [ webserver ]
 
 - name: remove the ocp4 installation directory {{ openshift_install_dir }}
   file:
@@ -84,6 +84,19 @@
   register: libvirt_nets
   tags: [ deploy_nodes, libvirt_net ]
 
+- name: ensure {{ virtinstall_dir }} is removed
+  file:
+    path: "{{ virtinstall_dir }}"
+    state: absent
+  tags: [ deploy_nodes, rhcos ]
+  ignore_errors: yes
+
+- name: ensure {{ openshift_install_dir }} is removed
+  file:
+    path: "{{ openshift_install_dir }}"
+    state: absent
+  tags: [ deploy_nodes, rhcos ]
+
 - name: stop the ocp4 nat libvirt network
   virt_net:
     state: inactive
@@ -100,19 +113,8 @@
   when: item == libvirt_network_name
   tags: [ deploy_nodes, libvirt_net ]
 
-- name: ensure {{ virtinstall_dir }} is removed
+- name: removing using kubeconfig
   file:
-    path: "{{ virtinstall_dir }}"
+    path: "/home/{{ local_user_account }}/.kube/config"
     state: absent
-  tags: [ deploy_nodes, rhcos ]
-  ignore_errors: yes
-
-- name: ensure {{ openshift_install_dir }} is removed
-  file:
-    path: "{{ openshift_install_dir }}"
-    state: absent
-  tags: [ deploy_nodes, rhcos ]
-
-- name: import configure-local-storage.yml
-  import_tasks: configure-local-storage.yml
-  tags: [ localstorage ]
+  tags: [ lb ]

@@ -12,7 +12,7 @@
   tags: [ setup, tools, client, ignitions ]
 
 - name: check for the version of oc client
-  command: /usr/local/bin/oc version | grep "{{ ocp4_version }}"
+  command: /usr/local/bin/oc version | grep "{{ ocp4_release }}"
   register: oc_client_version
   changed_when: false
   tags: [ setup, tools, client, ignitions ]
@@ -20,7 +20,7 @@
 
 - name: Set tools are missing variable
   vars:
-    current_version: "Client Version: {{ ocp4_version }}"
+    current_version: "Client Version: {{ ocp4_release }}"
   set_fact:
     tools_missing: true
   tags: [ setup, tools, client, ignitions ]
@@ -28,13 +28,13 @@
 
 - name: Check if OpenShift Versions match
   vars:
-    current_version: "Client Version: {{ ocp4_version }}"
+    current_version: "Client Version: {{ ocp4_release }}"
   set_fact:
     oc_version_match: "{{ true if oc_client_version.stdout == current_version else false }}"
   tags: [ setup, tools, client, ignitions ]
   when:  oc_client_cmd.stat.exists and oc_client_cmd.stat.exists
 
-- name: check if the oc client tool version is matches {{ ocp4_version }}
+- name: check if the oc client tool version is matches {{ ocp4_release }}
   set_fact:
     download_tools: "{{ true if tools_missing or not oc_version_match else false }}"
   tags: [ setup, tools, client, ignitions ]

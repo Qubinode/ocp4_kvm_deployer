@@ -4,7 +4,6 @@
   when: idm_server_ipaddr |length == 0
   tags: idm
 
-
 - name: loop through vm types
   include_tasks: check_dns_entries.yml
 
@@ -44,7 +43,7 @@
     records: "{{ records|default([]) + [ {'hostname': name, 'ipaddr': ip, 'ptr_record': ptr} ] }}"
   tags: idm
 
-- name: set  master nodes forward zone records
+- name: set master nodes forward zone records
   vars:
     ip: "{{ ocp4_nat_gateway.split('.')[:3] | join('.') }}.{{ master_ip_octet|int + item|int }}"
     name: "master-{{ item }}"
@@ -54,7 +53,7 @@
   with_sequence: start=0 end="{{ master_count|int - 1 }}" stride=1
   tags: idm
 
-- name: set  master nodes reverse zone records
+- name: set master nodes reverse zone records
   vars:
     ip: "{{ ocp4_nat_gateway.split('.')[:3] | join('.') }}.{{ master_ip_octet|int + item|int }}"
     name: "master-{{ item }}"
@@ -74,7 +73,7 @@
   with_sequence: start=0 end="{{ master_count|int - 1 }}" stride=1
   tags: idm
 
-- name:  set compute nodes forward zone records
+- name: set compute nodes forward zone records
   vars:
     ip: "{{ ocp4_nat_gateway.split('.')[:3] | join('.') }}.{{ compute_ip_octet|int + item|int }}"
     name: "compute-{{ item }}"
@@ -84,7 +83,7 @@
   with_sequence: start=0 end="{{ compute_count|int - 1 }}" stride=1
   tags: idm
 
-- name:  set compute nodes reverse zone records
+- name: set compute nodes reverse zone records
   vars:
     ip: "{{ ocp4_nat_gateway.split('.')[:3] | join('.') }}.{{ compute_ip_octet|int + item|int }}"
     name: "compute-{{ item }}"
@@ -154,7 +153,7 @@
   when: not dns_teardown|bool
   tags: idm
 
-- name:  Create Wildcard for Applications
+- name: Create Wildcard for Applications
   uri:
     url: "https://{{ idm_server_fqdn }}/ipa/session/json"
     validate_certs: no
@@ -175,26 +174,26 @@
   when: not dns_teardown|bool
   tags: idm
 
-- name:  Create Wildcard for Applications
-  uri:
-    url: "https://{{ idm_server_fqdn }}/ipa/session/json"
-    validate_certs: no
-    method: POST
-    status_code: 200
-    headers:
-      Cookie: "{{ ipa_session.set_cookie }}"
-      Accept: "application/json"
-      Referer: "https://{{ idm_server_fqdn }}/ipa"
-    body:
-      method: dnsrecord_add
-      params:
-      - - "{{ idm_dns_forward_zone }}"
-        - "{{ dns_wildcard }}"
-      - a_part_ip_address: "{{ nat_gateway }}"
-        a_extra_create_reverse: false
-    body_format: json
-  when: not dns_teardown|bool
-  tags: idm
+#- name: Create Wildcard for Applications
+#  uri:
+#    url: "https://{{ idm_server_fqdn }}/ipa/session/json"
+#    validate_certs: no
+#    method: POST
+#    status_code: 200
+#    headers:
+#      Cookie: "{{ ipa_session.set_cookie }}"
+#      Accept: "application/json"
+#      Referer: "https://{{ idm_server_fqdn }}/ipa"
+#    body:
+#      method: dnsrecord_add
+#      params:
+#      - - "{{ idm_dns_forward_zone }}"
+#        - "{{ dns_wildcard }}"
+#      - a_part_ip_address: "{{ nat_gateway }}"
+#        a_extra_create_reverse: false
+#    body_format: json
+#  when: not dns_teardown|bool
+#  tags: idm
 
 - name: Create SRV Records
   uri:

@@ -2,18 +2,44 @@
 # defaults file for ocp4-rhcos-vms
 admin_user: admin
 project_dir:  /home/{{ admin_user }}/qubinode-installer/
-tear_down: false
 ocp4_pull_secret: /home/{{ admin_user }}/qubinode-installer/pull-secret.txt
 
 # OCP release info
-ocp4_version: 4.3.3
-ocp4_release_dir: latest
+ocp4_release: 4.3.3
+ocp4_release_dir: "{{ ocp4_release }}"
 ocp4_release_url: "https://mirror.openshift.com/pub/openshift-v4/clients/ocp/{{ ocp4_release_dir }}"
 
 openshift_install_folder: ocp4
-ocp4_client: "openshift-client-linux-{{ ocp4_version }}.tar.gz"
-ocp4_installer: "openshift-install-linux-{{ ocp4_version }}.tar.gz"
+ocp4_client: "openshift-client-linux-{{ ocp4_release }}.tar.gz"
+ocp4_installer: "openshift-install-linux-{{ ocp4_release }}.tar.gz"
 tools_missing: false
+
+# set to true to tear down the cluster
+tear_down: no
+
+# set to no to not deploy cluster
+deploy_cluster: yes
+
+# set to true to startup cluster
+startup_cluster: no
+
+# set to false to stop checking of existing cluster
+check_existing_cluster: yes
+
+# cluster deployed message
+cluster_deployed_msg: "not deployed"
+
+# Allow cluster to be shutdown without waiting 24hrs
+cluster_shutdown_before_cert_rotate: no
+
+# set to configure local storaage
+configure_local_storage: no
+
+# deploy NFS persistent storage
+configure_nfs_storage: yes
+
+# deploy OCS persistent storage
+configure_ocs_storage: yes
 
 # Networking info
 ocp4_nat_subnet: 192.168.50.0
@@ -27,7 +53,7 @@ old_libvirt_net: ocp42
 deploy_ocp4_configs: yes
 
 # ocp4 nodes attributes
-master_count: 3s
+master_count: 3
 compute_count: 3
 master_ip_octet: 10
 compute_ip_octet: 20
@@ -41,6 +67,7 @@ internal_domain_name: lab.example
 ssh_ocp4_public_key: ""
 
 virtinstall_dir: /tmp/rhcos
+
 local_user_account: admin
 #subnet: 192.168.50.0
 #gateway: 192.168.50.1
@@ -127,7 +154,8 @@ podman_pkgs:
 localstorage_version: '4.3'
 localstorage_filesystem: true
 localstorage_block: false
-localstorage_mount_path: /dev/vdc1
+localstorage_block_disk: /dev/vdc
+localstorage_fs_disk: /dev/vdb
 
 # Defaults for NFS Provisioner role
 provision_nfs_server: true

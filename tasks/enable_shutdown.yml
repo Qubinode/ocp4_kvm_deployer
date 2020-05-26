@@ -1,11 +1,17 @@
 ---
-- name: Copying over  nfs-provisioner rbac
+- name: This is the immediate shutdown
+  debug:
+    msg: "Setting cluster to allow for immediate shutdown"
+  tags: [ postinstall, enable_shutdown ]
+
+- name: create {{ openshift_install_dir }}/kubelet-bootstrap-cred-manager-ds.yaml
   template:
     src: files/kubelet-bootstrap-cred-manager-ds.yaml
-    dest:  "/home/admin/qubinode-installer/rhcos-install/kubelet-bootstrap-cred-manager-ds.yaml"
+    dest:  "{{ openshift_install_dir }}/kubelet-bootstrap-cred-manager-ds.yaml"
     owner: root
     group: root
     mode: 0666
+  tags: [ postinstall, enable_shutdown ]
 
 - name: get all operators
   shell: /usr/local/bin/oc get clusteroperators --no-headers=true | awk '{print $1}'
@@ -25,11 +31,17 @@
     KUBECONFIG: "{{ openshift_install_dir }}/auth/kubeconfig"
   tags: [ postinstall, enable_shutdown ]
 
-- name: enable cluster to stop and sesume cluster VMs
+- name: show kubelet-bootstrap-cred-manager
+  debug:
+    var: bootstrap_cred_manager
+  tags: [ postinstall, enable_shutdown ]
+  
+
+- name: enable cluster to stop and resume cluster VMs
   block:
    - name: apply daemonset openshift-machine-config-operator
      shell: |
-       /usr/local/bin/oc apply -f /home/admin/qubinode-installer/rhcos-install/kubelet-bootstrap-cred-manager-ds.yaml
+       /usr/local/bin/oc apply -f {{ openshift_install_dir }}/kubelet-bootstrap-cred-manager-ds.yaml
      register: applied_daemonset
      changed_when: False
      ignore_errors: yes
@@ -37,7 +49,7 @@
    - name: fail when daemonset apply unsuccesful
      fail:
        msg: "Failed to apply daemonset openshift-machine-config-operator"
-     when: applied_daemonset.rc !=0
+     when: applied_daemonset.rc != 0
 
    - name: Get csr-signer-signer and csr-signer from the openshift-kube-controller-manager-operator namespace
      shell: |
@@ -57,17 +69,17 @@
      - applied_daemonset.rc != 0
      - output.stdout.find("csr-signer") != -1
 
-   - name: fail when csr and secrets deletion is unsuccessful
+   - name: fail when csr and secrets is unsuccessful
      fail:
        msg: "secrets csr-signer-signer and csr-signer from the openshift-kube-controller-manager-operator namespace failed"
-     when: csr_deleted.rc !=0
+     when: csr_deleted.rc is defined and csr_deleted.rc !=0
 
    - name: check all operators
      debug:
        msg: "{{ item }}"
      loop: "{{ all_operators.stdout_lines }}"
 
-   - name: wait until {{ item }} operator status is false
+   - name: wait until operator status is false
      shell: |
       /usr/local/bin/oc get clusteroperator "{{ item }}" -o=jsonpath='{range .status.conditions[*]}{.type}{" "}{.status}{" "}{.message}{"\n"}{end}'|awk '/Progressing/ {print $2}'
      register: operator_status
@@ -76,7 +88,7 @@
      delay: 10
      until: not operator_status.stdout | bool
      changed_when: False
-  when: bootstrap_cred_manager.rc != 0
+  when: bootstrap_cred_manager.rc == 0
   environment:
     KUBECONFIG: "{{ openshift_install_dir }}/auth/kubeconfig"
   tags: [ postinstall, enable_shutdown ]
