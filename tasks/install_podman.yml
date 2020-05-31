@@ -9,8 +9,33 @@
     name: rhel-7-server-extras-rpms
     state: enabled
   tags: [ podman, pkg ]
-  when: "not podman_is_installed.stat.exists"
+  when: 
+    - not podman_is_installed.stat.exists
+    - ansible_distribution == 'RedHat'
+    - ansible_distribution_major_version == '7'
 
+
+- name: Enable rhel-8-for-x86_64-appstream-rpms repository
+  rhsm_repository:
+    name: rhel-8-for-x86_64-appstream-rpms
+    state: enabled
+  tags: [ podman, pkg ]
+  when: 
+    - not podman_is_installed.stat.exists
+    - ansible_distribution == "RedHat"
+    - ansible_distribution_major_version == '8'
+
+
+- name: Enable rhel-8-for-x86_64-baseos-rpms repository
+  rhsm_repository:
+    name: rhel-8-for-x86_64-baseos-rpms
+    state: enabled
+  tags: [ podman, pkg ]
+  when: 
+    - not podman_is_installed.stat.exists
+    - ansible_distribution == "RedHat"
+    - ansible_distribution_major_version == '8'
+    
 - name: install podman, buildah, skopeo
   yum:
     name: "{{ podman_pkgs }}"
