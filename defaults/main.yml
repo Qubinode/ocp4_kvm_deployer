@@ -14,6 +14,9 @@ ocp4_client: "openshift-client-linux-{{ ocp4_release }}.tar.gz"
 ocp4_installer: "openshift-install-linux-{{ ocp4_release }}.tar.gz"
 tools_missing: false
 
+# Set to yes when expanding the qcow template from the default 10G
+expand_os_disk: no
+
 # set to true to tear down the cluster
 tear_down: no
 
