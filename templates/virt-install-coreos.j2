@@ -12,11 +12,11 @@ args+='rd.neednet=1'
 
 # {{ vm_type }} Node
 sudo qemu-img create -f qcow2 {{ kvm_host_libvirt_dir }}/{{ vm_name }}-vda.qcow2 {{ hd_size }}
-sudo virt-format --format=qcow2 -a {{ kvm_host_libvirt_dir }}/{{ vm_name }}-vda.qcow2
+#sudo virt-format --format=qcow2 -a {{ kvm_host_libvirt_dir }}/{{ vm_name }}-vda.qcow2
 {% for item in extra_storage %}
 {%- if item.enable %}
 sudo qemu-img create -f qcow2 {{ kvm_host_libvirt_dir }}/{{ vm_name }}-{{ item.name }}.qcow2 {{ item.size }}
-sudo virt-format --format=qcow2 -a {{ kvm_host_libvirt_dir }}/{{ vm_name }}-{{ item.name }}.qcow2
+#sudo virt-format --format=qcow2 -a {{ kvm_host_libvirt_dir }}/{{ vm_name }}-{{ item.name }}.qcow2
 {% endif %}
 {% endfor %}
 

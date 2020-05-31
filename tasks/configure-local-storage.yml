@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 - name: Copying over localstorage opeator template
   template:
     src: templates/localstorage-operator.yaml.j2
@@ -13,10 +14,44 @@
   environment:
     KUBECONFIG: "{{ openshift_install_dir }}/auth/kubeconfig"
   tags: [ localstorage ]
+=======
+---
+- name: check local-storage
+  include: configure-local-storage-checks.yml
+
+- name: deploy the localstorage operator
+  block:
+    - name: Copying over localstorage operator template
+      template:
+        src: templates/localstorage-operator.yaml.j2
+        dest:  "{{ openshift_install_dir }}/localstorage-operator.yaml"
+        owner: "{{ admin_user }}"
+        group: "{{ admin_user }}"
+        mode: 0666
+
+    - name: Create and Subscribe to the local-storage Catalog
+      command: "/usr/local/bin/oc apply -f {{ openshift_install_dir }}/localstorage-operator.yaml"
+      environment:
+        KUBECONFIG: "{{ openshift_install_dir }}/auth/kubeconfig"
+
+    - name: wait for local-storage pods
+      command: oc -n local-storage get pods
+      register: local_storage_pod_out
+      retries: 5
+      delay: 1
+      until: local_storage_pod_out.stdout.find("Running") != -1
+      environment:
+        KUBECONFIG: "{{ openshift_install_dir }}/auth/kubeconfig"
+  when: not namespace_exist and not local_storage_operator_exist
+
+- name: check local-storage
+  include: configure-local-storage-checks.yml
+>>>>>>> 8064b27e4ad7614b2968db39b51496323075f818
 
 - name: list all libvirt vms
   virt:
     command: list_vms
+  changed_when: False
   register: all_vms
   tags: [ deploy_nodes, rhcos, bootstrap, localstorage ]
 
@@ -33,6 +68,7 @@
     ocp4_compute_nodes: "{{ ocp4_compute_nodes + [ vm_name ] }}"
   loop: "{{ range(0, compute_count|int)|list }}"
 
+<<<<<<< HEAD
 - name: Copying over localstorage filesystem template
   template:
     src: templates/localstorage-filesystem.yaml.j2
@@ -87,3 +123,40 @@
     KUBECONFIG: "{{ openshift_install_dir }}/auth/kubeconfig"
   when: tear_down  | bool
   tags: [ localstorage ]
+=======
+- name: provision local volumes
+  block:
+    - name: create a filesystem local volume resource
+      block:
+        - name: Copying over localstorage customer resource filesystem template
+          template:
+            src: templates/localstorage-filesystem.yaml.j2
+            dest:  "{{ openshift_install_dir }}/localstorage-filesystem.yaml"
+            owner: "{{ admin_user }}"
+            group: "{{ admin_user }}"
+            mode: 0666
+    
+        - name: Provision the localstroage custom resource type filesystem
+          command: "/usr/local/bin/oc create -f {{ openshift_install_dir }}/localstorage-filesystem.yaml"
+          environment:
+            KUBECONFIG: "{{ openshift_install_dir }}/auth/kubeconfig"
+      when: localstorage_filesystem and localvol_filesystem_sc.rc != 0
+
+    - name: create a block local volume resource
+      block:
+        - name: Copying over localstorage custom resource block template
+          template:
+            src: templates/localstorage-block.yaml.j2
+            dest:  "{{ openshift_install_dir }}/localstorage-block.yaml"
+            owner: "{{ admin_user }}"
+            group: "{{ admin_user }}"
+            mode: 0666
+          when: localstorage_block
+    
+        - name: Provision the localstorage custom resource block storage
+          command: "/usr/local/bin/oc create -f {{ openshift_install_dir }}/localstorage-block.yaml"
+          environment:
+            KUBECONFIG: "{{ openshift_install_dir }}/auth/kubeconfig"
+      when: localstorage_block and localvol_block_sc.rc != 0
+  when: namespace_exist and local_storage_operator_exist
+>>>>>>> 8064b27e4ad7614b2968db39b51496323075f818

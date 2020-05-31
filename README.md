@@ -30,9 +30,9 @@ Example Playbook
     become: yes
     vars:
       local_user_account: admin
-      ocp4_version: 4.3.0
-      ocp4_dependencies_version: "{{ ocp4_version[:3] }}"
-      ocp4_image_version: "{{ ocp4_version[:3] + '.0' }}"
+      ocp4_release: 4.3.0
+      ocp4_dependencies_version: "{{ ocp4_release[:3] }}"
+      ocp4_image_version: "{{ ocp4_release[:3] + '.0' }}"
       installation_working_dir: /home/admin/qubinode-installer
       pull_secret: "{{ installation_working_dir }}/pull-secret.txt"
       vm_public_key: "/home/{{ local_user_account }}/.ssh/id_rsa.pub"
@@ -69,7 +69,8 @@ Example Playbook
       localstorage_version: '4.3'
       localstorage_filesystem: true
       localstorage_block: false
-      localstorage_mount_path: /dev/vdc1
+      localstorage_block_disk: /dev/vdc
+      localstorage_fs_disk: /dev/vdb
 
     environment:
       IPA_HOST: "{{idm_server_shortname}}.{{ internal_domain_name }}"

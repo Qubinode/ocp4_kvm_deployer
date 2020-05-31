@@ -1,7 +1,7 @@
 apiVersion: local.storage.openshift.io/v1
 kind: LocalVolume
 metadata:
-  name: "local-disks"
+  name: "localblock-disks"
   namespace: "local-storage"
   annotations:
     storageclass.kubernetes.io/is-default-class: 'True'
@@ -21,4 +21,4 @@ spec:
     - storageClassName: "localblock-sc"
       volumeMode: Block
       devicePaths:
-        - {{ localstorage_mount_path }}
+        - {{ localstorage_block_disk }}

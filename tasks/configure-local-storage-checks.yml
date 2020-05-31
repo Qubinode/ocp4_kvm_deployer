@@ -1,0 +1,61 @@
+---
+- name: does the local-storage namespace exist
+  shell: /usr/local/bin/oc get all -n local-storage
+  register: local_storage_namespace
+  ignore_errors: yes
+  changed_when: False
+  environment:
+    KUBECONFIG: "{{ openshift_install_dir }}/auth/kubeconfig"
+
+- name: check for the local storage operator pods
+  shell: /usr/local/bin/oc -n local-storage get pods|grep Running
+  register: local_storage_operator_pods
+  ignore_errors: yes
+  changed_when: False
+  environment:
+    KUBECONFIG: "{{ openshift_install_dir }}/auth/kubeconfig"
+
+- name: check if the local storage operator is available
+  shell: /usr/local/bin/oc get csvs -n local-storage| grep Succeeded
+  register: local_storage_operator_status
+  ignore_errors: yes
+  changed_when: False
+  environment:
+    KUBECONFIG: "{{ openshift_install_dir }}/auth/kubeconfig"
+
+- name: check if the local volume filesystem is available
+  shell: /usr/local/bin/oc get pv | grep {{ compute_vdb_size }}Gi
+  register: localvol_filesystem
+  ignore_errors: yes
+  changed_when: False
+  environment:
+    KUBECONFIG: "{{ openshift_install_dir }}/auth/kubeconfig"
+
+- name: check if the local volume filesystem storage class is available
+  shell: /usr/local/bin/oc get sc localfs-sc
+  register: localvol_filesystem_sc
+  ignore_errors: yes
+  changed_when: False
+  environment:
+    KUBECONFIG: "{{ openshift_install_dir }}/auth/kubeconfig"
+
+- name: check if the local volume block storage class is available
+  shell: /usr/local/bin/oc get sc localblock-sc
+  register: localvol_block_sc
+  ignore_errors: yes
+  changed_when: False
+  environment:
+    KUBECONFIG: "{{ openshift_install_dir }}/auth/kubeconfig"
+
+- name: set the status of the local-storage namespace
+  set_fact:
+    namespace_exist: "{{ false if 'No resources found' in local_storage_namespace.stderr else true }}"
+
+- name: set the status of the local-storage pods
+  set_fact:
+    local_storage_operator_pods_exist: "{{ true if local_storage_operator_pods.rc == 0 else false }}"
+
+- name: set the status of the local-storage operator
+  set_fact:
+    local_storage_operator_exist: "{{ true if local_storage_operator_status.rc == 0 else false }}"
+
