@@ -5,23 +5,26 @@
     owner: "{{ admin_user }}"
     group: "{{ admin_user }}"
     mode: 0666
+  tags: [ localstorage ]
 
 - name: Create  local storage project and operator
   command: "/usr/local/bin/oc create -f {{ project_dir }}/localstorage-operator.yaml"
   when: not tear_down
   environment:
     KUBECONFIG: "{{ openshift_install_dir }}/auth/kubeconfig"
+  tags: [ localstorage ]
 
 - name: list all libvirt vms
   virt:
     command: list_vms
   register: all_vms
-  tags: [ deploy_nodes, rhcos, bootstrap ]
+  tags: [ deploy_nodes, rhcos, bootstrap, localstorage ]
+
 
 - name: initialize and empty list of all the ocp4 nodes
   set_fact:
     ocp4_compute_nodes: [ '' ]
-  tags: [ deploy_nodes, rhcos ]
+  tags: [ deploy_nodes, rhcos, localstorage ]
 
 - name: add compute nodes to ocp4 nodes list
   vars:
@@ -38,12 +41,14 @@
     group: "{{ admin_user }}"
     mode: 0666
   when: not tear_down and localstorage_filesystem
+  tags: [ localstorage ]
 
 - name: Provision the local volumes for filesystem
   command: "/usr/local/bin/oc create -f {{ project_dir }}/localstorage-filesystem.yaml"
   when: not tear_down and localstorage_filesystem
   environment:
     KUBECONFIG: "{{ openshift_install_dir }}/auth/kubeconfig"
+  tags: [ localstorage ]
 
 - name: Copying over localstorage block template
   template:
@@ -53,27 +58,32 @@
     group: "{{ admin_user }}"
     mode: 0666
   when: not tear_down and localstorage_block
+  tags: [ localstorage ]
 
 - name: Provision the local volumes for block storage
   command: "/usr/local/bin/oc create -f {{ project_dir }}/localstorage-block.yaml"
   when: not tear_down and localstorage_block
   environment:
     KUBECONFIG: "{{ openshift_install_dir }}/auth/kubeconfig"
+  tags: [ localstorage ]
 
 - name: Remove the local volumes for filesystem
   command: "/usr/local/bin/oc delete -f {{ project_dir }}/localstorage-filesystem.yaml"
   environment:
     KUBECONFIG: "{{ openshift_install_dir }}/auth/kubeconfig"
   when: tear_down | bool and localstorage_filesystem
+  tags: [ localstorage ]
 
 - name: Remove the local volumes for block
   command: "/usr/local/bin/oc delete -f {{ project_dir }}/localstorage-block.yaml"
   environment:
     KUBECONFIG: "{{ openshift_install_dir }}/auth/kubeconfig"
   when: tear_down | bool and localstorage_block
+  tags: [ localstorage ]
 
 - name: Remove  local storage project and operator
   command: "/usr/local/bin/oc delete -f {{ project_dir }}/localstorage-operator.yaml"
   environment:
     KUBECONFIG: "{{ openshift_install_dir }}/auth/kubeconfig"
   when: tear_down  | bool
+  tags: [ localstorage ]

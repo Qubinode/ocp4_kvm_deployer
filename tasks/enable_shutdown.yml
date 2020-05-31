@@ -31,6 +31,8 @@
      shell: |
        /usr/local/bin/oc apply -f /home/admin/qubinode-installer/rhcos-install/kubelet-bootstrap-cred-manager-ds.yaml
      register: applied_daemonset
+     until: applied_daemonset.rc !=0
+     retries: 25
      changed_when: False
      ignore_errors: yes
 

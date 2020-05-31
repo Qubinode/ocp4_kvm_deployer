@@ -166,7 +166,7 @@ ansible-playbook rhcos.yml -t lb
 ansible-playbook rhcos.yml -t libvirt_net
 ansible-playbook rhcos.yml -t deploy_vms
 ansible-playbook rhcos.yml -t nfs
-ansible-playbook rhcos.yml -t lcoalstorage
+ansible-playbook rhcos.yml -t localstorage
 ```
 Dependancy roles:
   - openshift-4-loadbalancer
