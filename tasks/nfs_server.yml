@@ -7,8 +7,23 @@
     KUBECONFIG: "{{ openshift_install_dir }}/auth/kubeconfig"
   tags: [ deploy_nodes, rhcos, postinstall, nfs ]
 
+- name: Checking Image Registry pod health
+  shell: |
+    /usr/local/bin/oc get pods -n openshift-image-registry | grep -E image-registry-[a-z0-9]{10}
+  register: image_registry_health_status
+  ignore_errors: yes
+  environment:
+    KUBECONFIG: "{{ openshift_install_dir }}/auth/kubeconfig"
+  tags: [ deploy_nodes, rhcos, postinstall, nfs ]
+
 - name: Configure NFS provisioner
   import_role:
     name: nfs-provisioner-role
-  when: (registry_health_status.stdout == "" or delete_deployment|bool)
+  when: (registry_health_status.stdout == "" or image_registry_health_status.stdout == "")
+  tags: [ deploy_nodes, rhcos, postinstall, nfs ]
+
+- name: Remove NFS provisioner
+  import_role:
+    name: nfs-provisioner-role
+  when: delete_deployment|bool
   tags: [ deploy_nodes, rhcos, postinstall, nfs ]
