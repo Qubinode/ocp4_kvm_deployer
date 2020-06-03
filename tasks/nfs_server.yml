@@ -5,8 +5,10 @@
   ignore_errors: yes
   environment:
     KUBECONFIG: "{{ openshift_install_dir }}/auth/kubeconfig"
+  tags: [ deploy_nodes, rhcos, postinstall, nfs ]
 
 - name: Configure NFS provisioner
   import_role:
     name: nfs-provisioner-role
-  when: registry_health_status.stdout == ""
+  when: (registry_health_status.stdout == "" or delete_deployment|bool)
+  tags: [ deploy_nodes, rhcos, postinstall, nfs ]

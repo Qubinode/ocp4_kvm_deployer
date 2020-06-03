@@ -1,20 +1,3 @@
-<<<<<<< HEAD
-- name: Copying over localstorage opeator template
-  template:
-    src: templates/localstorage-operator.yaml.j2
-    dest:  "{{ project_dir }}/localstorage-operator.yaml"
-    owner: "{{ admin_user }}"
-    group: "{{ admin_user }}"
-    mode: 0666
-  tags: [ localstorage ]
-
-- name: Create  local storage project and operator
-  command: "/usr/local/bin/oc create -f {{ project_dir }}/localstorage-operator.yaml"
-  when: not tear_down
-  environment:
-    KUBECONFIG: "{{ openshift_install_dir }}/auth/kubeconfig"
-  tags: [ localstorage ]
-=======
 ---
 - name: check local-storage
   include: configure-local-storage-checks.yml
@@ -46,7 +29,6 @@
 
 - name: check local-storage
   include: configure-local-storage-checks.yml
->>>>>>> 8064b27e4ad7614b2968db39b51496323075f818
 
 - name: list all libvirt vms
   virt:
@@ -68,62 +50,6 @@
     ocp4_compute_nodes: "{{ ocp4_compute_nodes + [ vm_name ] }}"
   loop: "{{ range(0, compute_count|int)|list }}"
 
-<<<<<<< HEAD
-- name: Copying over localstorage filesystem template
-  template:
-    src: templates/localstorage-filesystem.yaml.j2
-    dest:  "{{ project_dir }}/localstorage-filesystem.yaml"
-    owner: "{{ admin_user }}"
-    group: "{{ admin_user }}"
-    mode: 0666
-  when: not tear_down and localstorage_filesystem
-  tags: [ localstorage ]
-
-- name: Provision the local volumes for filesystem
-  command: "/usr/local/bin/oc create -f {{ project_dir }}/localstorage-filesystem.yaml"
-  when: not tear_down and localstorage_filesystem
-  environment:
-    KUBECONFIG: "{{ openshift_install_dir }}/auth/kubeconfig"
-  tags: [ localstorage ]
-
-- name: Copying over localstorage block template
-  template:
-    src: templates/localstorage-block.yaml.j2
-    dest:  "{{ project_dir }}/localstorage-block.yaml"
-    owner: "{{ admin_user }}"
-    group: "{{ admin_user }}"
-    mode: 0666
-  when: not tear_down and localstorage_block
-  tags: [ localstorage ]
-
-- name: Provision the local volumes for block storage
-  command: "/usr/local/bin/oc create -f {{ project_dir }}/localstorage-block.yaml"
-  when: not tear_down and localstorage_block
-  environment:
-    KUBECONFIG: "{{ openshift_install_dir }}/auth/kubeconfig"
-  tags: [ localstorage ]
-
-- name: Remove the local volumes for filesystem
-  command: "/usr/local/bin/oc delete -f {{ project_dir }}/localstorage-filesystem.yaml"
-  environment:
-    KUBECONFIG: "{{ openshift_install_dir }}/auth/kubeconfig"
-  when: tear_down | bool and localstorage_filesystem
-  tags: [ localstorage ]
-
-- name: Remove the local volumes for block
-  command: "/usr/local/bin/oc delete -f {{ project_dir }}/localstorage-block.yaml"
-  environment:
-    KUBECONFIG: "{{ openshift_install_dir }}/auth/kubeconfig"
-  when: tear_down | bool and localstorage_block
-  tags: [ localstorage ]
-
-- name: Remove  local storage project and operator
-  command: "/usr/local/bin/oc delete -f {{ project_dir }}/localstorage-operator.yaml"
-  environment:
-    KUBECONFIG: "{{ openshift_install_dir }}/auth/kubeconfig"
-  when: tear_down  | bool
-  tags: [ localstorage ]
-=======
 - name: provision local volumes
   block:
     - name: create a filesystem local volume resource
@@ -159,4 +85,3 @@
             KUBECONFIG: "{{ openshift_install_dir }}/auth/kubeconfig"
       when: localstorage_block and localvol_block_sc.rc != 0
   when: namespace_exist and local_storage_operator_exist
->>>>>>> 8064b27e4ad7614b2968db39b51496323075f818

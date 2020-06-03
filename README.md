@@ -166,7 +166,7 @@ ansible-playbook rhcos.yml -t webserver
 ansible-playbook rhcos.yml -t lb
 ansible-playbook rhcos.yml -t libvirt_net
 ansible-playbook rhcos.yml -t deploy_vms
-ansible-playbook rhcos.yml -t nfs
+ansible-playbook rhcos.yml -t nfs --extra-vars "configure_nfs_storage=true" --extra-vars "cluster_deployed_msg=deployed
 ansible-playbook rhcos.yml -t localstorage
 ```
 Dependancy roles:
