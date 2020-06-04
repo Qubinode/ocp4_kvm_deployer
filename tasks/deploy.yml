@@ -92,10 +92,19 @@
   import_tasks: build_vm_list.yml
   tags: [ deploy_nodes, rhcos, bootstrap ]
 
+- name: testing
+  vars:
+    vm_name: "{{ item }}"
+  debug:
+    msg: "{{ virtinstall_dir }}{{ vm_name }}.sh"
+  when: vm_name not in all_vms.list_vms
+  loop: "{{ ocp4_nodes }}"
+  delay: 10
+
 - name: deploy ocp4 nodes
   vars:
     vm_name: "{{ item }}"
-  command: "{{ virtinstall_dir }}/{{ vm_name }}.sh"
+  command: "{{ virtinstall_dir }}{{ vm_name }}.sh"
   when: vm_name not in all_vms.list_vms
   loop: "{{ ocp4_nodes }}"
   delay: 10
@@ -121,21 +130,6 @@
   delay: 10
   tags: [ deploy_nodes, bootstrap ]
 
-- name: Waiting for bootstrap Complete
-  shell: |
-    /usr/local/bin/openshift-install  --dir "{{ openshift_install_dir }}"  wait-for bootstrap-complete --log-level debug 2>&1 | tee "{{ project_dir }}/ocp4/bootstrap-complete.log" &
-  register: install_status
-  until: "'Bootstrap status: complete' in install_status.stdout"
-  retries: 120
-  delay: 30
-  tags: [ deploy_nodes, bootstrap, postinstall ]
-
-- name: "Install Status"
-  debug:
-    msg: "{{ install_status }}"
-  register: continue_install
-  tags: [ deploy_nodes, bootstrap, postinstall ]
-
 - name: ensure kube folder exist
   file:
     path: "/home/{{ local_user_account  }}/.kube/"
@@ -153,6 +147,22 @@
     group: "{{ local_user_account }}"
     backup: yes
   tags: [ postinstall, enable_shutdown ]
+
+- name: Waiting for bootstrap Complete
+  shell: |
+    /usr/local/bin/openshift-install  --dir "{{ openshift_install_dir }}"  wait-for bootstrap-complete --log-level debug 2>&1 | tee "{{ project_dir }}/ocp4/bootstrap-complete.log" &
+  register: install_status
+  until: "'Bootstrap status: complete' in install_status.stdout"
+  retries: 220
+  delay: 30
+  tags: [ deploy_nodes, bootstrap, postinstall ]
+
+- name: "Install Status"
+  debug:
+    msg: "{{ install_status }}"
+  register: continue_install
+  tags: [ deploy_nodes, bootstrap, postinstall ]
+
 
 - name: Waiting for Installation to Complete
   shell: |
