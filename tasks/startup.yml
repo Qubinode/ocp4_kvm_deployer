@@ -65,7 +65,7 @@
     state: running
   loop: "{{ range(0, compute_count|int)|list }}"
   delay: 10
-  when: vm_name in all_vms.list_vms
+  when: vm_name in all_vms.list_vms and compute_count|int != 0
   tags: [ deploy_nodes, rhcos, bootstrap, startup]
 
 - name: wait for compute nodes to be available
@@ -78,12 +78,13 @@
   retries: 18
   delay: 10
   changed_when: False
+  when: compute_count|int != 0
   tags: [ deploy_nodes, rhcos, bootstrap, startup]
 
 - name: fail a total {{ compute_count }} is not found
   fail:
     msg: "Was not able to confirm all {{ compute_count }} compute nodes are up"
-  when: master_nodes_count.stdout|int != master_count|int
+  when: compute_nodes_count.stdout|int != compute_count|int and compute_count|int != 0
   tags: [ deploy_nodes, rhcos, bootstrap, startup]
 
 - name: ensure compute nodes are set to schedulable

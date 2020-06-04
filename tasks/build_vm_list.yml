@@ -26,4 +26,6 @@
     ocp4_nodes: "{{ ocp4_nodes + [ vm_name ] }}"
   loop: "{{ range(0, compute_count|int)|list }}"
   delay: 10
+  when: compute_count|int != 0
   tags: [ deploy_nodes, rhcos, bootstrap ]
+  

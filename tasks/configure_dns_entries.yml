@@ -73,25 +73,28 @@
   with_sequence: start=0 end="{{ master_count|int - 1 }}" stride=1
   tags: idm
 
-- name: set compute nodes forward zone records
-  vars:
-    ip: "{{ ocp4_nat_gateway.split('.')[:3] | join('.') }}.{{ compute_ip_octet|int + item|int }}"
-    name: "compute-{{ item }}"
-    ptr: "{{ compute_ip_octet|int + item|int }}"
-  set_fact:
-    records: "{{ records|default([]) + [ {'hostname': name, 'ipaddr': ip, 'ptr_record': ptr} ] }}"
-  with_sequence: start=0 end="{{ compute_count|int - 1 }}" stride=1
-  tags: idm
-
-- name: set compute nodes reverse zone records
-  vars:
-    ip: "{{ ocp4_nat_gateway.split('.')[:3] | join('.') }}.{{ compute_ip_octet|int + item|int }}"
-    name: "compute-{{ item }}"
-    ptr: "{{ compute_ip_octet|int + item|int }}"
-  set_fact:
-    reverse_records: "{{ reverse_records|default([]) + [ {'hostname': name, 'ipaddr': ip, 'ptr_record': ptr} ] }}"
-  with_sequence: start=0 end="{{ compute_count|int - 1 }}" stride=1
-  tags: idm
+- name: create compute nodes dns records
+  block:
+    - name: set compute nodes forward zone records
+      vars:
+        ip: "{{ ocp4_nat_gateway.split('.')[:3] | join('.') }}.{{ compute_ip_octet|int + item|int }}"
+        name: "compute-{{ item }}"
+        ptr: "{{ compute_ip_octet|int + item|int }}"
+      set_fact:
+        records: "{{ records|default([]) + [ {'hostname': name, 'ipaddr': ip, 'ptr_record': ptr} ] }}"
+      with_sequence: start=0 end="{{ compute_node_count|int - 1 }}" stride=1
+      tags: idm
+    
+    - name: set compute nodes reverse zone records
+      vars:
+        ip: "{{ ocp4_nat_gateway.split('.')[:3] | join('.') }}.{{ compute_ip_octet|int + item|int }}"
+        name: "compute-{{ item }}"
+        ptr: "{{ compute_ip_octet|int + item|int }}"
+      set_fact:
+        reverse_records: "{{ reverse_records|default([]) + [ {'hostname': name, 'ipaddr': ip, 'ptr_record': ptr} ] }}"
+      with_sequence: start=0 end="{{ compute_node_count|int - 1 }}" stride=1
+      tags: idm
+  when: compute_count|int != 0
 
 - name: set dns record state
   set_fact:
@@ -173,27 +176,6 @@
     body_format: json
   when: not dns_teardown|bool
   tags: idm
-
-#- name: Create Wildcard for Applications
-#  uri:
-#    url: "https://{{ idm_server_fqdn }}/ipa/session/json"
-#    validate_certs: no
-#    method: POST
-#    status_code: 200
-#    headers:
-#      Cookie: "{{ ipa_session.set_cookie }}"
-#      Accept: "application/json"
-#      Referer: "https://{{ idm_server_fqdn }}/ipa"
-#    body:
-#      method: dnsrecord_add
-#      params:
-#      - - "{{ idm_dns_forward_zone }}"
-#        - "{{ dns_wildcard }}"
-#      - a_part_ip_address: "{{ nat_gateway }}"
-#        a_extra_create_reverse: false
-#    body_format: json
-#  when: not dns_teardown|bool
-#  tags: idm
 
 - name: Create SRV Records
   uri:

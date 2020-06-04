@@ -1,5 +1,9 @@
 ---
 # tasks file for ocp4-kvm-deployer
+- name: set compute_node_count variable
+  set_fact:
+    compute_node_count: "{{ 1 if compute_count|int == 0 else compute_count }}"
+
 - name: remove OpenShift 4 bootstrap webserver
   import_role:
     name: ocp4-bootstrap-webserver
