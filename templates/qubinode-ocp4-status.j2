@@ -40,9 +40,6 @@ do
         if [ "A${STATUS}" == "ATrue" ]
         then
             COUNT=$(($COUNT + 1))
-            #printf "%s\n" "        $operator is up!"
-        else
-            #printf "%s\n" "        $operator is down!"
         fi
     done
     if [ $COUNT -eq $TOTAL_OPERATORS ]
