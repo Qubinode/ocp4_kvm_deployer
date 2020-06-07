@@ -1,0 +1,61 @@
+{
+  "apiVersion": "v1",
+  "kind": "Namespace",
+  "metadata": {
+    "annotations": {
+      "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"v1\",\"kind\":\"Namespace\",\"metadata\":{\"annotations\":{},\"name\":\"local-storage\"}}\n",
+      "openshift.io/sa.scc.mcs": "s0:c26,c10",
+      "openshift.io/sa.scc.supplemental-groups": "1000670000/10000",
+      "openshift.io/sa.scc.uid-range": "1000670000/10000"
+    },
+    "creationTimestamp": "2020-06-07T05:16:17Z",
+    "deletionTimestamp": "2020-06-07T14:53:14Z",
+    "name": "local-storage",
+    "resourceVersion": "250047",
+    "selfLink": "/api/v1/namespaces/local-storage",
+    "uid": "5b07a401-8af2-46bf-8b85-bf3e65b99b7c"
+  },
+  "spec": {
+    "finalizers": []
+  },
+  "status": {
+    "conditions": [
+      {
+        "lastTransitionTime": "2020-06-07T14:53:22Z",
+        "message": "All resources successfully discovered",
+        "reason": "ResourcesDiscovered",
+        "status": "False",
+        "type": "NamespaceDeletionDiscoveryFailure"
+      },
+      {
+        "lastTransitionTime": "2020-06-07T14:53:22Z",
+        "message": "All legacy kube types successfully parsed",
+        "reason": "ParsedGroupVersions",
+        "status": "False",
+        "type": "NamespaceDeletionGroupVersionParsingFailure"
+      },
+      {
+        "lastTransitionTime": "2020-06-07T14:53:22Z",
+        "message": "All content successfully deleted, may be waiting on finalization",
+        "reason": "ContentDeleted",
+        "status": "False",
+        "type": "NamespaceDeletionContentFailure"
+      },
+      {
+        "lastTransitionTime": "2020-06-07T14:53:22Z",
+        "message": "Some resources are remaining: localvolumes.local.storage.openshift.io has 1 resource instances",
+        "reason": "SomeResourcesRemain",
+        "status": "True",
+        "type": "NamespaceContentRemaining"
+      },
+      {
+        "lastTransitionTime": "2020-06-07T14:53:22Z",
+        "message": "Some content in the namespace has finalizers remaining: storage.openshift.com/local-volume-protection in 1 resource instances",
+        "reason": "SomeFinalizersRemain",
+        "status": "True",
+        "type": "NamespaceFinalizersRemaining"
+      }
+    ],
+    "phase": "Terminating"
+  }
+}
