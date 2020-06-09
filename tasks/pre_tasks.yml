@@ -3,6 +3,7 @@
 - name: set compute_node_count variable
   set_fact:
     compute_node_count: "{{ 1 if compute_count|int == 0 else compute_count }}"
+  tags: [ setup, deploy_nodes, rhcos, bootstrap, idm]
 
 - name: Setting Ingress information and machine configuration for bootstrap nodes and other machines
   set_fact:
@@ -21,6 +22,7 @@
     ingress_node: "{{ 'master' if compute_count|int == 0 else 'compute' }}"
     ingress_node_octet: "{{ master_ip_octet if compute_count|int == 0 else compute_ip_octet }}"
     ingress_count: "{{ master_count if compute_count|int == 0 else compute_count }}"
+  tags: [ setup, deploy_nodes, rhcos, bootstrap, idm]
 
 - name: Setting Ingress information and machine configuration for internal API Server
   set_fact:

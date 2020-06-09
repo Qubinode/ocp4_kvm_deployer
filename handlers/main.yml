@@ -4,3 +4,9 @@
   service:
     name: nfs-server
     state: restarted
+  tags: nfs
+
+- name: reload firewalld
+  command: 'firewall-cmd --reload'
+  tags: nfs
+

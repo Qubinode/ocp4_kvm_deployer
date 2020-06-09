@@ -3,45 +3,46 @@
   stat:
     path: "/usr/bin/podman"
   register: podman_is_installed
+  tags: [ podman, pkg ]
 
 - name: Enable rhel-7-server-extras-rpms repository
   rhsm_repository:
     name: rhel-7-server-extras-rpms
     state: enabled
-  tags: [ podman, pkg ]
   when: 
     - not podman_is_installed.stat.exists
     - ansible_distribution == 'RedHat'
     - ansible_distribution_major_version == '7'
+  tags: [ podman, pkg ]
 
 
 - name: Enable rhel-8-for-x86_64-appstream-rpms repository
   rhsm_repository:
     name: rhel-8-for-x86_64-appstream-rpms
     state: enabled
-  tags: [ podman, pkg ]
   when: 
     - not podman_is_installed.stat.exists
     - ansible_distribution == "RedHat"
     - ansible_distribution_major_version == '8'
+  tags: [ podman, pkg ]
 
 
 - name: Enable rhel-8-for-x86_64-baseos-rpms repository
   rhsm_repository:
     name: rhel-8-for-x86_64-baseos-rpms
     state: enabled
-  tags: [ podman, pkg ]
   when: 
     - not podman_is_installed.stat.exists
     - ansible_distribution == "RedHat"
     - ansible_distribution_major_version == '8'
+  tags: [ podman, pkg ]
     
 - name: install podman, buildah, skopeo
   yum:
     name: "{{ podman_pkgs }}"
     state: present
-  tags: [ podman, pkg ]
   when: "not podman_is_installed.stat.exists"
+  tags: [ podman, pkg ]
 
 - name: activate namespaces
   become: True
@@ -51,35 +52,35 @@
     sysctl_set: yes
     state: present
     reload: yes
-  tags: [ podman ]
   when: "not podman_is_installed.stat.exists"
+  tags: [ podman ]
 
 - name: check if subuid file exists
   stat:
     path: /etc/subuid
   register: subuid_setting
-  tags: [ podman ]
   when: "not podman_is_installed.stat.exists"
+  tags: [ podman ]
 
 - name: check if subgid file exists
   stat:
     path: /etc/subgid
   register: ssubgid_setting
-  tags: [ podman ]
   when: "not podman_is_installed.stat.exists"
+  tags: [ podman ]
 
 - name: Create /etc/subuid for non root podman exec
   copy:
     dest: "/etc/subuid"
     content: |
       {{ lookup('env','USER') }}:100000:65536
-  tags: [ podman ]
   when: not podman_is_installed.stat.exists and subuid_setting.stat.exists
+  tags: [ podman ]
 
 - name: Create /etc/subgid for non root podman exec
   copy:
     dest: "/etc/subgid"
     content: |
       {{ lookup('env','USER') }}:100000:65536
-  tags: [ podman ]
   when: not podman_is_installed.stat.exists and ssubgid_setting.stat.exists
+  tags: [ podman ]

@@ -14,14 +14,8 @@
   when: not pull_secret_file.stat.exists
   tags: [ setup ]
 
-- name: enable required firewall ports
-  firewalld:
-    port: "{{ item }}"
-    permanent: yes
-    state: enabled
-    immediate: yes
-  loop: "{{ ocp4_firewall_ports }}"
-  tags: [ setup ]
+- name: import tasks firewall_setup.yml
+  import_tasks: firewall_setup.yml
 
 - name: import tasks install_podman.yml
   import_tasks: install_podman.yml

@@ -1,0 +1,54 @@
+---
+- name: enable required firewall ports
+  firewalld:
+    port: "{{ item }}"
+    permanent: yes
+    state: enabled
+    immediate: yes
+  loop: "{{ ocp4_firewall_ports }}"
+  tags: firewall
+
+- name: Allow NFS traffic from VM's to Host
+  firewalld:
+    zone: libvirt
+    state: enabled
+    permanent: yes
+    service: "{{ item }}"
+  with_items:
+    - nfs
+    - mountd
+    - rpc-bind
+  notify: 'reload firewalld'
+  tags: firewall
+
+- name: Allow OpenShift traffic from VM's to Host
+  firewalld:
+    zone: libvirt
+    state: enabled
+    permanent: yes
+    port: "{{ item }}"
+  with_items:
+    - 80/tcp
+    - 443/tcp
+    - 6443/tcp
+    - 22623/tcp
+  notify: 'reload firewalld'
+  tags: firewall
+
+- name: Allow OpenShift traffic from public to Host
+  firewalld:
+    zone: public
+    state: enabled
+    permanent: yes
+    port: "{{ item }}"
+  with_items:
+    - 80/tcp
+    - 443/tcp
+    - 6443/tcp
+  notify: 'reload firewalld'
+  tags: firewall
+
+- name: firewalld reload
+  command: firewall-cmd --reload
+  tags: firewall
+
