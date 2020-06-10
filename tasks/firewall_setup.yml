@@ -45,6 +45,7 @@
     - 80/tcp
     - 443/tcp
     - 6443/tcp
+    - 8080/tcp
   notify: 'reload firewalld'
   tags: firewall
 

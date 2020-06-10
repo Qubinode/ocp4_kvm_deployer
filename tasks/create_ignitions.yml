@@ -1,9 +1,4 @@
 ---
-# - name: deploy ocp4 configs default state
-#   set_fact:
-#     deploy_ocp4_configs: true
-#   tags: [ ignitions, deploy_nodes ]
-
  - name: create the directory {{ openshift_install_dir }} to store the ignition files
    file:
      path: "{{ openshift_install_dir }}"

@@ -20,4 +20,4 @@
   loop_control:
     loop_var: inner_item
     label: "building {{ vm_name }}"
-  tags: [ deploy_nodes, node_profile ]
+  tags: [ deploy_nodes, node_profile, add_workers]

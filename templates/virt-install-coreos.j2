@@ -20,7 +20,7 @@ sudo qemu-img create -f qcow2 -o preallocation=falloc {{ kvm_host_libvirt_dir }}
 
 
 sudo virt-install --name {{ vm_name }} \
-  --disk {{ kvm_host_libvirt_dir }}/{{ vm_name }}-vda.qcow2 \
+  --disk {{ kvm_host_libvirt_dir }}/{{ vm_name }}-vda.qcow2,bus=virtio,format=qcow2 \
 {% for item in extra_storage %}
 {%- if item.enable %}
   --disk {{ kvm_host_libvirt_dir }}/{{ vm_name }}-{{ item.name }}.qcow2,bus=virtio,format=qcow2 \

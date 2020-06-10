@@ -80,20 +80,21 @@
   loop_control:
     loop_var: outer_item
     label: outer_item.name
-  tags: [ deploy_nodes, rhcos, node_profile ]
+  tags: [ deploy_nodes, rhcos, node_profile, add_workers ]
 
 - name: import tasks build_vm_list.yml
   import_tasks: build_vm_list.yml
-  tags: [ deploy_nodes, rhcos, bootstrap ]
+  tags: [ deploy_nodes, rhcos, bootstrap,add_workers ]
 
-- name: testing
-  vars:
-    vm_name: "{{ item }}"
-  debug:
-    msg: "{{ virtinstall_dir }}{{ vm_name }}.sh"
-  when: vm_name not in all_vms.list_vms
-  loop: "{{ ocp4_nodes }}"
-  delay: 10
+  # This should be deleted
+  #- name: testing
+  #  vars:
+  #    vm_name: "{{ item }}"
+  #  debug:
+  #    msg: "{{ virtinstall_dir }}{{ vm_name }}.sh"
+  #  when: vm_name not in all_vms.list_vms
+  #  loop: "{{ ocp4_nodes }}"
+  #  delay: 10
 
 - name: deploy ocp4 nodes
   vars:
@@ -103,7 +104,7 @@
   loop: "{{ ocp4_nodes }}"
   delay: 10
   register: deploy_ocp4_nodes
-  tags: [ deploy_nodes, rhcos ]
+  tags: [ deploy_nodes, rhcos, add_workers]
 
 - name: include wait_for_vm_shutdown.yml
   include_tasks: wait_for_vm_shutdown.yml
@@ -112,9 +113,9 @@
     loop_var: vm_name
     label: vm_name
   when: deploy_ocp4_nodes.changed
-  tags: [ deploy_nodes, rhcos, rhcos_wait ]
+  tags: [ deploy_nodes, rhcos, rhcos_wait, add_workers]
 
-- name: continue ocp4 bootstrap
+- name: ensure all nodes are started
   vars:
     vm_name: "{{ item }}"
   virt:
@@ -122,7 +123,7 @@
     state: running
   loop: "{{ ocp4_nodes }}"
   delay: 10
-  tags: [ deploy_nodes, bootstrap ]
+  tags: [ deploy_nodes, bootstrap, add_workers]
 
 - name: ensure kube folder exist
   file:

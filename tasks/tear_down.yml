@@ -69,7 +69,6 @@
     vm_name: "{{ item }}"
   virt:
     name: "{{ vm_name }}"
-#    #state: destroyed
     command: undefine
   when: vm_name in all_vms.list_vms
   loop: "{{ ocp4_nodes }}"
