@@ -1,4 +1,8 @@
 ---
+- set_fact:
+    ocp4_nodes: []
+  tags: [ deploy_nodes, rhcos, bootstrap, add_workers ]
+
 - name: list all libvirt vms
   virt:
     command: list_vms
@@ -7,8 +11,8 @@
 
 - name: initialize and empty list of all the ocp4 nodes
   set_fact:
-    ocp4_nodes: [ 'bootstrap' ]
-  tags: [ deploy_nodes, rhcos, bootstrap, add_workers ]
+    ocp4_nodes: "{{ ocp4_nodes + [ 'bootstrap' ] }}"
+  tags: [ deploy_nodes, rhcos, bootstrap, bootstrap_node ]
 
 - name: add master nodes to ocp4 nodes list
   vars:
@@ -17,7 +21,7 @@
     ocp4_nodes: "{{ ocp4_nodes + [ vm_name ] }}"
   loop: "{{ range(0, master_count|int)|list }}"
   delay: 10
-  tags: [ deploy_nodes, rhcos, bootstrap, add_workers]
+  tags: [ deploy_nodes, rhcos, bootstrap, master_nodes]
 
 - name: add compute nodes to ocp4 nodes list
   vars:
@@ -27,5 +31,5 @@
   loop: "{{ range(0, compute_count|int)|list }}"
   delay: 10
   when: compute_count|int != 0
-  tags: [ deploy_nodes, rhcos, bootstrap, add_workers]
+  tags: [ deploy_nodes, rhcos, bootstrap, add_workers, compute_nodes]
   

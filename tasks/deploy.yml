@@ -1,6 +1,8 @@
 ---
 - set_fact:
     ocp4_nodes: []
+    new_nodes: []
+  tags: [ deploy_nodes, rhcos, add_workers]
 
 - name: check for user pull-secret
   stat:
@@ -86,16 +88,6 @@
   import_tasks: build_vm_list.yml
   tags: [ deploy_nodes, rhcos, bootstrap,add_workers ]
 
-  # This should be deleted
-  #- name: testing
-  #  vars:
-  #    vm_name: "{{ item }}"
-  #  debug:
-  #    msg: "{{ virtinstall_dir }}{{ vm_name }}.sh"
-  #  when: vm_name not in all_vms.list_vms
-  #  loop: "{{ ocp4_nodes }}"
-  #  delay: 10
-
 - name: deploy ocp4 nodes
   vars:
     vm_name: "{{ item }}"
@@ -106,14 +98,34 @@
   register: deploy_ocp4_nodes
   tags: [ deploy_nodes, rhcos, add_workers]
 
-- name: include wait_for_vm_shutdown.yml
-  include_tasks: wait_for_vm_shutdown.yml
+- name: build list of deployed vms
+  vars:
+    vm_name: "{{ item }}"
+  set_fact:
+    new_nodes: "{{ new_nodes + [ vm_name ] }}"
+  when: vm_name not in all_vms.list_vms
   loop: "{{ ocp4_nodes }}"
-  loop_control:
-    loop_var: vm_name
-    label: vm_name
-  when: deploy_ocp4_nodes.changed
-  tags: [ deploy_nodes, rhcos, rhcos_wait, add_workers]
+  register: deploy_ocp4_nodes
+  tags: [ deploy_nodes, rhcos, add_workers]
+
+- name: show new nodes
+  debug:
+    msg: "{{ item }}"
+  loop: "{{ new_nodes }}"
+  tags: [ deploy_nodes, rhcos, add_workers]
+
+- name: show ocp4_nodes
+  debug:
+    var: item
+  loop: "{{ ocp4_nodes }}"
+  tags: [ deploy_nodes, rhcos, add_workers]
+
+- name: include wait_for_vm_shutdown.yml
+  vars:
+    vm_name: "{{ item }}"
+  include_tasks: wait_for_vm_shutdown.yml
+  loop: "{{ new_nodes }}"
+  tags: [ deploy_nodes, rhcos, rhcos_wait, add_workers ]
 
 - name: ensure all nodes are started
   vars:
@@ -158,7 +170,6 @@
   register: continue_install
   tags: [ deploy_nodes, bootstrap, postinstall ]
 
-
 - name: Waiting for Installation to Complete
   shell: |
     /usr/local/bin/oc get csr -ojson | jq -r '.items[] | select(.status == {} ) | .metadata.name' | xargs /usr/local/bin/oc adm certificate approve
@@ -180,3 +191,11 @@
       import_tasks: check_cluster.yml
   when: "'Install complete!' in install_status.stdout"
   tags: [ complete_install ]
+
+- name: add worker node to ocp cluster
+  vars:
+    vm_name: "{{ item }}"
+  script: files/qubinode-add-worker-node {{ vm_name }}
+  loop: "{{ new_nodes }}"
+  when: approve_work_csr|bool
+  tags: [ deploy_nodes, rhcos, node_profile, add_workers ]

@@ -10,11 +10,17 @@ args+='coreos.inst.ignition_url={{ rhcos_ignition }} '
 args+='ip={{ vm_ip }}::{{ ocp4_nat_gateway }}:{{ mask }}:{{ vm_name }}.{{ cluster_name }}.{{ ocp4_cluster_domain }}:ens3:none nameserver={{ dns_server_ip }} '
 args+='rd.neednet=1'
 
+{% if performance_disk %}
+qemu_mode=falloc
+{% else %}
+qemu_mode=metadata
+{% endif %}
+
 # {{ vm_type }} Node
-sudo qemu-img create -f qcow2 -o preallocation=falloc {{ kvm_host_libvirt_dir }}/{{ vm_name }}-vda.qcow2 {{ hd_size }}
+sudo qemu-img create -f qcow2 -o preallocation=$qemu_mode {{ kvm_host_libvirt_dir }}/{{ vm_name }}-vda.qcow2 {{ hd_size }}
 {% for item in extra_storage %}
 {%- if item.enable %}
-sudo qemu-img create -f qcow2 -o preallocation=falloc {{ kvm_host_libvirt_dir }}/{{ vm_name }}-{{ item.name }}.qcow2 {{ item.size }}
+sudo qemu-img create -f qcow2 -o preallocation=$qemu_mode {{ kvm_host_libvirt_dir }}/{{ vm_name }}-{{ item.name }}.qcow2 {{ item.size }}
 {% endif %}
 {% endfor %}
 
