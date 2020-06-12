@@ -45,7 +45,7 @@
   set_fact:
     namespace_exist:
     local_storage_operator_pods_exist:
-    local_storage_operator_exist: 
+    local_storage_operator_exist:
 
 - name: check local-storage
   include: configure-local-storage-checks.yml
@@ -81,7 +81,7 @@
             owner: "{{ admin_user }}"
             group: "{{ admin_user }}"
             mode: 0666
-    
+
         - name: Provision the localstroage custom resource type filesystem
           command: "/usr/local/bin/oc create -f {{ openshift_install_dir }}/localstorage-filesystem.yaml"
           environment:
@@ -98,14 +98,14 @@
             owner: "{{ admin_user }}"
             group: "{{ admin_user }}"
             mode: 0666
-          when: localstorage_block not delete_deployment|bool
-    
+
         - name: Provision the localstorage custom resource block storage
           command: "/usr/local/bin/oc create -f {{ openshift_install_dir }}/localstorage-block.yaml"
           environment:
             KUBECONFIG: "{{ openshift_install_dir }}/auth/kubeconfig"
           when: not delete_deployment|bool  and localvol_block_sc.rc != 0
       when: localstorage_block|bool
+
     - name: Remove to the local-storage localstorage-filesystem.yaml
       command: "/usr/local/bin/oc delete -f {{ openshift_install_dir }}/localstorage-filesystem.yaml"
       environment:
