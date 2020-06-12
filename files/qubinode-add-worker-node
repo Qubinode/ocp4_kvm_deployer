@@ -4,18 +4,17 @@
 
 node_name=$1
 WAIT_TIME=20
+STATE=""
 
 if [ "$1" != "" ]
 then
     LASP_TIME=0
-    until oc get nodes | grep $node_name || [ $LASP_TIME -eq $WAIT_TIME ]
+    until [[ "A${STATE}" == "AReady" ]] || [[ $LASP_TIME -eq $WAIT_TIME ]]
     do
-        oc get csr -ojson |\
-            jq -r '.items[] |\ 
-            select(.status == {} ) |\ 
-            .metadata.name'|\
+	echo $STATE
+	STATE=$(oc get nodes | grep $node_name | awk '{print $2}')
+	oc get csr -ojson | jq -r '.items[] | select(.status == {} ) | .metadata.name'|\
             xargs oc adm certificate approve
-        oc get nodes > /dev/null
         sleep $(( LASP_TIME++ ))
     done
 else

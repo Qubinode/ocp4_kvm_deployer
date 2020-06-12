@@ -192,10 +192,20 @@
   when: "'Install complete!' in install_status.stdout"
   tags: [ complete_install ]
 
-- name: add worker node to ocp cluster
-  vars:
-    vm_name: "{{ item }}"
-  script: files/qubinode-add-worker-node {{ vm_name }}
-  loop: "{{ new_nodes }}"
+- name: worker node csr
+  block:
+    - name: add worker csr script
+      copy:
+        src: files/qubinode-add-worker-node
+        dest: /usr/local/bin/qubinode-add-worker-node
+
+    - name: approve worker node csr
+      vars:
+        vm_name: "{{ item }}"
+      shell: /usr/local/bin/qubinode-add-worker-node {{ vm_name }}
+      loop: "{{ new_nodes }}"
+      loop_control:
+        label: "{{ item }}"
   when: approve_work_csr|bool
   tags: [ deploy_nodes, rhcos, node_profile, add_workers ]
+  become: yes
