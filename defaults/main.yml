@@ -156,6 +156,9 @@ podman_pkgs:
   - slirp4netns
   - nfs-utils
 
+# Defaults for additional worker 
+approve_work_csr: false
+
 # localstorage
 localstorage_version: '4.3'
 localstorage_filesystem: true
