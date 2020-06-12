@@ -1,0 +1,29 @@
+#!/bin/bash
+
+# Add a new worker node to the clsuter
+
+node_name=$1
+WAIT_TIME=5
+NODE_STATUS=""
+
+if [ "$1" != "" ]
+then
+    oc adm cordon $node_name
+    oc adm drain $node_name --force --delete-local-data --ignore-daemonsets
+
+    LASP_TIME=0
+    until [[ "A${NODE_STATUS}" == "ASchedulingDisabled" ]] || [[ $LASP_TIME -eq $WAIT_TIME ]]
+    do
+       NODE_STATUS=$(oc get nodes | awk -v var="${node_name}" '$0 ~ var {print $2}'|cut -d, -f2)
+       sleep $(( LASP_TIME++ ))
+    done
+
+    # delete node
+    oc delete nodes $node_name
+
+else
+    echo "You must a ocp node name"
+    exit 1
+fi
+
+exit 0

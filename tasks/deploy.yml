@@ -197,7 +197,14 @@
     - name: add worker csr script
       copy:
         src: files/qubinode-add-worker-node
+        dest: /usr/local/bin/qubinode-remove-worker-node
+        mode: '0755'
+
+    - name: add remove worker csr script
+      copy:
+        src: files/qubinode-add-worker-node
         dest: /usr/local/bin/qubinode-add-worker-node
+        mode: '0755'
 
     - name: approve worker node csr
       vars:
