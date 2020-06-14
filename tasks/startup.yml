@@ -89,7 +89,7 @@
 
 - name: ensure compute nodes are set to schedulable
   vars:
-    vm_name: "compute-{{ '%00x' |format(item) }}"
+    vm_name: "compute-{{ '%00x' |format(item) }}.{{ cluster_name }}.{{ ocp4_cluster_domain }}"
   shell: >
     /usr/local/bin/oc adm uncordon "{{ vm_name }}"
   register: schedule_state
