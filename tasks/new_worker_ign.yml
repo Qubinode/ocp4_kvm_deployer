@@ -47,13 +47,13 @@
 
     - name: Restart podman webserver
       shell: |
-          podman stop qbn-httpd
-          podman inspect -f "{{.State.Status}}" qbn-httpd
-          if podman inspect -f "{{.State.Status}}" qbn-httpd | grep exited
+          podman stop {{ podman_webserver }}
+          podman inspect -f {%raw%}"{{.State.Status}}"{%endraw%} {{ podman_webserver }}
+          if podman inspect -f "{{.State.Status}}" {{ podman_webserver }} | grep exited
           then
-              podman start qbn-httpd
+              podman start {{ podman_webserver }}
           fi
-          podman inspect -f "{{.State.Status}}" qbn-httpd
+          podman inspect -f {%raw%}"{{.State.Status}}"{%endraw%} {{ podman_webserver }}
       register: container_status
       until: "'running' in container_status.stdout"
       retries: 60
