@@ -49,13 +49,30 @@
       shell: |
           podman stop {{ podman_webserver }}
           podman inspect -f {%raw%}"{{.State.Status}}"{%endraw%} {{ podman_webserver }}
-          if podman inspect -f "{{.State.Status}}" {{ podman_webserver }} | grep exited
+          sleep 10s
+          if podman inspect -f {%raw%}"{{.State.Status}}"{%endraw%} {{ podman_webserver }} | grep exited
           then
               podman start {{ podman_webserver }}
           fi
+          sleep 60s
           podman inspect -f {%raw%}"{{.State.Status}}"{%endraw%} {{ podman_webserver }}
       register: container_status
       until: "'running' in container_status.stdout"
-      retries: 60
+      retries: 10
       delay: 30
       become: yes
+
+    - name: add worker csr script
+      copy:
+        src: files/qubinode-add-worker-node
+        dest: /usr/local/bin/qubinode-remove-worker-node
+        mode: '0755'
+      become: yes
+
+    - name: add remove worker csr script
+      copy:
+        src: files/qubinode-add-worker-node
+        dest: /usr/local/bin/qubinode-add-worker-node
+        mode: '0755'
+      become: yes
+

@@ -3,7 +3,7 @@
 # Add a new worker node to the clsuter
 
 node_name=$1
-WAIT_TIME=20
+WAIT_TIME=60
 STATE=""
 
 if [ "$1" != "" ]
@@ -11,11 +11,11 @@ then
     LASP_TIME=0
     until [[ "A${STATE}" == "AReady" ]] || [[ $LASP_TIME -eq $WAIT_TIME ]]
     do
-	echo $STATE
-	STATE=$(oc get nodes | grep $node_name | awk '{print $2}')
 	oc get csr -ojson | jq -r '.items[] | select(.status == {} ) | .metadata.name'|\
-            xargs oc adm certificate approve
+            xargs oc adm certificate approve > /dev/null 2>&1
         sleep $(( LASP_TIME++ ))
+	STATE=$(oc get nodes | grep $node_name | awk '{print $2}')
+	echo "$node_name state is $STATE"
     done
 else
     echo "You must a ocp node name"

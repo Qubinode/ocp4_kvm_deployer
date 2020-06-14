@@ -197,27 +197,33 @@
   when: "'Install complete!' in install_status.stdout"
   tags: [ complete_install ]
 
-- name: worker node csr
-  block:
-    - name: add worker csr script
-      copy:
-        src: files/qubinode-add-worker-node
-        dest: /usr/local/bin/qubinode-remove-worker-node
-        mode: '0755'
-
-    - name: add remove worker csr script
-      copy:
-        src: files/qubinode-add-worker-node
-        dest: /usr/local/bin/qubinode-add-worker-node
-        mode: '0755'
-
-    - name: approve worker node csr
-      vars:
-        vm_name: "{{ item }}"
-      shell: /usr/local/bin/qubinode-add-worker-node {{ vm_name }}
-      loop: "{{ new_nodes }}"
-      loop_control:
-        label: "{{ item }}"
-  when: approve_work_csr|bool
-  tags: [ deploy_nodes, rhcos, node_profile, add_workers ]
-  become: yes
+#- name: worker node csr
+#  block:
+#    - name: add worker csr script
+#      copy:
+#        src: files/qubinode-add-worker-node
+#        dest: /usr/local/bin/qubinode-remove-worker-node
+#        mode: '0755'
+#
+#    - name: add remove worker csr script
+#      copy:
+#        src: files/qubinode-add-worker-node
+#        dest: /usr/local/bin/qubinode-add-worker-node
+#        mode: '0755'
+#
+#    - name: approve worker node csr
+#      vars:
+#        vm_name: "{{ item }}.{{ cluster_name }}.{{ ocp4_cluster_domain }}"
+#      shell: /usr/local/bin/qubinode-add-worker-node {{ vm_name }}
+#      register: aproved_workers
+#      loop: "{{ new_nodes }}"
+#      loop_control:
+#        label: "{{ vm_name }}"
+#
+#    - name: show approved worker node csr
+#      debug:
+#        var: aproved_workers
+#
+#  when: approve_work_csr|bool
+#  tags: [ deploy_nodes, rhcos, node_profile, add_workers ]
+#  become: yes
