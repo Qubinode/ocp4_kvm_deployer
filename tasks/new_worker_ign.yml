@@ -62,14 +62,14 @@
       delay: 30
       become: yes
 
-    - name: add worker csr script
+    - name: add remove worker csr script
       copy:
-        src: files/qubinode-add-worker-node
+        src: files/qubinode-remove-worker-node
         dest: /usr/local/bin/qubinode-remove-worker-node
         mode: '0755'
       become: yes
 
-    - name: add remove worker csr script
+    - name: add worker csr script
       copy:
         src: files/qubinode-add-worker-node
         dest: /usr/local/bin/qubinode-add-worker-node

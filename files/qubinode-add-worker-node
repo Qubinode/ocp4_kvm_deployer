@@ -4,7 +4,7 @@
 
 node_name=$1
 WAIT_TIME=60
-STATE=""
+STATE="WaitOnCSR"
 
 if [ "$1" != "" ]
 then

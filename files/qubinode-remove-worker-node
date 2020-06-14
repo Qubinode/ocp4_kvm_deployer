@@ -19,7 +19,13 @@ then
     done
 
     # delete node
-    oc delete nodes $node_name
+    LASP_TIME=0
+    until [[ "A${NODE_REMOVED}" == "A" ]] || [[ $LASP_TIME -eq $WAIT_TIME ]]
+    do
+       oc delete nodes $node_name
+       NODE_REMOVED=$(oc get nodes | awk -v var="${node_name}" '$0 ~ var {print $1}'|cut -d, -f1)
+       sleep $(( LASP_TIME++ ))
+    done
 
 else
     echo "You must a ocp node name"
