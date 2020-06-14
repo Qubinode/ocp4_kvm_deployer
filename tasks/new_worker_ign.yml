@@ -42,10 +42,10 @@
         sed --regexp-extended --in-place=.backup "s%base64,[^,]+%base64,$(cat {{ ocp4_dir }}/api-int.base64)\"%" {{ worker_ign }}.new
       register: new_worker_ign
       when: certs_rotation_status.stdout == 'rotated'
-      notify: restart webserver
       tags: [ deploy_nodes, rhcos, node_profile, add_workers ]
       become: no
 
-    - meta: flush_handlers
-      tags: [ deploy_nodes, rhcos, node_profile, add_workers ]
-
+    - name: restart podman webserver
+      shell: |
+        systemctl restart qbn-httpd.service
+      become: yes
