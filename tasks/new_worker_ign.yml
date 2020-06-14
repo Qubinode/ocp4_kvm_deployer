@@ -45,7 +45,17 @@
       tags: [ deploy_nodes, rhcos, node_profile, add_workers ]
       become: no
 
-    - name: restart podman webserver
+    - name: Restart podman webserver
       shell: |
-        systemctl restart qbn-httpd.service
+          podman stop qbn-httpd
+          podman inspect -f "{{.State.Status}}" qbn-httpd
+          if podman inspect -f "{{.State.Status}}" qbn-httpd | grep exited
+          then
+              podman start qbn-httpd
+          fi
+          podman inspect -f "{{.State.Status}}" qbn-httpd
+      register: container_status
+      until: "'running' in container_status.stdout"
+      retries: 60
+      delay: 30
       become: yes
