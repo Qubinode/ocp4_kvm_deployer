@@ -10,3 +10,14 @@
   command: 'firewall-cmd --reload'
   tags: nfs
 
+- name: restart webserver
+  service:
+    name: qbn-httpd.service
+    state: restarted
+  tags: [ deploy_nodes, rhcos, node_profile, add_workers ]
+
+- name: restart load balancer
+  service:
+    name: qbn-lb.service
+    state: restarted
+  tags: [ deploy_nodes, rhcos, node_profile, add_workers ]

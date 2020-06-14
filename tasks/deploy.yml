@@ -76,6 +76,11 @@
   import_tasks: configure_dns_entries.yml
   tags: [ deploy_nodes, idm ]
 
+- name: import tasks from new_worker_ign.yml
+  import_tasks: new_worker_ign.yml
+  when: approve_work_csr|bool
+  tags: [ deploy_nodes, rhcos, node_profile, add_workers ]
+
 - name: include build_cluster_nodes_profile.yml
   include_tasks: build_cluster_nodes_profile.yml
   loop: "{{ ocp4_instances }}"

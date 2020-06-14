@@ -38,5 +38,4 @@ sudo virt-install --name {{ vm_name }} \
   --network network={{ libvirt_network_name }},mac=${mac_address},model=virtio --noreboot --noautoconsole\
   --location {{ virtinstall_dir }} \
   --rng /dev/urandom \
-  --console pty,target.type=virtio \
   --extra-args="${args}"
