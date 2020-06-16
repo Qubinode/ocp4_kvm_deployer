@@ -5,17 +5,16 @@
 set -xe
 mac_address=$(sudo virsh net-dumpxml {{ libvirt_network_name }}|awk '/host mac/ {print $0}'| awk '/{{ vm_name }}/ {print $2}'|grep -o -E '([[:xdigit:]]{1,2}:){5}[[:xdigit:]]{1,2}')
 
-#sudo qemu-img create -f qcow2  -b {{ kvm_host_libvirt_dir }}/{{ fedora_qcow_image }}  {{ kvm_host_libvirt_dir }}/{{ vm_name }}-vda.qcow2 
+kernel=http://{{ bootstrap_webserver_ip }}:8080/pub/{{ ocp4_dependencies_version }}/images/{{ coreos_installer_kernel }}
+initrd=http://{{ bootstrap_webserver_ip }}:8080/pub/{{ ocp4_dependencies_version }}/images/{{ coreos_installer_initramfs }}
 
-
-kernel={{ coreos_installer_kernel }}
-initrd={{ coreos_installer_initramfs }}
+sudo qemu-img create -f qcow2  -b {{ kvm_host_libvirt_dir }}/fedora-coreos-31.20200517.3.0-openstack.x86_64.qcow2  {{ kvm_host_libvirt_dir }}/{{ vm_name }}-vda.qcow2 
 
 args='nomodeset '
 args+='coreos.inst=yes '
 args+='console=tty0 console=ttyS0 '
 args+='coreos.inst.install_dev=/dev/vda '
-args+='rd.neednet=1'
+args+='rd.neednet=1 '
 args+='coreos.inst.stream=stable '
 args+='coreos.inst.ignition_url={{ rhcos_ignition }} '
 args+='ip=dhcp '
