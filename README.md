@@ -141,6 +141,13 @@ Dependancy roles:
 22. wait_for_vm_shutdown.yml: wait for the bootstrap node to shutdown
 23. destroy the bootstrap node
 
+
+For OKD 4 Deployments use the following pull secert
+```
+$ cat pull-secret.txt 
+{"auths":{"fake":{"auth": "bar"}}}
+```
+
 Configure nfs provisioner
 ```
 ansible-playbook playbooks/deploy_ocp4.yml --start-at-task="Waiting for Installation to Complete"

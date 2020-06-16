@@ -21,9 +21,5 @@ networking:
   type: OpenShiftSDN
 platform:
   none: {}
-{% if ocp4_okd4 ==  "ocp4" %}
 pullSecret: '{{ lookup('file', pull_secret) }}'
-{% else %}
-pullSecret: "'{'auths':{'fake':{'auth': 'bar'}}}'"
-{% endif %}
 sshKey: {{ ssh_ocp4_public_key }}
