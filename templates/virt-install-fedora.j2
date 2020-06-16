@@ -1,0 +1,30 @@
+#!/bin/bash
+##
+# Still in development preview
+##
+set -xe
+mac_address=$(sudo virsh net-dumpxml {{ libvirt_network_name }}|awk '/host mac/ {print $0}'| awk '/{{ vm_name }}/ {print $2}'|grep -o -E '([[:xdigit:]]{1,2}:){5}[[:xdigit:]]{1,2}')
+
+#sudo qemu-img create -f qcow2  -b {{ kvm_host_libvirt_dir }}/{{ fedora_qcow_image }}  {{ kvm_host_libvirt_dir }}/{{ vm_name }}-vda.qcow2 
+
+
+kernel={{ coreos_installer_kernel }}
+initrd={{ coreos_installer_initramfs }}
+
+args='nomodeset '
+args+='coreos.inst=yes '
+args+='console=tty0 console=ttyS0 '
+args+='coreos.inst.install_dev=/dev/vda '
+args+='rd.neednet=1'
+args+='coreos.inst.stream=stable '
+args+='coreos.inst.ignition_url={{ rhcos_ignition }} '
+args+='ip=dhcp '
+#args+='ip=192.168.50.2::192.168.50.1:255.255.255.0:{{ vm_name }}.{{ cluster_name }}.{{ ocp4_cluster_domain }}eth0:none nameserver=10.90.30.161 nameserver=8.8.8.8 '
+
+sudo virt-install --name {{ vm_name }} --ram 16192 --vcpus 4 \
+  --disk size=120 \
+  --os-type linux  \
+  --os-variant fedora31 \
+  --rng /dev/urandom \
+  --network network={{ libvirt_network_name }},model=virtio,mac=${mac_address} --noreboot --noautoconsole \
+  --install kernel=${kernel},initrd=${initrd},kernel_args_overwrite=yes,kernel_args="${args}"

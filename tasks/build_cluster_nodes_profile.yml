@@ -1,5 +1,5 @@
 ---
-- name: create virt-install template
+- name: create virt-install template for Red Hat CoreOS 
   vars:
     vm_name:  "{{ outer_item.name if outer_item.name == 'bootstrap' else outer_item.name + '-' + '%00x'|format(inner_item) }}"
     cpu_size: "{{ outer_item.cpu_size }}"
@@ -21,3 +21,28 @@
     loop_var: inner_item
     label: "building {{ vm_name }}"
   tags: [ deploy_nodes, node_profile, add_workers]
+  when: ocp4_okd4 == 'ocp4'
+
+- name: create virt-install template for Fedora CoreOS
+  vars:
+    vm_name:  "{{ outer_item.name if outer_item.name == 'bootstrap' else outer_item.name + '-' + '%00x'|format(inner_item) }}"
+    cpu_size: "{{ outer_item.cpu_size }}"
+    memory_size: "{{ outer_item.memory_size }}"
+    hd_size: "{{ outer_item.hd_size }}"
+    extra_storage: "{{ outer_item.extra_storage }}"
+    vm_type: "{{ outer_item.vm_type }}"
+    last_octet: "{{ '%02x' |format(inner_item)|int + outer_item.ip_octet }}"
+    ip_address: "{{ ocp4_nat_subnet.split('.')[:3] | join('.') }}.{{ '%02x' |format(inner_item)|int + outer_item.ip_octet }}"
+    vm_ip: "{{ '192.168.50.2' if outer_item.name == 'bootstrap' else ip_address }}"
+    vm_mac: "{{ mac_start }}{{ '%02x' % ocp4_nat_subnet.split('.')[1]|int }}:{{ '%02x' % ocp4_nat_subnet.split('.')[2]|int }}:{{ '%02x' % last_octet|int }}"
+  template:
+    src: virt-install-fedora.j2
+    dest: "{{ virtinstall_dir }}/{{ vm_name }}.sh"
+    mode: "u=rwx,g=rx,o=rx"
+    owner: "{{ local_user_account }}"
+  loop: "{{ range(0, outer_item.qty|int)|list }}"
+  loop_control:
+    loop_var: inner_item
+    label: "building {{ vm_name }}"
+  tags: [ deploy_nodes, node_profile, add_workers]
+  when: ocp4_okd4 == 'okd4'
