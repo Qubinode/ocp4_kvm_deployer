@@ -5,8 +5,8 @@
 set -xe
 mac_address=$(sudo virsh net-dumpxml {{ libvirt_network_name }}|awk '/host mac/ {print $0}'| awk '/{{ vm_name }}/ {print $2}'|grep -o -E '([[:xdigit:]]{1,2}:){5}[[:xdigit:]]{1,2}')
 
-kernel=http://{{ bootstrap_webserver_ip }}:8080/pub/{{ ocp4_dependencies_version }}/images/{{ coreos_installer_kernel }}
-initrd=http://{{ bootstrap_webserver_ip }}:8080/pub/{{ ocp4_dependencies_version }}/images/{{ coreos_installer_initramfs }}
+kernel=https://builds.coreos.fedoraproject.org/prod/streams/stable/builds/{{ major_version }}/x86_64/fedora-coreos-{{ major_version }}-live-kernel-x86_64
+initrd=https://builds.coreos.fedoraproject.org/prod/streams/stable/builds/{{ major_version }}/x86_64/fedora-coreos-{{ major_version }}-live-initramfs.x86_64.img
 
 args='nomodeset '
 args+='coreos.inst=yes '
