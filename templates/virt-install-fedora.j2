@@ -8,8 +8,6 @@ mac_address=$(sudo virsh net-dumpxml {{ libvirt_network_name }}|awk '/host mac/ 
 kernel=http://{{ bootstrap_webserver_ip }}:8080/pub/{{ ocp4_dependencies_version }}/images/{{ coreos_installer_kernel }}
 initrd=http://{{ bootstrap_webserver_ip }}:8080/pub/{{ ocp4_dependencies_version }}/images/{{ coreos_installer_initramfs }}
 
-sudo qemu-img create -f qcow2  -b {{ kvm_host_libvirt_dir }}/fedora-coreos-31.20200517.3.0-openstack.x86_64.qcow2  {{ kvm_host_libvirt_dir }}/{{ vm_name }}-vda.qcow2 
-
 args='nomodeset '
 args+='coreos.inst=yes '
 args+='console=tty0 console=ttyS0 '
@@ -18,7 +16,7 @@ args+='rd.neednet=1 '
 args+='coreos.inst.stream=stable '
 args+='coreos.inst.ignition_url={{ rhcos_ignition }} '
 args+='ip=dhcp '
-#args+='ip=192.168.50.2::192.168.50.1:255.255.255.0:{{ vm_name }}.{{ cluster_name }}.{{ ocp4_cluster_domain }}eth0:none nameserver=10.90.30.161 nameserver=8.8.8.8 '
+#args+='ip=192.168.50.2::192.168.50.1:255.255.255.0:{{ vm_name }}.{{ cluster_name }}.{{ ocp4_cluster_domain }}:eth0:none nameserver=10.90.30.161 nameserver=8.8.8.8 '
 
 sudo virt-install --name {{ vm_name }} --ram 16192 --vcpus 4 \
   --disk size=120 \
