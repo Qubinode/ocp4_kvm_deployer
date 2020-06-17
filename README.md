@@ -1,7 +1,7 @@
 ocp4-kvm-deployer
 =================
 
-This role will deploy OCP4 on a kvm host. It was develop to support the [Qubinode Installer](https://github.com/Qubinode/qubinode-installer).
+This role will deploy OCP4 and OKD4 on a kvm host. It was develop to support the [Qubinode Installer](https://github.com/Qubinode/qubinode-installer).
 
 Requirements
 ------------
@@ -30,7 +30,8 @@ Example Playbook
     become: yes
     vars:
       local_user_account: admin
-      ocp4_release: 4.3.0
+      ocp4_okd4: ocp4
+      ocp4_release: 4.4.6
       ocp4_dependencies_version: "{{ ocp4_release[:3] }}"
       ocp4_image_version: "{{ ocp4_release[:3] + '.0' }}"
       installation_working_dir: /home/admin/qubinode-installer
