@@ -21,7 +21,7 @@ Roles:
   - [openshift-4-loadbalancer](https://github.com/Qubinode/openshift-4-loadbalancer)
   - [ocp4-bootstrap-webserver](https://github.com/Qubinode/ocp4-bootstrap-webserver)
 
-Example Playbook
+Example Playbook Deploying OpenShift 4 Cluster
 ----------------
 
 ```
@@ -32,6 +32,7 @@ Example Playbook
       local_user_account: admin
       ocp4_okd4: ocp4
       ocp4_release: 4.4.6
+      family_tree: "Red Hat CoreOS"
       ocp4_dependencies_version: "{{ ocp4_release[:3] }}"
       ocp4_image_version: "{{ ocp4_release[:3] + '.0' }}"
       installation_working_dir: /home/admin/qubinode-installer
@@ -47,10 +48,10 @@ Example Playbook
       webserver_directory: /opt/qubinode_webserver
       webserver_dependencies: "{{ webserver_directory }}/{{ ocp4_dependencies_version }}"
       webserver_images: "{{ webserver_directory }}/{{ ocp4_dependencies_version }}/images"
-      coreos_installer_kernel: "rhcos-{{ ocp4_image_version }}-x86_64-installer-kernel"
-      coreos_installer_initramfs: "rhcos-{{ ocp4_image_version }}-x86_64-installer-initramfs.img"
-      coreos_metal_bios: "rhcos-{{ ocp4_image_version }}-x86_64-metal.raw.gz"
-      openshift_mirror: http://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/{{ ocp4_dependencies_version }}/{{ ocp4_image_version }}
+      coreos_installer_kernel: "fedora-coreos-{{ major_version }}-live-kernel-x86_64"   
+      coreos_installer_initramfs: "fedora-coreos-{{ major_version }}-live-initramfs.x86_64.img"
+      coreos_metal_bios: "fedora-coreos-{{ major_version }}-metal.x86_64.raw.xz"
+      openshift_mirror: "https://builds.coreos.fedoraproject.org/prod/streams/stable/builds/{{ major_version }}/x86_64"
       coreos_tmp_dir: /tmp/build_coreos_container
       tear_down: false
       virtinstall_dir: "{{ installation_working_dir }}/rhcos-install/"
@@ -82,6 +83,78 @@ Example Playbook
     - name: run the role ocp4-kvm-deployer
       import_role:
         name: ocp4-kvm-deployer
+```
+
+Example Playbook Deploying OKD 4 Cluster
+----------------
+
+```
+  - name: Deploy OKD 4.x Cluster
+    hosts: localhost
+    become: yes
+    vars:
+      local_user_account: admin
+      ocp4_okd4: okd4
+      ocp4_release: 4.4.0-0.okd-2020-05-23-055148-beta5
+      ocp4_dependencies_version: "{{ major_version }}"
+      ocp4_image_version: "{{ major_version }}"
+      installation_working_dir: /home/admin/qubinode-installer
+      ocp4_release_url: "https://github.com/openshift/okd/releases/download/{{ ocp4_release }}"
+      family_tree: "Fedora CoreOS"
+      pull_secret: "{{ installation_working_dir }}/pull-secret.txt"
+      vm_public_key: "/home/{{ local_user_account }}/.ssh/id_rsa.pub"
+      openshift_install_folder: ocp4
+      openshift_install_dir: "{{ installation_working_dir }}/{{ openshift_install_folder }}"
+      ignition_files_dir: "{{ openshift_install_dir }}"
+      ssh_ocp4_public_key: "{{ lookup('file', vm_public_key) }}"
+      podman_webserver: qbn-httpd
+      rhcos_webserver_img_name: rhcos-webserver
+      dest_ignitions_web_directory: "{{ webserver_directory }}/{{ ocp4_dependencies_version }}/ignitions/"
+      webserver_directory: /opt/qubinode_webserver
+      webserver_dependencies: "{{ webserver_directory }}/{{ ocp4_dependencies_version }}"
+      webserver_images: "{{ webserver_directory }}/{{ ocp4_dependencies_version }}/images"
+      coreos_installer_kernel: "rhcos-{{ ocp4_image_version }}-x86_64-installer-kernel"
+      coreos_installer_initramfs: "rhcos-{{ ocp4_image_version }}-x86_64-installer-initramfs.img"
+      coreos_metal_bios: "rhcos-{{ ocp4_image_version }}-x86_64-metal.raw.gz"
+      openshift_mirror: http://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/{{ ocp4_dependencies_version }}/{{ ocp4_image_version }}
+      coreos_tmp_dir: /tmp/build_coreos_container
+      tear_down: false
+      virtinstall_dir: "{{ installation_working_dir }}/rhcos-install/"
+      internal_domain_name: "{{ domain }}"
+      external_domain_name: "{{ domain }}"
+      libivrt_network_domain: "{{ cluster_name }}.{{ ocp4_subdomain }}.{{ domain }}"
+      ocp4_cluster_domain: "cloud.{{ internal_domain_name }}"
+      idm_server_shortname: qbn-dns01
+      user_idm_admin: admin
+      user_idm_password: "password"
+      idm_server_ipaddr: 192.168.11.1
+      dns_teardown: false
+      idm_dns_forward_zone: "{{ ocp4_cluster_domain }}"
+      idm_dns_reverse_zone: "50.168.192.in-addr.arpa."
+      idm_server_fqdn: qbn-dns01.lunchnet.example
+      dns_wildcard: "*.apps.{{ cluster_name }}"
+      nat_gateway: "192.168.50.1"
+      localstorage_version: '4.3'
+      localstorage_filesystem: true
+      localstorage_block: false
+      localstorage_block_disk: /dev/vdc
+      localstorage_fs_disk: /dev/vdb
+
+    environment:
+      IPA_HOST: "{{idm_server_shortname}}.{{ internal_domain_name }}"
+      IPA_USER: "{{ user_idm_admin }}"
+      IPA_PASS: "{{ user_idm_password }}"
+
+    tasks:
+    - name: run the role ocp4-kvm-deployer
+      import_role:
+        name: ocp4-kvm-deployer
+```
+
+For OKD 4 Deployments use the following pull secert
+```
+$ cat pull-secret.txt 
+{"auths":{"fake":{"auth": "bar"}}}
 ```
 
 Additional Details About The Role
@@ -143,11 +216,7 @@ Dependancy roles:
 23. destroy the bootstrap node
 
 
-For OKD 4 Deployments use the following pull secert
-```
-$ cat pull-secret.txt 
-{"auths":{"fake":{"auth": "bar"}}}
-```
+
 
 Configure nfs provisioner
 ```
