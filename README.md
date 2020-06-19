@@ -252,7 +252,7 @@ Dependancy roles:
 
 To-Do List / Known Limitations
 ------------------------------
->List of To-Do if anyone would like to contriube to the role
+>List of to-do's if anyone would like to contriube to the role
 - ocp4-bootstrap-webserver does not need to download any coreos images
 - Currently disconnected installation is not supported in OCP4/OKD4 role
 - localstorage - Role has not been tested on OKD
