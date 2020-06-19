@@ -173,6 +173,15 @@ Dependancy roles:
   - openshift-4-loadbalancer
   - nfs-provisioner-role
 
+To-Do List / Known Limitations
+------------------------------
+>List of To-Do if anyone would like to contriube to the role
+- ocp4-bootstrap-webserver does not need to download any coreos images
+- Currently disconnected installation is not supported in OCP4/OKD4 role
+- localstorage - Role has not been tested on OKD
+- Role currently does not support IPI install on OCP or OKD.
+- Role should be able to run on Fedora or Centos but has not been tested.
+
 License
 -------
 
