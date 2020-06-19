@@ -5,7 +5,8 @@ project_dir:  /home/{{ admin_user }}/qubinode-installer/
 ocp4_pull_secret: /home/{{ admin_user }}/qubinode-installer/pull-secret.txt
 
 # OCP release info
-ocp4_release: 4.3.3
+ocp4_okd4: ocp4
+ocp4_release: 4.4.6
 ocp4_release_dir: "{{ ocp4_release }}"
 ocp4_release_url: "https://mirror.openshift.com/pub/openshift-v4/clients/ocp/{{ ocp4_release_dir }}"
 
@@ -13,6 +14,9 @@ openshift_install_folder: ocp4
 ocp4_client: "openshift-client-linux-{{ ocp4_release }}.tar.gz"
 ocp4_installer: "openshift-install-linux-{{ ocp4_release }}.tar.gz"
 tools_missing: false
+
+# treeinfo 
+family_tree: "Red Hat CoreOS"
 
 # add worker nodes
 add_workers: no
