@@ -67,12 +67,16 @@
         src: files/qubinode-remove-worker-node
         dest: /usr/local/bin/qubinode-remove-worker-node
         mode: '0755'
+        owner: "{{ admin_user }}"
+        group: "{{ admin_user }}"
       become: yes
 
     - name: add worker csr script
       copy:
         src: files/qubinode-add-worker-node
         dest: /usr/local/bin/qubinode-add-worker-node
+        owner: "{{ admin_user }}"
+        group: "{{ admin_user }}"
         mode: '0755'
       become: yes
 

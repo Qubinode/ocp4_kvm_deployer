@@ -23,10 +23,6 @@
       import_tasks: destroy_bootstrap_node.yml
       when: cluster_deployed_msg == 'deployed'
 
-    - name: enable shutdown before 24hrs lasped
-      import_tasks: enable_shutdown.yml
-      when: cluster_shutdown_before_cert_rotate|bool
-    
     - name: import configure-local-storage.yml
       import_tasks: configure-local-storage.yml
       tags: [ localstorage, deploy_nodes, rhcos, postinstall ]
@@ -40,3 +36,7 @@
 - name: import startup task
   import_tasks: startup.yml
   when: not tear_down|bool and startup_cluster|bool
+
+- name: import shutdown task
+  import_tasks: shutdown.yml
+  when: not tear_down|bool and shutdown_cluster|bool

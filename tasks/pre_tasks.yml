@@ -5,6 +5,13 @@
     compute_node_count: "{{ 1 if compute_count|int == 0 else compute_count }}"
   tags: [ setup, deploy_nodes, rhcos, bootstrap, idm]
 
+- name: get users homedir
+  set_fact:
+    homedir: "{{ lookup('env','HOME') }}"
+  become: yes
+  become_user: "{{ admin_user }}"
+  tags: always
+
 - name: Setting Ingress information and machine configuration for bootstrap nodes and other machines
   set_fact:
     tmp_api: "[ '{{ bootstrap_ip }}:6443' ]"

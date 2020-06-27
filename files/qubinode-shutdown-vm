@@ -1,0 +1,40 @@
+#!/bin/bash
+
+SCRIPT=$(basename "${BASH_SOURCE[0]}")
+
+function HELP {
+  echo -e " -u user to ssh as"
+  echo -e " -i ssh-key id for the user"
+  echo -e " -n name of the vm to shutdown"
+  exit 1
+}
+
+while getopts "u:i:n:h" opt
+do
+    case "$opt" in
+      u) NODE_USER=$OPTARG;;
+      i) USER_SSH_ID=$OPTARG;;
+      n) NODE=$OPTARG;;
+      h) HELP;;
+      \?) echo -e "Usage: ${SCRIPT} [-a] [-i] [-m] [-n]";;
+    esac
+done
+shift "$((OPTIND-1))"
+
+VM_NAME=$(echo $NODE|cut -d'.' -f1)
+SSH_OPTIONS="-q -o StrictHostKeyChecking=no -o BatchMode=yes"
+SLEEP_FOR=0
+TIMEOUT=20
+
+printf "\n\n Shutting down $NODE.\n"
+VM_STATE=$(sudo virsh dominfo --domain $VM_NAME | awk '/State/ {print $2}')
+ssh $SSH_OPTIONS -i $USER_SSH_ID "${NODE_USER}@${NODE}" 'sudo shutdown -h now'
+until [[ "A${VM_STATE}" != "Arunning" ]] || [[ $SLEEP_FOR -eq $TIMEOUT ]]
+do
+    printf "\n Waiting on $VM_NAME to shutdown. \n"
+    VM_STATE=$(sudo virsh dominfo --domain $VM_NAME | awk '/State/ {print $2}')
+    sleep $SLEEP_FOR
+    let SLEEP_FOR=SLEEP_FOR+1
+
+done
+

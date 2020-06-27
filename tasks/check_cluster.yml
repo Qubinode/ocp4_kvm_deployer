@@ -7,7 +7,7 @@
     owner: "{{ local_user_account }}"
     mode: u=rwx,g=rx,o=rx
   become: yes
-  tags: [ complete_install, check_cluster_status ]
+  tags: [ complete_install, check_cluster_status, status_script ]
 
 - name: check the bootstrap status
   command: |

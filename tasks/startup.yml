@@ -87,6 +87,11 @@
   when: compute_nodes_count.stdout|int != compute_count|int and compute_count|int != 0
   tags: [ deploy_nodes, rhcos, bootstrap, startup]
 
+- name: Wait 3m for nodes to settle and pods to start
+  pause:
+    seconds: 180
+  tags: [ deploy_nodes, rhcos, bootstrap, startup]
+
 - name: ensure compute nodes are set to schedulable
   vars:
     vm_name: "compute-{{ '%00x' |format(item) }}.{{ cluster_name }}.{{ ocp4_cluster_domain }}"
@@ -97,4 +102,16 @@
   loop: "{{ range(0, compute_count|int)|list }}"
   delay: 10
   when: vm_name in all_vms.list_vms
+  tags: [ deploy_nodes, rhcos, bootstrap, startup]
+
+- name: Wait 10s for additional CSRs to appear
+  pause:
+    seconds: 10
+  tags: [ deploy_nodes, rhcos, bootstrap, startup]
+
+- name: Approve all additional Pending CSRs
+  shell: >
+    /usr/local/bin/oc get csr -ojson | jq -r '.items[] | select(.status == {} ) | .metadata.name' | xargs /usr/local/bin/oc adm certificate approve > /dev/null 2>&1
+  ignore_errors: yes
+  become: no
   tags: [ deploy_nodes, rhcos, bootstrap, startup]

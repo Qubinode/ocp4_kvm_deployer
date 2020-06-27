@@ -33,14 +33,17 @@ deploy_cluster: yes
 # set to true to startup cluster
 startup_cluster: no
 
+# set to true to shutdown cluster
+shutdown_cluster: no
+
 # set to false to stop checking of existing cluster
 check_existing_cluster: yes
 
 # cluster deployed message
 cluster_deployed_msg: "not deployed"
 
-# Allow cluster to be shutdown without waiting 24hrs
-cluster_shutdown_before_cert_rotate: no
+# ssh command options
+ssh_options: "-q -o StrictHostKeyChecking=no -o BatchMode=yes"
 
 # set to configure local storaage
 configure_local_storage: no
@@ -162,6 +165,9 @@ podman_pkgs:
 
 # Defaults for additional worker 
 approve_work_csr: false
+
+# RHCOS default username
+rhcos_user: core
 
 # localstorage
 localstorage_version: '4.3'
