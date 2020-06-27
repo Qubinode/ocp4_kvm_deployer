@@ -195,7 +195,7 @@ Dependancy roles:
 2. ensure the kvm host firewall ports are open
 3. install_podman.yml: ensure the kvm host is setup to run podman containers
 4. ocp4_tools.yml: ensure the ocp4 tools such as the oc command and the openshift installer are installed
-5. create_ignitions.yml: generate ignitions files based on the number of masters and workers specified for this cluster
+5. create_ignitions.yml: generate ignitions files based on the number of ctrlplane and computes specified for this cluster
 6. deploy the container load balancer
 7. deploy the container webserver that servers up the files for bootstrap
 8. download_rhcos_files.yml: download the files required to bootstrap rhcos

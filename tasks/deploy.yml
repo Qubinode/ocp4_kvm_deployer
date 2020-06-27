@@ -2,7 +2,7 @@
 - set_fact:
     ocp4_nodes: []
     new_nodes: []
-  tags: [ deploy_nodes, rhcos, add_workers]
+  tags: [ deploy_nodes, rhcos, add_computes]
 
 - name: check for user pull-secret
   stat:
@@ -76,10 +76,10 @@
   import_tasks: configure_dns_entries.yml
   tags: [ deploy_nodes, idm ]
 
-- name: import tasks from new_worker_ign.yml
-  import_tasks: new_worker_ign.yml
+- name: import tasks from new_compute_ign.yml
+  import_tasks: new_compute_ign.yml
   when: approve_work_csr|bool
-  tags: [ deploy_nodes, rhcos, node_profile, add_workers ]
+  tags: [ deploy_nodes, rhcos, node_profile, add_computes ]
 
 - name: include build_cluster_nodes_profile.yml
   include_tasks: build_cluster_nodes_profile.yml
@@ -87,11 +87,11 @@
   loop_control:
     loop_var: outer_item
     label: outer_item.name
-  tags: [ deploy_nodes, rhcos, node_profile, add_workers ]
+  tags: [ deploy_nodes, rhcos, node_profile, add_computes ]
 
 - name: import tasks build_vm_list.yml
   import_tasks: build_vm_list.yml
-  tags: [ deploy_nodes, rhcos, bootstrap,add_workers ]
+  tags: [ deploy_nodes, rhcos, bootstrap,add_computes ]
 
 - name: deploy ocp4 nodes
   vars:
@@ -101,7 +101,7 @@
   loop: "{{ ocp4_nodes }}"
   delay: 10
   register: deploy_ocp4_nodes
-  tags: [ deploy_nodes, rhcos, add_workers]
+  tags: [ deploy_nodes, rhcos, add_computes]
 
 - name: build list of deployed vms
   vars:
@@ -111,26 +111,26 @@
   when: vm_name not in all_vms.list_vms
   loop: "{{ ocp4_nodes }}"
   register: deploy_ocp4_nodes
-  tags: [ deploy_nodes, rhcos, add_workers]
+  tags: [ deploy_nodes, rhcos, add_computes]
 
 - name: show new nodes
   debug:
     msg: "{{ item }}"
   loop: "{{ new_nodes }}"
-  tags: [ deploy_nodes, rhcos, add_workers]
+  tags: [ deploy_nodes, rhcos, add_computes]
 
 - name: show ocp4_nodes
   debug:
     var: item
   loop: "{{ ocp4_nodes }}"
-  tags: [ deploy_nodes, rhcos, add_workers]
+  tags: [ deploy_nodes, rhcos, add_computes]
 
 - name: include wait_for_vm_shutdown.yml
   vars:
     vm_name: "{{ item }}"
   include_tasks: wait_for_vm_shutdown.yml
   loop: "{{ new_nodes }}"
-  tags: [ deploy_nodes, rhcos, rhcos_wait, add_workers ]
+  tags: [ deploy_nodes, rhcos, rhcos_wait, add_computes ]
 
 - name: ensure all nodes are started
   vars:
@@ -140,7 +140,7 @@
     state: running
   loop: "{{ ocp4_nodes }}"
   delay: 10
-  tags: [ deploy_nodes, bootstrap, add_workers]
+  tags: [ deploy_nodes, bootstrap, add_computes]
 
 - name: ensure kube folder exist
   file:
@@ -197,33 +197,33 @@
   when: "'Install complete!' in install_status.stdout"
   tags: [ complete_install ]
 
-#- name: worker node csr
+#- name: compute node csr
 #  block:
-#    - name: add worker csr script
+#    - name: add compute csr script
 #      copy:
-#        src: files/qubinode-add-worker-node
-#        dest: /usr/local/bin/qubinode-remove-worker-node
+#        src: files/qubinode-add-compute-node
+#        dest: /usr/local/bin/qubinode-remove-compute-node
 #        mode: '0755'
 #
-#    - name: add remove worker csr script
+#    - name: add remove compute csr script
 #      copy:
-#        src: files/qubinode-add-worker-node
-#        dest: /usr/local/bin/qubinode-add-worker-node
+#        src: files/qubinode-add-compute-node
+#        dest: /usr/local/bin/qubinode-add-compute-node
 #        mode: '0755'
 #
-#    - name: approve worker node csr
+#    - name: approve compute node csr
 #      vars:
 #        vm_name: "{{ item }}.{{ cluster_name }}.{{ ocp4_cluster_domain }}"
-#      shell: /usr/local/bin/qubinode-add-worker-node {{ vm_name }}
-#      register: aproved_workers
+#      shell: /usr/local/bin/qubinode-add-compute-node {{ vm_name }}
+#      register: aproved_computes
 #      loop: "{{ new_nodes }}"
 #      loop_control:
 #        label: "{{ vm_name }}"
 #
-#    - name: show approved worker node csr
+#    - name: show approved compute node csr
 #      debug:
-#        var: aproved_workers
+#        var: aproved_computes
 #
 #  when: approve_work_csr|bool
-#  tags: [ deploy_nodes, rhcos, node_profile, add_workers ]
+#  tags: [ deploy_nodes, rhcos, node_profile, add_computes ]
 #  become: yes

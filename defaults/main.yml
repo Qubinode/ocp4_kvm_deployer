@@ -18,8 +18,8 @@ tools_missing: false
 # treeinfo 
 family_tree: "Red Hat CoreOS"
 
-# add worker nodes
-add_workers: no
+# add compute nodes
+add_computes: no
 
 # Set to yes when expanding the qcow template from the default 10G
 expand_os_disk: no
@@ -66,9 +66,9 @@ old_libvirt_net: ocp42
 deploy_ocp4_configs: yes
 
 # ocp4 nodes attributes
-master_count: 3
+ctrlplane_count: 3
 compute_count: 3
-master_ip_octet: 10
+ctrlplane_ip_octet: 10
 compute_ip_octet: 20
 bootstrap_node_name: bootstrap
 
@@ -103,7 +103,7 @@ libivrt_network_domain: compute.local
 pull_secret_request: https://cloud.redhat.com/openshift/install/metal/user-provisioned
 
 ocp4_instances:
-  - name: master
+  - name: ctrlplane
     hd_size: 120G
     memory_size: 16192
     cpu_size: 4
@@ -114,9 +114,9 @@ ocp4_instances:
       - size: 50G
         enable: true
         name: vdc
-    qty: "{{ master_count }}"
-    vm_type: master
-    ip_octet: "{{ master_ip_octet }}"
+    qty: "{{ ctrlplane_count }}"
+    vm_type: ctrlplane
+    ip_octet: "{{ ctrlplane_ip_octet }}"
   - name: compute
     hd_size: 120G
     memory_size: 16192
@@ -129,7 +129,7 @@ ocp4_instances:
         name: vdc
         enable: true
     qty: "{{ compute_count }}"
-    vm_type: worker
+    vm_type: compute
     ip_octet: "{{ compute_ip_octet }}"
   - name: bootstrap
     hd_size: 120G
@@ -163,7 +163,7 @@ podman_pkgs:
   - slirp4netns
   - nfs-utils
 
-# Defaults for additional worker 
+# Defaults for additional compute 
 approve_work_csr: false
 
 # RHCOS default username
@@ -185,7 +185,7 @@ nfs_server_ip:  changeme
 registry_pvc_size: 100Gi
 storage_class_result: true
 openshift_token: 1234567890
-openshift_url: https://master.example.com:6443 #https://master.example.com for openshift 3
+openshift_url: https://ctrlplane.example.com:6443 #https://ctrlplane.example.com for openshift 3
 openshift_version: ocp4
 project_namespace: nfs-provisioner
 set_as_default: true

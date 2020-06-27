@@ -20,7 +20,7 @@
   loop_control:
     loop_var: inner_item
     label: "building {{ vm_name }}"
-  tags: [ deploy_nodes, node_profile, add_workers]
+  tags: [ deploy_nodes, node_profile, add_computes]
   when: ocp4_okd4 == 'ocp4'
 
 - name: create virt-install template for Fedora CoreOS
@@ -44,5 +44,5 @@
   loop_control:
     loop_var: inner_item
     label: "building {{ vm_name }}"
-  tags: [ deploy_nodes, node_profile, add_workers]
+  tags: [ deploy_nodes, node_profile, add_computes]
   when: ocp4_okd4 == 'okd4'

@@ -2,12 +2,12 @@
 - name: fail when idm server ip address isn't provided
   fail: msg="Bailing out. this play requires 'idm_server_ipaddr'  your idm server ip"
   when: idm_server_ipaddr |length == 0
-  tags: [idm, worker_dns, master_dns, bootstrap_dns, api_dns, etcd_dns, wildcard_dns]
+  tags: [idm, compute_dns, ctrlplane_dns, bootstrap_dns, api_dns, etcd_dns, wildcard_dns]
 
 # NOTE: this may not be needed, uncomment if role fails
 #- name: check DNS entries
 #  include_tasks: check_dns_entries.yml
-#  tags: [idm, worker_dns, master_dns]
+#  tags: [idm, compute_dns, ctrlplane_dns]
 
 - name: add bootstrap to dns forward zone
   vars:
@@ -45,25 +45,25 @@
     records: "{{ records|default([]) + [ {'hostname': name, 'ipaddr': ip, 'ptr_record': ptr} ] }}"
   tags: [api_dns]
 
-- name: set master nodes forward zone records
+- name: set ctrlplane nodes forward zone records
   vars:
-    ip: "{{ ocp4_nat_gateway.split('.')[:3] | join('.') }}.{{ master_ip_octet|int + item|int }}"
-    name: "master-{{ item }}"
-    ptr: "{{ master_ip_octet|int + item|int }}"
+    ip: "{{ ocp4_nat_gateway.split('.')[:3] | join('.') }}.{{ ctrlplane_ip_octet|int + item|int }}"
+    name: "ctrlplane-{{ item }}"
+    ptr: "{{ ctrlplane_ip_octet|int + item|int }}"
   set_fact:
     records: "{{ records|default([]) + [ {'hostname': name, 'ipaddr': ip, 'ptr_record': ptr} ] }}"
-  with_sequence: start=0 end="{{ master_count|int - 1 }}" stride=1
-  tags: [master_dns]
+  with_sequence: start=0 end="{{ ctrlplane_count|int - 1 }}" stride=1
+  tags: [ctrlplane_dns]
 
-- name: set master nodes reverse zone records
+- name: set ctrlplane nodes reverse zone records
   vars:
-    ip: "{{ ocp4_nat_gateway.split('.')[:3] | join('.') }}.{{ master_ip_octet|int + item|int }}"
-    name: "master-{{ item }}"
-    ptr: "{{ master_ip_octet|int + item|int }}"
+    ip: "{{ ocp4_nat_gateway.split('.')[:3] | join('.') }}.{{ ctrlplane_ip_octet|int + item|int }}"
+    name: "ctrlplane-{{ item }}"
+    ptr: "{{ ctrlplane_ip_octet|int + item|int }}"
   set_fact:
     reverse_records: "{{ reverse_records|default([]) + [ {'hostname': name, 'ipaddr': ip, 'ptr_record': ptr} ] }}"
-  with_sequence: start=0 end="{{ master_count|int - 1 }}" stride=1
-  tags: [master_dns]
+  with_sequence: start=0 end="{{ ctrlplane_count|int - 1 }}" stride=1
+  tags: [ctrlplane_dns]
 
 - name: set etcd nodes forward zone records
   vars:
@@ -72,7 +72,7 @@
     ptr: "{{ 10 + item|int }}"
   set_fact:
     records: "{{ records|default([]) + [ {'hostname': name, 'ipaddr': ip, 'ptr_record': ptr} ] }}"
-  with_sequence: start=0 end="{{ master_count|int - 1 }}" stride=1
+  with_sequence: start=0 end="{{ ctrlplane_count|int - 1 }}" stride=1
   tags: [etcd_dns]
 
 - name: create compute nodes dns records
@@ -85,7 +85,7 @@
       set_fact:
         records: "{{ records|default([]) + [ {'hostname': name, 'ipaddr': ip, 'ptr_record': ptr} ] }}"
       with_sequence: start=0 end="{{ compute_node_count|int - 1 }}" stride=1
-      tags: [worker_dns]
+      tags: [compute_dns]
     
     - name: set compute nodes reverse zone records
       vars:
@@ -95,27 +95,27 @@
       set_fact:
         reverse_records: "{{ reverse_records|default([]) + [ {'hostname': name, 'ipaddr': ip, 'ptr_record': ptr} ] }}"
       with_sequence: start=0 end="{{ compute_node_count|int - 1 }}" stride=1
-      tags: [worker_dns]
+      tags: [compute_dns]
   when: compute_count|int != 0
 
 - name: set dns record state
   set_fact:
     record_state: "{{ 'absent' if dns_teardown|bool else 'present' }}"
-  tags: [idm, worker_dns, master_dns, bootstrap_dns, api_dns, etcd_dns, wildcard_dns]
+  tags: [idm, compute_dns, ctrlplane_dns, bootstrap_dns, api_dns, etcd_dns, wildcard_dns]
 
 - name: create forward dns zone {{ idm_dns_forward_zone }}
   ipa_dnszone:
     state: "{{ record_state }}"
     zone_name: "{{ idm_dns_forward_zone }}"
     validate_certs: no
-  tags: [idm, worker_dns, master_dns, bootstrap_dns, api_dns, etcd_dns, wildcard_dns]
+  tags: [idm, compute_dns, ctrlplane_dns, bootstrap_dns, api_dns, etcd_dns, wildcard_dns]
 
 - name: create reverse dns zone {{ idm_dns_reverse_zone }}
   ipa_dnszone:
     state: "{{ record_state }}"
     zone_name: "{{ idm_dns_reverse_zone }}"
     validate_certs: no
-  tags: [idm, worker_dns, master_dns, bootstrap_dns, api_dns, etcd_dns, wildcard_dns]
+  tags: [idm, compute_dns, ctrlplane_dns, bootstrap_dns, api_dns, etcd_dns, wildcard_dns]
 
 - name: Create/Delete A Records
   ipa_dnsrecord:
@@ -127,7 +127,7 @@
     validate_certs: no
   with_items: "{{ records }}"
   when: not dns_teardown|bool
-  tags: [idm, worker_dns, master_dns, bootstrap_dns, api_dns, etcd_dns]
+  tags: [idm, compute_dns, ctrlplane_dns, bootstrap_dns, api_dns, etcd_dns]
 
 - name: Create/Delete PTR Records
   ipa_dnsrecord:
@@ -139,7 +139,7 @@
     validate_certs: no
   with_items: "{{ reverse_records }}"
   when: not dns_teardown|bool
-  tags: [idm, worker_dns, master_dns, bootstrap_dns, api_dns, etcd_dns]
+  tags: [idm, compute_dns, ctrlplane_dns, bootstrap_dns, api_dns, etcd_dns]
 
 
 - name: Generate IPA Session Cookie
@@ -157,7 +157,7 @@
   register: ipa_session
   run_once: true
   when: not dns_teardown|bool
-  tags: [idm, worker_dns, master_dns, bootstrap_dns, api_dns, etcd_dns, wildcard_dns]
+  tags: [idm, compute_dns, ctrlplane_dns, bootstrap_dns, api_dns, etcd_dns, wildcard_dns]
 
 - name: Create Wildcard for Applications
   uri:

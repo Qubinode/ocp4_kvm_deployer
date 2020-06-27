@@ -14,10 +14,10 @@
   service:
     name: qbn-httpd.service
     state: restarted
-  tags: [ deploy_nodes, rhcos, node_profile, add_workers ]
+  tags: [ deploy_nodes, rhcos, node_profile, add_computes ]
 
 - name: restart load balancer
   service:
     name: qbn-lb.service
     state: restarted
-  tags: [ deploy_nodes, rhcos, node_profile, add_workers ]
+  tags: [ deploy_nodes, rhcos, node_profile, add_computes ]

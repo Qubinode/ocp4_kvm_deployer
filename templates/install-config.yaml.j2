@@ -1,15 +1,15 @@
 apiVersion: v1
 baseDomain: {{ ocp4_cluster_domain }}
 compute:
-- name: worker
+- name: compute
   hyperthreading: Enabled
   platform: {}
   replicas: {{ compute_count }}
 controlPlane:
-  name: master
+  name: ctrlplane
   hyperthreading: Enabled
   platform: {}
-  replicas: {{ master_count }}
+  replicas: {{ ctrlplane_count }}
 metadata:
   name: {{ cluster_name }}
 networking:

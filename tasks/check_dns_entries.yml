@@ -22,10 +22,10 @@
 - set_fact:
     stdout_lines: "{{ stdout_lines + validate_entry.stdout_lines }}"
 
-- name: Test if OpenShift master node Entries Exist
-  command: "dig +short @{{ idm_server_ip }} master-{{ item }}.{{ cluster_name }}.{{ idm_dns_forward_zone }}"
+- name: Test if OpenShift ctrlplane node Entries Exist
+  command: "dig +short @{{ idm_server_ip }} ctrlplane-{{ item }}.{{ cluster_name }}.{{ idm_dns_forward_zone }}"
   register: validate_entry
-  with_sequence: start=0 end="{{ master_count|int - 1 }}" stride=1
+  with_sequence: start=0 end="{{ ctrlplane_count|int - 1 }}" stride=1
 
 - debug:
     var: validate_entry

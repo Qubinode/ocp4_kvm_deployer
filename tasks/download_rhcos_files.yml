@@ -90,8 +90,8 @@
   stat:
     path: "{{ ignition_files_dir }}/{{ item }}.ign"
   with_items:
-    - master
-    - worker
+    - ctrlplane
+    - compute
     - bootstrap
   register: rhcos_igition_files_exist
   tags: [ download, ignition, deploy_nodes, webserver ]
@@ -110,8 +110,8 @@
     owner: "{{ local_user_account }}"
     group: "{{ local_user_account }}"
   with_items:
-    - master
-    - worker
+    - ctrlplane
+    - compute
     - bootstrap
   register: rhcos_igition_files_cp
   notify:

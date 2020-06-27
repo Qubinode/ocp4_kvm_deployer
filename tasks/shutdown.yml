@@ -7,9 +7,9 @@
   become: no
   tags: shutdown
 
-- name: getting worker nodes
-  command: kubectl get node --selector='!node-role.kubernetes.io/master' -o custom-columns=NAME:.metadata.name --no-headers=true
-  register: worker_ocp4_nodes
+- name: getting compute nodes
+  command: kubectl get node --selector='!node-role.kubernetes.io/ctrlplane' -o custom-columns=NAME:.metadata.name --no-headers=true
+  register: compute_ocp4_nodes
   ignore_errors: yes
   changed_when: False
   when: all_ocp_nodes and all_ocp_nodes.rc == 0
@@ -17,7 +17,7 @@
   tags: shutdown
 
 - name: getting control nodes
-  command: kubectl get node --selector='!node-role.kubernetes.io/worker' -o custom-columns=NAME:.metadata.name --no-headers=true
+  command: kubectl get node --selector='!node-role.kubernetes.io/compute' -o custom-columns=NAME:.metadata.name --no-headers=true
   register: control_ocp4_nodes
   ignore_errors: yes
   when: all_ocp_nodes and all_ocp_nodes.rc == 0
@@ -61,24 +61,24 @@
       when: vm_name in running_vms.list_vms and control_ocp4_nodes
       become: yes
 
-    - name: shutdown worker nodes
+    - name: shutdown compute nodes
       vars:
         vm_name: "{{ item.split('.')[0] | lower }}"
       command: /usr/local/bin/qubinode-shutdown-vm -i {{ homedir }}/.ssh/id_rsa -u {{ rhcos_user }} -n {{ item }}
-      register: shutdown_workers
+      register: shutdown_computes
       ignore_errors: yes
-      loop: "{{ worker_ocp4_nodes.stdout_lines }}"
+      loop: "{{ compute_ocp4_nodes.stdout_lines }}"
       when: vm_name in running_vms.list_vms
 
-    - name: wait for worker nodes to shutdown
+    - name: wait for compute nodes to shutdown
       vars:
         vm_name: "{{ item.split('.')[0] | lower }}"
       include_tasks: wait_for_vm_shutdown.yml
       register: shutdown_vms
-      loop: "{{ worker_ocp4_nodes.stdout_lines }}"
+      loop: "{{ compute_ocp4_nodes.stdout_lines }}"
       loop_control:
         label: "{{ item.split('.')[0] | lower }}"
-      when: shutdown_workers and shutdown_workers.changed
+      when: shutdown_computes and shutdown_computes.changed
 
     - name: shutdown control nodes
       vars:
