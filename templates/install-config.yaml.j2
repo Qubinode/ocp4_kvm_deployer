@@ -1,7 +1,7 @@
 apiVersion: v1
 baseDomain: {{ ocp4_cluster_domain }}
 compute:
-- name: compute
+- name: worker
   hyperthreading: Enabled
   platform: {}
   replicas: {{ compute_count }}
