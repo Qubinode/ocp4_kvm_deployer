@@ -6,7 +6,7 @@ compute:
   platform: {}
   replicas: {{ compute_count }}
 controlPlane:
-  name: ctrlplane
+  name: master
   hyperthreading: Enabled
   platform: {}
   replicas: {{ ctrlplane_count }}

@@ -129,7 +129,7 @@ ocp4_instances:
         name: vdc
         enable: true
     qty: "{{ compute_count }}"
-    vm_type: compute
+    vm_type: worker
     ip_octet: "{{ compute_ip_octet }}"
   - name: bootstrap
     hd_size: 120G
@@ -191,3 +191,9 @@ project_namespace: nfs-provisioner
 set_as_default: true
 delete_deployment: false
 insecure_skip_tls_verify: true
+
+# this is temporary and should be updated to grab the type from ocp4_instances
+nodes_types:
+  - master
+  - worker
+  - bootstrap
