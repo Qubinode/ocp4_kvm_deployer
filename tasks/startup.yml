@@ -30,7 +30,7 @@
 
 - name: start ocp ctrlplane nodes
   vars:
-    vm_name: "ctrlplane-{{ '%00x' |format(item) }}"
+    vm_name: "{{ ctrlplane_node_name }}-{{ '%00x' |format(item) }}"
   virt:
     name: "{{ vm_name }}"
     state: running
@@ -59,7 +59,7 @@
 
 - name: start ocp compute nodes
   vars:
-    vm_name: "compute-{{ '%00x' |format(item) }}"
+    vm_name: "{{ compute_node_name }}-{{ '%00x' |format(item) }}"
   virt:
     name: "{{ vm_name }}"
     state: running
@@ -94,7 +94,7 @@
 
 - name: ensure compute nodes are set to schedulable
   vars:
-    vm_name: "compute-{{ '%00x' |format(item) }}.{{ cluster_name }}.{{ ocp4_cluster_domain }}"
+    vm_name: "{{ compute_node_name }}-{{ '%00x' |format(item) }}.{{ cluster_name }}.{{ ocp4_cluster_domain }}"
   shell: >
     /usr/local/bin/oc adm uncordon "{{ vm_name }}"
   register: schedule_state

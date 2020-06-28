@@ -89,9 +89,32 @@
     label: outer_item.name
   tags: [ deploy_nodes, rhcos, node_profile, add_computes ]
 
-- name: import tasks build_vm_list.yml
-  import_tasks: build_vm_list.yml
-  tags: [ deploy_nodes, rhcos, bootstrap,add_computes ]
+- name: list all libvirt vms
+  virt:
+    command: list_vms
+  register: all_vms
+  tags: [ deploy_nodes, rhcos, bootstrap, add_workers ]
+
+- name: ensure podman httpd container is ready
+  uri:
+    url: "{{ rhcos_ignition_url}}/bootstrap.ign"
+  register: ignition_file_reachable
+  failed_when: False
+  tags: [ deploy_nodes, rhcos, node_profile, add_computes ]
+
+- name: restart podman httpd server when ignition file unreachable
+  command: systemctl restart qbn-httpd.service
+  args:
+    warn: no
+  when: ignition_file_reachable.status != 200
+  become: yes
+  tags: [ deploy_nodes, rhcos, node_profile, add_computes ]
+
+- name: Wait 120s for podman httpd container
+  pause:
+    seconds: 120
+  when: ignition_file_reachable.status != 200
+  tags: [ deploy_nodes, rhcos, node_profile, add_computes ]
 
 - name: deploy ocp4 nodes
   vars:

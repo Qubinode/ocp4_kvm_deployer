@@ -13,13 +13,13 @@
         {% for id in range(0, ctrlplane_count | int) -%}
         <srv service='etcd-server-ssl' protocol='tcp' domain='{{ libivrt_network_domain }}' target='etcd-{{ id }}.{{ libivrt_network_domain }}' port='2380' priority='0' weight='10'/>
         <host ip='{{ ocp4_nat_subnet.split('.')[:3] | join('.')}}.{{ ctrlplane_ip_octet|int + id|int }}'>
-            <hostname>ctrlplane-{{ id }}.{{ libivrt_network_domain }}</hostname>
+            <hostname>{{ ctrlplane_node_name }}-{{ id }}.{{ libivrt_network_domain }}</hostname>
             <hostname>etcd-{{ id }}.{{ libivrt_network_domain }}</hostname>
         </host>
         {% endfor %}
         {% for id in range(0, compute_count | int) -%}
         <host ip='{{ ocp4_nat_subnet.split('.')[:3] | join('.')}}.{{ compute_ip_octet|int + id|int }}'>
-            <hostname>compute-{{ id }}.{{ libivrt_network_domain }}</hostname>
+            <hostname>{{ compute_node_name }}-{{ id }}.{{ libivrt_network_domain }}</hostname>
         </host>
         {% endfor %}
     </dns>
@@ -30,11 +30,11 @@
             <host mac='{{ mac_start }}{{ '%02x' % ocp4_nat_subnet.split('.')[1]|int }}:{{ '%02x' % ocp4_nat_subnet.split('.')[2]|int }}:{{ '%02x' % 2 }}' name='{{ bootstrap_node_name }}.{{ libivrt_network_domain }}' ip='{{ ocp4_nat_subnet.split('.')[:3] | join('.')}}.2'/>
 
             {% for id in range(0, ctrlplane_count | int) -%}
-            <host mac='{{ mac_start }}{{ '%02x' % ocp4_nat_subnet.split('.')[1]|int }}:{{ '%02x' % ocp4_nat_subnet.split('.')[2]|int }}:{{ '%02x' % (10 + id) }}' name='ctrlplane-{{ id }}.{{ libivrt_network_domain }}' ip='{{ ocp4_nat_subnet.split('.')[:3] | join('.')}}.{{ ctrlplane_ip_octet|int + id|int }}'/>
+            <host mac='{{ mac_start }}{{ '%02x' % ocp4_nat_subnet.split('.')[1]|int }}:{{ '%02x' % ocp4_nat_subnet.split('.')[2]|int }}:{{ '%02x' % (10 + id) }}' name='{{ ctrlplane_node_name }}-{{ id }}.{{ libivrt_network_domain }}' ip='{{ ocp4_nat_subnet.split('.')[:3] | join('.')}}.{{ ctrlplane_ip_octet|int + id|int }}'/>
             {% endfor -%}
 
             {% for id in range(0, compute_count | int) -%}
-            <host mac='{{ mac_start }}{{ '%02x' % ocp4_nat_subnet.split('.')[1]|int }}:{{ '%02x' % ocp4_nat_subnet.split('.')[2]|int }}:{{ '%02x' % (10 + ctrlplane_count|int + id) }}' name='compute-{{ id }}.{{ libivrt_network_domain }}' ip='{{ ocp4_nat_subnet.split('.')[:3] | join('.')}}.{{ compute_ip_octet|int + id }}'/>
+            <host mac='{{ mac_start }}{{ '%02x' % ocp4_nat_subnet.split('.')[1]|int }}:{{ '%02x' % ocp4_nat_subnet.split('.')[2]|int }}:{{ '%02x' % (10 + ctrlplane_count|int + id) }}' name='{{ compute_node_name }}-{{ id }}.{{ libivrt_network_domain }}' ip='{{ ocp4_nat_subnet.split('.')[:3] | join('.')}}.{{ compute_ip_octet|int + id }}'/>
             {% endfor %}
         </dhcp>
     </ip>
