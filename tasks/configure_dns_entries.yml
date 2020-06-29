@@ -12,7 +12,7 @@
 - name: add bootstrap to dns forward zone
   vars:
     ip: "{{ ocp4_nat_gateway.split('.')[:3] | join('.') }}.2"
-    name: bootstrap
+    name: "{{ bootstrap_node_name }}"
     ptr: 2
   set_fact:
     records: "{{ records|default([]) + [ {'hostname': name, 'ipaddr': ip, 'ptr_record': ptr} ] }}"
@@ -21,7 +21,7 @@
 - name: add bootstrap to reverse forward zone
   vars:
     ip: "{{ ocp4_nat_gateway.split('.')[:3] | join('.') }}.2"
-    name: "bootstrap"
+    name: "{{ bootstrap_node_name }}"
     ptr: 2
   set_fact:
     reverse_records: "{{ reverse_records|default([]) + [ {'hostname': name, 'ipaddr': ip, 'ptr_record': ptr} ] }}"
@@ -48,7 +48,7 @@
 - name: set ctrlplane nodes forward zone records
   vars:
     ip: "{{ ocp4_nat_gateway.split('.')[:3] | join('.') }}.{{ ctrlplane_ip_octet|int + item|int }}"
-    name: "ctrlplane-{{ item }}"
+    name: "{{ ctrlplane_node_name }}-{{ item }}"
     ptr: "{{ ctrlplane_ip_octet|int + item|int }}"
   set_fact:
     records: "{{ records|default([]) + [ {'hostname': name, 'ipaddr': ip, 'ptr_record': ptr} ] }}"
@@ -58,7 +58,7 @@
 - name: set ctrlplane nodes reverse zone records
   vars:
     ip: "{{ ocp4_nat_gateway.split('.')[:3] | join('.') }}.{{ ctrlplane_ip_octet|int + item|int }}"
-    name: "ctrlplane-{{ item }}"
+    name: "{{ ctrlplane_node_name }}-{{ item }}"
     ptr: "{{ ctrlplane_ip_octet|int + item|int }}"
   set_fact:
     reverse_records: "{{ reverse_records|default([]) + [ {'hostname': name, 'ipaddr': ip, 'ptr_record': ptr} ] }}"
@@ -80,7 +80,7 @@
     - name: set compute nodes forward zone records
       vars:
         ip: "{{ ocp4_nat_gateway.split('.')[:3] | join('.') }}.{{ compute_ip_octet|int + item|int }}"
-        name: "compute-{{ item }}"
+        name: "{{ compute_node_name }}-{{ item }}"
         ptr: "{{ compute_ip_octet|int + item|int }}"
       set_fact:
         records: "{{ records|default([]) + [ {'hostname': name, 'ipaddr': ip, 'ptr_record': ptr} ] }}"
@@ -90,7 +90,7 @@
     - name: set compute nodes reverse zone records
       vars:
         ip: "{{ ocp4_nat_gateway.split('.')[:3] | join('.') }}.{{ compute_ip_octet|int + item|int }}"
-        name: "compute-{{ item }}"
+        name: "{{ compute_node_name }}-{{ item }}"
         ptr: "{{ compute_ip_octet|int + item|int }}"
       set_fact:
         reverse_records: "{{ reverse_records|default([]) + [ {'hostname': name, 'ipaddr': ip, 'ptr_record': ptr} ] }}"
