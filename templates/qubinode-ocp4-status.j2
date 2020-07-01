@@ -8,13 +8,9 @@ if oc get nodes | grep okd
 then
     install_dir=okd4
     product=okd4
-if oc get nodes | grep ocp4
-then
+else
     install_dir=ocp4
     product=ocp4
-else
-    install_dir={{ openshift_install_folder }}
-    product={{ openshift_install_folder }}
 fi
 
 KUBEADMIN_PASS=$(cat {{ project_dir }}/${install_dir}/auth/kubeadmin-password)

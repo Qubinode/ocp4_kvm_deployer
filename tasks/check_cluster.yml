@@ -36,54 +36,25 @@
     cluster_install_status: "{{ true if install_complete.stderr is defined and install_complete.stderr.find('Login to the console with user:') != -1 else false }}"
   tags: [ deploy_nodes, bootstrap, postinstall, check_cluster_status, complete_install ]
 
-- name: check cluster operators status
-  command: |
-    /usr/local/bin/qubinode-ocp4-status
-  register: cluster_operators_status
-  changed_when: false
-  ignore_errors: yes
-  environment:
-    KUBECONFIG: "{{ openshift_install_dir }}/auth/kubeconfig"
-  when: bootstrap_complete is defined and cluster_install_status|bool
-  tags: [ deploy_nodes, bootstrap, postinstall, check_cluster_status, complete_install ]
-
-- name: set cluster operators status
-  set_fact:
-    is_cluster_deployed: "{{ false if cluster_operators_status.stdout is not defined else true }}"
-    is_cluster_up: "{{ true if cluster_operators_status.stdout is defined and cluster_operators_status.stdout.find('All cluster operators are up') != -1 else false }}"
-    is_cluster_timeout: "{{ true if cluster_operators_status.stdout is defined and cluster_operators_status.stdout.find('Timeout waiting for all cluster operators to come up') != -1 else false }}"
-  tags: [ deploy_nodes, bootstrap, postinstall, check_cluster_status, complete_install ]
-
-- name: set cluster deployed message
-  set_fact:
-    cluster_deployed_msg: "deployed"
-  when: is_cluster_deployed|bool
-  tags: [ deploy_nodes, bootstrap, postinstall, check_cluster_status, complete_install ]
-
-- name: show variable status
-  debug:
-    msg:
-      - "bootstrap_complete {{ bootstrap_complete }}"
-      - "is_cluster_up {{ is_cluster_up }}"
-      - "is_cluster_timeout {{ is_cluster_timeout }}"
-      - "cluster_operators_status {{ cluster_operators_status }}"
-      - "is_cluster_deployed {{ is_cluster_deployed }}"
-      - "cluster_deployed_msg {{ cluster_deployed_msg }}"
-  tags: [ deploy_nodes, bootstrap, postinstall, check_cluster_status, complete_install ]
-
 - name: fail if bootstrap process was attempted 
   fail:
     msg: "It appears an installation of the cluster has been attempted. Run /usr/local/bin/qubinode-ocp4-status for more details."
-  when: bootstrap_complete|bool and not is_cluster_up|bool
+  when: bootstrap_complete|bool and not cluster_install_status|bool
   tags: [ complete_install, check_cluster_status ]
 
-- name: fail when the cluster status timed out
-  fail:
-    msg: "OCP4 Cluster is deployed but it appears not all operators are up! Run /usr/local/bin/qubinode-ocp4-status for more details."
-  when: is_cluster_timeout|bool and not is_cluster_up|bool
-  tags: [ complete_install, check_cluster_status ]
+- name: get all cluster operators
+  shell: oc get clusteroperators --no-headers=true | awk '{print $1}'
+  environment:
+    KUBECONFIG: "{{ openshift_install_dir }}/auth/kubeconfig"
+  register: all_cluster_operators
+  become: no
+  when: cluster_install_status|bool
+  tags: [ deploy_nodes, bootstrap, postinstall, check_cluster_status, complete_install ]
 
-- name: show the status of the ocp4 cluster
-  debug:
-    msg: "The OCP4 cluster is {{ cluster_deployed_msg }}."
+- name: ensure all cluster operators are up
+  include_tasks: check_operators.yml
+  loop: "{{ all_cluster_operators.stdout_lines }}"
+  loop_control:
+    loop_var: operator_name
+  when: cluster_install_status|bool
   tags: [ deploy_nodes, bootstrap, postinstall, check_cluster_status, complete_install ]

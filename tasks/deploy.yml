@@ -210,43 +210,6 @@
     KUBECONFIG: "{{ openshift_install_dir }}/auth/kubeconfig"
   tags: [ complete_install ]
 
-- name: report on cluster status
-  block:
-    - name: "The OCP install has completed"
-      debug:
-        msg: "Install is compelte {{ install_status.stdout }}"
-    - name: import check_cluster.yml
-      import_tasks: check_cluster.yml
-  when: "'Install complete!' in install_status.stdout"
-  tags: [ complete_install ]
-
-#- name: compute node csr
-#  block:
-#    - name: add compute csr script
-#      copy:
-#        src: files/qubinode-add-compute-node
-#        dest: /usr/local/bin/qubinode-remove-compute-node
-#        mode: '0755'
-#
-#    - name: add remove compute csr script
-#      copy:
-#        src: files/qubinode-add-compute-node
-#        dest: /usr/local/bin/qubinode-add-compute-node
-#        mode: '0755'
-#
-#    - name: approve compute node csr
-#      vars:
-#        vm_name: "{{ item }}.{{ cluster_name }}.{{ ocp4_cluster_domain }}"
-#      shell: /usr/local/bin/qubinode-add-compute-node {{ vm_name }}
-#      register: aproved_computes
-#      loop: "{{ new_nodes }}"
-#      loop_control:
-#        label: "{{ vm_name }}"
-#
-#    - name: show approved compute node csr
-#      debug:
-#        var: aproved_computes
-#
-#  when: approve_work_csr|bool
-#  tags: [ deploy_nodes, rhcos, node_profile, add_computes ]
-#  become: yes
+- name: import check_cluster.yml
+  import_tasks: check_cluster.yml
+  tags: [ complete_install, check_cluster_status ]
