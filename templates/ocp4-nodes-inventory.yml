@@ -1,0 +1,14 @@
+[control]
+{% for item in control_ocp4_nodes.stdout_lines %}
+{{ item }}
+{% endfor %}
+
+[computes]
+{% for item in compute_ocp4_nodes.stdout_lines %}
+{{ item }}
+{% endfor %}
+
+[nodes]
+{% for item in all_ocp_nodes.stdout_lines %}
+{{ item }}
+{% endfor %}

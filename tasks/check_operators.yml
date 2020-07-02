@@ -1,0 +1,25 @@
+---
+# This is a inner loop task that is called by the outer loop task: ensure all operators are up
+- name: verify operator status
+  block:
+    - name: wait for operator {{ operator_name }} available status to be True
+      until: _operator_status.stdout.find("True") != -1
+      retries: 60
+      delay: 30
+      shell: >
+        /usr/local/bin/oc get clusteroperator {{ operator_name }} -o=jsonpath='{range .status.conditions[*]}{.type}{" "}{.status}{" "}{.message}{"\n"}{end}'|awk '/Available/ {print $2}'|grep -o True
+      register: _operator_status
+      changed_when: False
+      environment:
+        KUBECONFIG: "{{ openshift_install_dir }}/auth/kubeconfig"
+      become: no
+  rescue:
+    - debug:
+        msg:
+          - "The operator {{ operator_name }} status did not change from {{ _operator_status.stdout }} to True."
+          - "You can verify the status of the operators with 'oc get clusteroperators'."
+          - "Remove this attempt before running the installer again."
+          - "Run './qubinode-installer -p {{ ocp4_okd4 }}'"
+    - fail:
+        msg: The cluster deployment was unsuccessfull
+  tags: [ deploy_nodes, bootstrap, postinstall, check_cluster_status, complete_install ]

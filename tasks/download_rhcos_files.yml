@@ -89,10 +89,7 @@
 - name: get the status of the ignition files are available
   stat:
     path: "{{ ignition_files_dir }}/{{ item }}.ign"
-  with_items:
-    - master
-    - worker
-    - bootstrap
+  loop: "{{ nodes_types }}"
   register: rhcos_igition_files_exist
   tags: [ download, ignition, deploy_nodes, webserver ]
 
@@ -109,10 +106,7 @@
     dest: "{{ dest_ignitions_web_directory }}/{{ item }}.ign"
     owner: "{{ local_user_account }}"
     group: "{{ local_user_account }}"
-  with_items:
-    - master
-    - worker
-    - bootstrap
+  loop: "{{ nodes_types }}"
   register: rhcos_igition_files_cp
   notify:
     - restart {{ podman_webserver }}.service

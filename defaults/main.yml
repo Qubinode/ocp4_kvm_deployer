@@ -18,14 +18,17 @@ tools_missing: false
 # treeinfo 
 family_tree: "Red Hat CoreOS"
 
-# add worker nodes
-add_workers: no
+# add compute nodes
+add_computes: no
 
 # Set to yes when expanding the qcow template from the default 10G
 expand_os_disk: no
 
 # set to true to tear down the cluster
 tear_down: no
+
+# set to yes to run smoketest after cluster is deployed
+smoketest_cluster: no
 
 # set to no to not deploy cluster
 deploy_cluster: yes
@@ -66,9 +69,9 @@ old_libvirt_net: ocp42
 deploy_ocp4_configs: yes
 
 # ocp4 nodes attributes
-master_count: 3
+ctrlplane_count: 3
 compute_count: 3
-master_ip_octet: 10
+ctrlplane_ip_octet: 10
 compute_ip_octet: 20
 bootstrap_node_name: bootstrap
 
@@ -103,7 +106,7 @@ libivrt_network_domain: compute.local
 pull_secret_request: https://cloud.redhat.com/openshift/install/metal/user-provisioned
 
 ocp4_instances:
-  - name: master
+  - name: ctrlplane
     hd_size: 120G
     memory_size: 16192
     cpu_size: 4
@@ -114,9 +117,9 @@ ocp4_instances:
       - size: 50G
         enable: true
         name: vdc
-    qty: "{{ master_count }}"
-    vm_type: master
-    ip_octet: "{{ master_ip_octet }}"
+    qty: "{{ ctrlplane_count }}"
+    vm_type: ctrlplane
+    ip_octet: "{{ ctrlplane_ip_octet }}"
   - name: compute
     hd_size: 120G
     memory_size: 16192
@@ -163,7 +166,7 @@ podman_pkgs:
   - slirp4netns
   - nfs-utils
 
-# Defaults for additional worker 
+# Defaults for additional compute 
 approve_work_csr: false
 
 # RHCOS default username
@@ -185,9 +188,15 @@ nfs_server_ip:  changeme
 registry_pvc_size: 100Gi
 storage_class_result: true
 openshift_token: 1234567890
-openshift_url: https://master.example.com:6443 #https://master.example.com for openshift 3
+openshift_url: https://ctrlplane.example.com:6443 #https://ctrlplane.example.com for openshift 3
 openshift_version: ocp4
 project_namespace: nfs-provisioner
 set_as_default: true
 delete_deployment: false
 insecure_skip_tls_verify: true
+
+# this is temporary and should be updated to grab the type from ocp4_instances
+nodes_types:
+  - master
+  - worker
+  - bootstrap

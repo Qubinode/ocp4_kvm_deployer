@@ -1,5 +1,9 @@
 ---
 # tasks file for ocp4-kvm-deployer
+
+- set_fact:
+    ocp4_nodes: []
+
 - name: set compute_node_count variable
   set_fact:
     compute_node_count: "{{ 1 if compute_count|int == 0 else compute_count }}"
@@ -32,11 +36,16 @@
     state: absent
   tags: [ lb ]
 
-- name: import tasks build_vm_list.yml
-  import_tasks: build_vm_list.yml
-  tags: [ deploy_nodes, rhcos ]
+- name: include build_cluster_nodes_profile.yml
+  include_tasks: build_cluster_nodes_profile.yml
+  loop: "{{ ocp4_instances }}"
+  loop_control:
+    loop_var: outer_item
+    label: outer_item.name
+  tags: [ deploy_nodes, rhcos, node_profile, add_computes ]
 
-- name: list all libvirt vms
+
+- name: list running libvirt vms
   virt:
     command: list_vms
     state: running
@@ -63,6 +72,21 @@
     label: vm_name
   when: shutdown_vms.changed
   tags: [ deploy_nodes, rhcos, rhcos_wait ]
+
+- name: list all libvirt vms
+  virt:
+    command: list_vms
+  register: all_vms
+  tags: [ deploy_nodes, rhcos, bootstrap ]
+
+- name: show me the vm names
+  vars:
+    vm_name: "{{ item }}"
+  debug:
+    msg: "name: {{ vm_name }}"
+  loop: "{{ ocp4_nodes }}"
+  when: vm_name in all_vms.list_vms
+  tags: [ deploy_nodes, rhcos ]
 
 - name: destroy ocp4 node
   vars:

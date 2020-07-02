@@ -9,7 +9,7 @@ controlPlane:
   name: master
   hyperthreading: Enabled
   platform: {}
-  replicas: {{ master_count }}
+  replicas: {{ ctrlplane_count }}
 metadata:
   name: {{ cluster_name }}
 networking:
