@@ -173,7 +173,7 @@
   become: true
   become_user: "{{ local_user_account }}"
   tags: [ postinstall, enable_shutdown ]
-  
+
 - name: setup kubeconfig
   copy:
     src: "{{ project_dir }}/{{ ocp4_okd4 }}/auth/kubeconfig"

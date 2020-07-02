@@ -5,11 +5,11 @@
   block:
     - name: import tasks pre_tasks.yml
       import_tasks: pre_tasks.yml
-    
+
     - name: check if cluster is deployed and report state of cluster
       import_tasks: check_cluster.yml
       when: check_existing_cluster|bool
-    
+
     - name: import task deploy.yml
       import_tasks: deploy.yml
       when: deploy_cluster|bool
@@ -40,3 +40,7 @@
 - name: import shutdown task
   import_tasks: shutdown.yml
   when: not tear_down|bool and shutdown_cluster|bool
+
+- name: import smoke test task
+  import_tasks: smoketest.yml
+  when: not tear_down and smoketest_cluster|bool

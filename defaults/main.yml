@@ -27,6 +27,9 @@ expand_os_disk: no
 # set to true to tear down the cluster
 tear_down: no
 
+# set to yes to run smoketest after cluster is deployed
+smoketest_cluster: no
+
 # set to no to not deploy cluster
 deploy_cluster: yes
 

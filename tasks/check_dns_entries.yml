@@ -49,7 +49,7 @@
     - debug:
         var: validate_entry
         verbosity: 2
-    
+
     - set_fact:
         stdout_lines: "{{ stdout_lines + item.stdout_lines }}"
       with_items: "{{ validate_entry.results }}"

@@ -1,5 +1,5 @@
 ---
-- name: create virt-install template for Red Hat CoreOS 
+- name: create virt-install template for Red Hat CoreOS
   vars:
     vm_name:  "{{ outer_item.name if outer_item.name == bootstrap_node_name else outer_item.name + '-' + '%00x'|format(inner_item) }}"
     cpu_size: "{{ outer_item.cpu_size }}"

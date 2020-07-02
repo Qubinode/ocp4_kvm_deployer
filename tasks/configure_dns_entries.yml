@@ -86,7 +86,7 @@
         records: "{{ records|default([]) + [ {'hostname': name, 'ipaddr': ip, 'ptr_record': ptr} ] }}"
       with_sequence: start=0 end="{{ compute_node_count|int - 1 }}" stride=1
       tags: [compute_dns]
-    
+
     - name: set compute nodes reverse zone records
       vars:
         ip: "{{ ocp4_nat_gateway.split('.')[:3] | join('.') }}.{{ compute_ip_octet|int + item|int }}"

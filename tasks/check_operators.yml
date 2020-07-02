@@ -15,7 +15,7 @@
       become: no
   rescue:
     - debug:
-        msg: 
+        msg:
           - "The operator {{ operator_name }} status did not change from {{ _operator_status.stdout }} to True."
           - "You can verify the status of the operators with 'oc get clusteroperators'."
           - "Remove this attempt before running the installer again."

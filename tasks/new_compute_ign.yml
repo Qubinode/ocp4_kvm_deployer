@@ -31,7 +31,7 @@
       when: cluster_hours.stdout|int > 24
       tags: [ deploy_nodes, rhcos, node_profile, add_computes ]
       become: no
-  
+
     - name: generate new compute.ign
       shell: |
         WORKER_API_INT={{ api_int }}/config/compute

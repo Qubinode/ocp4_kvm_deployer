@@ -36,7 +36,7 @@
     cluster_install_status: "{{ true if install_complete.stderr is defined and install_complete.stderr.find('Login to the console with user:') != -1 else false }}"
   tags: [ deploy_nodes, bootstrap, postinstall, check_cluster_status, complete_install ]
 
-- name: fail if bootstrap process was attempted 
+- name: fail if bootstrap process was attempted
   fail:
     msg: "It appears an installation of the cluster has been attempted. Run /usr/local/bin/qubinode-ocp4-status for more details."
   when: bootstrap_complete|bool and not cluster_install_status|bool
