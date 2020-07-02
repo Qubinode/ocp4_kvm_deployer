@@ -7,7 +7,7 @@
       retries: 60
       delay: 30
       shell: >
-        /usr/local/bin/oc get clusteroperator {{ operator_name }} -o=jsonpath='{range .status.conditions[*]}{.type}{" "}{.status}{" "}{.message}{"\n"}{end}'|awk '/Available/ {print $2}'|grep -o True
+        oc get co {{ operator_name }} --no-headers|awk '/True/ {print $3}'| grep -o True
       register: _operator_status
       changed_when: False
       environment:

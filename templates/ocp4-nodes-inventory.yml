@@ -1,14 +1,33 @@
-[control]
-{% for item in control_ocp4_nodes.stdout_lines %}
-{{ item }}
-{% endfor %}
+{% set computes = [] %}
+{% set control = [] %}
+{% set all = [] %}
+{%- for item in all_ocp_nodes.stdout_lines -%}
+{% set vm = item.split()[0] | lower %}
+{% set hostname = vm.split('.')[0] | lower %}
+{% set ipaddr = item.split()[1] | lower %}
+{% set role = item.split()[2] | lower %}
+{%- if role == 'worker' -%}
+{{ computes.append(hostname+"    ansible_host="+ipaddr+"    ansible_user=core") }}
+{%- endif -%}
+{%- if role == 'master' -%}
+{{ control.append(hostname+"    ansible_host="+ipaddr+"    ansible_user=core") }}
+{%- endif -%}
+{{ all.append(hostname+"    ansible_host="+ipaddr+"    ansible_user=core") }}
+{%- endfor -%}
 
 [computes]
-{% for item in compute_ocp4_nodes.stdout_lines %}
+{% for item in computes %}
 {{ item }}
 {% endfor %}
 
+
+[control]
+{% for item in control %}
+{{ item }}
+{% endfor %}
+
+
 [nodes]
-{% for item in all_ocp_nodes.stdout_lines %}
+{% for item in all %}
 {{ item }}
 {% endfor %}

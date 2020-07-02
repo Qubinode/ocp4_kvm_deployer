@@ -111,7 +111,7 @@
 
 - name: Approve all additional Pending CSRs
   shell: >
-    /usr/local/bin/oc get csr -ojson | jq -r '.items[] | select(.status == {} ) | .metadata.name' | xargs /usr/local/bin/oc adm certificate approve > /dev/null 2>&1
+    oc get csr -ojson | jq -r '.items[] | select(.status == {} ) | .metadata.name' | xargs oc adm certificate approve > /dev/null 2>&1
   ignore_errors: yes
   become: no
   tags: [ deploy_nodes, rhcos, bootstrap, startup]

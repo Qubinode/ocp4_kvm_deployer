@@ -23,8 +23,8 @@ shift "$((OPTIND-1))"
 
 VM_NAME=$(echo $NODE|cut -d'.' -f1)
 SSH_OPTIONS="-q -o StrictHostKeyChecking=no -o BatchMode=yes"
-SLEEP_FOR=0
-TIMEOUT=20
+SLEEP_FOR=5
+TIMEOUT=60
 
 printf "\n\n Shutting down $NODE.\n"
 VM_STATE=$(sudo virsh dominfo --domain $VM_NAME | awk '/State/ {print $2}')
