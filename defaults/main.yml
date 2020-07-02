@@ -15,7 +15,7 @@ ocp4_client: "openshift-client-linux-{{ ocp4_release }}.tar.gz"
 ocp4_installer: "openshift-install-linux-{{ ocp4_release }}.tar.gz"
 tools_missing: false
 
-# treeinfo 
+# treeinfo
 family_tree: "Red Hat CoreOS"
 
 # add compute nodes
@@ -166,7 +166,7 @@ podman_pkgs:
   - slirp4netns
   - nfs-utils
 
-# Defaults for additional compute 
+# Defaults for additional compute
 approve_work_csr: false
 
 # RHCOS default username

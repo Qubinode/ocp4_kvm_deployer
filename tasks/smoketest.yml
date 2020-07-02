@@ -15,7 +15,7 @@
       delay: 30
       until: routeconsole is succeeded
       ignore_errors: true
-  
+
     - name: Set webconsole address
       set_fact:
         webconsole: "http://{{ routeconsole.stdout | from_json | json_query('spec.host') }}"
@@ -34,14 +34,14 @@
       delay: 30
       tags: smoketest
       become: no
-    
+
     - name: Check DNS API
       command: nslookup "{{ showserver.stdout | trim | urlsplit('hostname') }}"
       register: checkdnsapi
       changed_when: false
       tags: smoketest
       become: no
-    
+
     - name: Webconsole
       uri:
         url: "{{ webconsole }}"
@@ -52,7 +52,7 @@
       delay: 60
       tags: smoketest
       become: no
-    
+
     - name: Cluster-info
       command: oc cluster-info
       register: clusterinfor
@@ -65,24 +65,24 @@
   block:
 
     - name: Create project
-      command: oc new-project postflightcheck 
+      command: oc new-project postflightcheck
       register: newproject
       tags: smoketest
       become: no
-    
+
     - name: New-app
       command: oc new-app cakephp-mysql-persistent -n postflightcheck
       register: newapp
       tags: smoketest
       become: no
-    
+
     - name: Wait for mysql
       command: timeout 600 oc rollout status dc/mysql -w -n postflightcheck
       register: mysqlw
       changed_when: false
       tags: smoketest
       become: no
-    
+
     - name: Wait for php
       command: timeout 600 oc rollout status dc/cakephp-mysql-persistent -w -n postflightcheck
       register: phpw
@@ -93,7 +93,7 @@
       when: mysqlw.rc != 0
       tags: smoketest
       become: no
-    
+
     - name: Get route
       command: >-
         oc get route
@@ -109,7 +109,7 @@
       tags: smoketest
       become: no
       when: mysqlw.rc != 0
-    
+
     - name: Test that route is reachable
       uri:
         url: "http://{{ getroute.stdout|from_json|json_query('items[0].spec.host') }}"
@@ -144,7 +144,7 @@
       tags: smoketest
       become: no
       ignore_errors: yes
-    
+
     - name: Switch back to default project
       command: oc project default
       tags: smoketest

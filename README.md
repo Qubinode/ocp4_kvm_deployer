@@ -1,5 +1,12 @@
+.. image:: https://github.com/Qubinode/ocp4-kvm-deployer/workflows/Ansible%20Lint/badge.svg
+   :target: https://github.com/Qubinode/ocp4-kvm-deployer/actions?query=workflow%3Agh+branch%3Adev+event%3Apush
+   :alt: GitHub Actions CI/CD
+![Ansible Lint](https://github.com/Qubinode/ocp4-kvm-deployer/workflows/Ansible%20Lint/badge.svg?branch=dev)
+
+
 ocp4-kvm-deployer
 =================
+
 
 This role will deploy OCP4 and OKD4 on a kvm host. It was develop to support the [Qubinode Installer](https://github.com/Qubinode/qubinode-installer).
 
