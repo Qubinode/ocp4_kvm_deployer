@@ -167,12 +167,6 @@
   tags: [ deploy_nodes, bootstrap, postinstall ]
   become: no
 
-- name: "Install Status"
-  debug:
-    msg: "{{ install_status }}"
-  register: continue_install
-  tags: [ deploy_nodes, bootstrap, postinstall ]
-
 - name: Waiting for Installation to Complete
   shell: |
     oc get csr -ojson | jq -r '.items[] | select(.status == {} ) | .metadata.name' | xargs oc adm certificate approve
