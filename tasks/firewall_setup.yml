@@ -6,6 +6,7 @@
     state: enabled
     immediate: yes
   loop: "{{ ocp4_firewall_ports }}"
+  register: enable_firewall_ports
   tags: firewall
 
 - name: Allow NFS traffic from VM's to Host
@@ -18,6 +19,7 @@
     - nfs
     - mountd
     - rpc-bind
+  register: enable_nfs_ports
   notify: 'reload firewalld'
   tags: firewall
 
@@ -33,6 +35,7 @@
     - 6443/tcp
     - 22623/tcp
   notify: 'reload firewalld'
+  register: allow_vm_traffic
   tags: firewall
 
 - name: Allow OpenShift traffic from public to Host
@@ -48,8 +51,10 @@
     - 8080/tcp
   notify: 'reload firewalld'
   tags: firewall
+  register: allow_traffic
 
-- name: firewalld reload
-  command: firewall-cmd --reload
-  tags: firewall
-
+- name: reload firewalld
+  command: 'firewall-cmd --reload'
+  tags: [ deploy_nodes, rhcos, node_profile, add_computes ]
+  when:
+    - allow_traffic.changed or allow_vm_traffic.changed or enable_nfs_ports.changed or enable_firewall_ports.changed

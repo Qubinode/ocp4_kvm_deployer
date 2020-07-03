@@ -40,16 +40,16 @@
 
 - name: Setting Ingress information and machine configuration for ctrlplane nodes
   set_fact:
-    tmp_api: "{{ tmp_api }}  + [ 'ctrlplane-{{ item }}={{ ocp4_nat_subnet.split('.')[:3] | join('.') }}.{{ ctrlplane_ip_octet|int + item|int }}:6443' ]"
-    tmp_machine_config_server: "{{ tmp_machine_config_server }} + [ 'ctrlplane-{{ item }}={{ ocp4_nat_subnet.split('.')[:3] | join('.') }}.{{ ctrlplane_ip_octet|int + item|int }}:22623' ]"
+    tmp_api: "{{ tmp_api }}  + [ 'ctrlplane-{{ item }}={{ cluster_subnet }}.{{ ctrlplane_ip_octet|int + item|int }}:6443' ]"
+    tmp_machine_config_server: "{{ tmp_machine_config_server }} + [ 'ctrlplane-{{ item }}={{ cluster_subnet }}.{{ ctrlplane_ip_octet|int + item|int }}:22623' ]"
   with_sequence: start=0 end="{{ ctrlplane_count|int - 1 }}" stride=1
   ignore_errors: false
   tags: [ setup, deploy_nodes, rhcos, bootstrap, idm]
 
 - name: Setting Ingress information and machine configuration
   set_fact:
-    tmp_ingress_http: "{{ tmp_ingress_http }} + [ '{{ ingress_node }}-{{ item }}={{ ocp4_nat_subnet.split('.')[:3] | join('.') }}.{{ ingress_node_octet|int + item|int }}:80' ]"
-    tmp_ingress_https: "{{ tmp_ingress_https }} + [ '{{ ingress_node }}-{{ item }}={{ ocp4_nat_subnet.split('.')[:3] | join('.') }}.{{ ingress_node_octet|int + item|int }}:443' ]"
+    tmp_ingress_http: "{{ tmp_ingress_http }} + [ '{{ ingress_node }}-{{ item }}={{ cluster_subnet }}.{{ ingress_node_octet|int + item|int }}:80' ]"
+    tmp_ingress_https: "{{ tmp_ingress_https }} + [ '{{ ingress_node }}-{{ item }}={{ cluster_subnet }}.{{ ingress_node_octet|int + item|int }}:443' ]"
   with_sequence: start=0 end="{{ ingress_count|int - 1 }}" stride=1
   ignore_errors: false
   tags: [ setup, deploy_nodes, rhcos, bootstrap, idm]
@@ -77,7 +77,7 @@
   set_fact:
     container_exited: "{{ true if container_result.stdout is defined and container_result.stdout == 'exited' else false }}"
     container_running: "{{ true if container_result.stdout is defined and container_result.stdout == 'running' else false }}"
-    container_exist: "{{ true if container_result.stdout is defined and container_result.stdout != '' else false }}"
+    container_exist: "{{ true if container_result.stdout is defined and container_result.stdout|length > 0  else false }}"
   tags: [ setup, deploy_nodes, rhcos, bootstrap, idm, lb, startup]
 
 - name: check if Loadbalancer SystemD service exists
@@ -97,6 +97,6 @@
         sudo subscription-manager repos --disable rhel-7-server-ose-"{{ ocp4_dependencies_version }}"-rpms
         sudo yum -y install ${rpmdir}/*.rpm
      fi
-  changed_when: jq_command_install.stdout != ""
+  changed_when: jq_command_install.stdout|length > 0
   register: jq_command_install
   tags: [ deploy_nodes, rhcos, postinstall ]

@@ -12,7 +12,7 @@
     owner: "{{ local_user_account }}"
     group: "{{ local_user_account }}"
   register: create_webdir
-  when: webserver_dir.stat.exists == False
+  when: not webserver_dir.stat.exists
   tags: [ download, webserver ]
 
 - name: check if {{ virtinstall_dir }} exist
@@ -28,7 +28,7 @@
     owner: "{{ local_user_account }}"
     group: "{{ local_user_account }}"
   register: create_webdir
-  when: virtinstall_directory.stat.exists == False
+  when: not virtinstall_directory.stat.exists
   tags: [ download, virtinstall, deploy_nodes, webserver ]
 
 - name: Create a {{ ocp4_dependencies_version }} directory
@@ -97,7 +97,7 @@
   fail:
     msg: One or more igition file does not exist! Please ensure the igition files have been created under {{ ignition_files_dir }}.
   with_items: "{{ rhcos_igition_files_exist.results }}"
-  when: item.stat.exists == False
+  when: not item.stat.exists
   tags: [ download, ignition, deploy_nodes, webserver ]
 
 - name: copy over ignition files to webserver pub directory

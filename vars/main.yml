@@ -1,2 +1,8 @@
 ---
 # vars file for ocp4-rhcos-vms
+cluster_subnet: "{{ ocp4_nat_subnet.split('.')[:3] | join('.') }}"
+bs_complete_s: "It is now safe to remove the bootstrap resources"
+clus_in_stat_string: 'Login to the console with user:'
+oc_descr_pkgsmanifest_cmd: 'oc describe packagemanifests local-storage-operator -n openshift-marketplace'
+bootstrap_log: "{{ project_dir }}/{{ ocp4_okd4 }}/bootstrap-complete.log"
+install_complete_log: "{{ project_dir }}/{{ ocp4_okd4 }}/install-complete.log"

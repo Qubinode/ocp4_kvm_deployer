@@ -25,4 +25,4 @@ jobs:
         pip install ansible-lint==${{ matrix.lint-version }} ansible==${{ matrix.ansible-version }}
     - name: Lint playbook
       run: |
-        ansible-lint tasks/*.yml defaults/*.yml
+        ansible-lint -x 206,204 tasks/*.yml defaults/*.yml

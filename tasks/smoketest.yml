@@ -2,11 +2,12 @@
 - name: Get API for command line
   command: oc whoami --show-server
   register: showserver
-  tags: smoketest
+  tags: [ smoketest, smoketest-verify ]
   become: no
 
 - name: Ensure web console is known
   when: webconsole is not defined
+  tags: [ smoketest, smoketest-verify ]
   block:
     - name: Get console route
       command: oc get route -n openshift-console console -o json
@@ -15,15 +16,17 @@
       delay: 30
       until: routeconsole is succeeded
       ignore_errors: true
+      tags: [ smoketest, smoketest-verify ]
 
     - name: Set webconsole address
       set_fact:
         webconsole: "http://{{ routeconsole.stdout | from_json | json_query('spec.host') }}"
       when: routeconsole is succeeded
-  tags: smoketest
+      tags: [ smoketest, smoketest-verify ]
   become: no
 
 - name: verify dns and cluster
+  tags: [ smoketest, smoketest-verify ]
   block:
     - name: Check DNS webconsole
       command: nslookup "{{ webconsole | urlsplit('hostname') }}"
@@ -32,15 +35,15 @@
       retries: 15
       until: checkdnswebconsole is succeeded
       delay: 30
-      tags: smoketest
       become: no
+      tags: [ smoketest, smoketest-verify ]
 
     - name: Check DNS API
       command: nslookup "{{ showserver.stdout | trim | urlsplit('hostname') }}"
       register: checkdnsapi
       changed_when: false
-      tags: smoketest
       become: no
+      tags: [ smoketest, smoketest-verify ]
 
     - name: Webconsole
       uri:
@@ -50,37 +53,37 @@
       retries: 5
       until: testwebconsole is succeeded
       delay: 60
-      tags: smoketest
       become: no
+      tags: [ smoketest, smoketest-verify ]
 
     - name: Cluster-info
       command: oc cluster-info
       register: clusterinfor
       changed_when: false
-      tags: smoketest
       become: no
+      tags: [ smoketest, smoketest-verify ]
 
 - name: test deploying a PHP LAMP Stack
-  tags: smoketest
+  tags: [ smoketest, smoketest-app ]
   block:
 
     - name: Create project
       command: oc new-project postflightcheck
       register: newproject
-      tags: smoketest
+      tags: [ smoketest-verify ]
       become: no
 
     - name: New-app
       command: oc new-app cakephp-mysql-persistent -n postflightcheck
       register: newapp
-      tags: smoketest
+      tags: [ smoketest-verify ]
       become: no
 
     - name: Wait for mysql
       command: timeout 600 oc rollout status dc/mysql -w -n postflightcheck
       register: mysqlw
       changed_when: false
-      tags: smoketest
+      when: smoketest_cluster|bool
       become: no
 
     - name: Wait for php
@@ -90,8 +93,7 @@
       retries: 2
       delay: 60
       until: phpw is succeeded
-      when: mysqlw.rc != 0
-      tags: smoketest
+      when: smoketest_cluster|bool
       become: no
 
     - name: Get route
@@ -106,9 +108,8 @@
       retries: 10
       delay: 5
       until: getroute is succeeded
-      tags: smoketest
       become: no
-      when: mysqlw.rc != 0
+      when: smoketest_cluster|bool
 
     - name: Test that route is reachable
       uri:
@@ -117,7 +118,7 @@
       retries: 15
       delay: 5
       until: testroute is succeeded
-      tags: smoketest
+      when: smoketest_cluster|bool
       become: no
 
     - debug:
@@ -132,8 +133,8 @@
       - "user.info: Create Project with PV ........ {{ 'OK' if newproject.rc == 0 else 'FAIL' }}"
       - "user.info: App deployed .................. {{ 'OK' if phpw.rc == 0 and mysqlw.rc == 0 else 'FAIL' }}"
       - "user.info: Route ......................... {{ 'OK' if testroute is succeeded else 'FAIL' }}"
-      tags: smoketest
       become: no
+      when: smoketest_cluster|bool
 
   rescue:
     - debug:
@@ -141,12 +142,29 @@
   always:
     - name: Delete project
       command: oc delete project postflightcheck
-      tags: smoketest
       become: no
       ignore_errors: yes
+      tags: [ smoketest, smoketest-app, smoketest-verify ]
 
     - name: Switch back to default project
       command: oc project default
-      tags: smoketest
       become: no
       ignore_errors: yes
+      tags: [ smoketest, smoketest-app, smoketest-verify ]
+
+- name: set cluster deployed message
+  set_fact: 
+    cluster_deployed_msg: "{{ 'deployed' if checkdnsapi.rc == 0 and testwebconsole.status == 200 and clusterinfor.rc == 0 and newproject.rc == 0 else 'notdeployed' }}"
+  tags: [ smoketest, smoketest-app, smoketest-verify, verify-cluster ]
+
+- name: cluster deployment complete
+  debug:
+     msg:
+       - "*****************************"
+       - " Cluster deployment complete "
+       - "*****************************"
+       - "checkdnsapi: {{ checkdnsapi.rc }}"
+       - "testwebconsole: {{ testwebconsole.status }}"
+       - "clusterinfor: {{ clusterinfor.rc }}"
+       - "newproject: {{ newproject.rc }}"
+  tags: verify-cluster

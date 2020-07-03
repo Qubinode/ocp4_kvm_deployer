@@ -19,7 +19,7 @@
 
 - name: set bootstrap status
   set_fact:
-    bootstrap_complete: "{{ true if bootstrap_complete.stderr is defined and bootstrap_complete.stderr.find('It is now safe to remove the bootstrap resources') != -1 else false }}"
+    bootstrap_complete: "{{ true if bootstrap_complete.stderr is defined and bootstrap_complete.stderr.find(bs_complete_s) != -1 else false }}"
   tags: [ deploy_nodes, bootstrap, postinstall, check_cluster_status, complete_install ]
 
 - name: check the cluster install status
@@ -33,7 +33,7 @@
 
 - name: set openshift-install status
   set_fact:
-    cluster_install_status: "{{ true if install_complete.stderr is defined and install_complete.stderr.find('Login to the console with user:') != -1 else false }}"
+    cluster_install_status: "{{ true if install_complete.stderr is defined and install_complete.stderr.find(clus_in_stat_string) != -1 else false }}"
   tags: [ deploy_nodes, bootstrap, postinstall, check_cluster_status, complete_install ]
 
 - name: fail if bootstrap process was attempted

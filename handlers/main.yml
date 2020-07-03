@@ -4,11 +4,11 @@
   service:
     name: nfs-server
     state: restarted
-  tags: nfs
+  tags: [ deploy_nodes, rhcos, node_profile, add_computes ]
 
 - name: reload firewalld
   command: 'firewall-cmd --reload'
-  tags: nfs
+  tags: [ deploy_nodes, rhcos, node_profile, add_computes ]
 
 - name: restart webserver
   service:
