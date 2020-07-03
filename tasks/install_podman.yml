@@ -1,8 +1,8 @@
 ---
-- name: Verifiy podman is installed
+- name: check for the podman command
   stat:
     path: "/usr/bin/podman"
-  register: podman_is_installed
+  register: podman_cmd
   tags: [ podman, pkg ]
 
 - name: Enable rhel-7-server-extras-rpms repository
@@ -10,7 +10,7 @@
     name: rhel-7-server-extras-rpms
     state: enabled
   when:
-    - not podman_is_installed.stat.exists
+    - not podman_cmd.stat.exists
     - ansible_distribution == 'RedHat'
     - ansible_distribution_major_version == '7'
   tags: [ podman, pkg ]
