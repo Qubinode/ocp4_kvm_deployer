@@ -153,7 +153,7 @@
       tags: [ smoketest, smoketest-app, smoketest-verify ]
 
 - name: set cluster deployed message
-  set_fact: 
+  set_fact:
     cluster_deployed_msg: "{{ 'deployed' if checkdnsapi.rc == 0 and testwebconsole.status == 200 and clusterinfor.rc == 0 and newproject.rc == 0 else 'notdeployed' }}"
   tags: [ smoketest, smoketest-app, smoketest-verify, verify-cluster ]
 
