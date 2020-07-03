@@ -15,7 +15,6 @@
     - ansible_distribution_major_version == '7'
   tags: [ podman, pkg ]
 
-
 - name: Enable rhel-8-for-x86_64-appstream-rpms repository
   rhsm_repository:
     name: rhel-8-for-x86_64-appstream-rpms
@@ -25,7 +24,6 @@
     - ansible_distribution == "RedHat"
     - ansible_distribution_major_version == '8'
   tags: [ podman, pkg ]
-
 
 - name: Enable rhel-8-for-x86_64-baseos-rpms repository
   rhsm_repository:

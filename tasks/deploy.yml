@@ -5,23 +5,15 @@
     new_nodes: []
   tags: always
 
-- name: check for user pull-secret
-  stat:
-    path: "{{ ocp4_pull_secret }}"
-  register: pull_secret_file
-  tags: [ setup ]
+- name: import tasks configure_dns_entries.yml
+  import_tasks: configure_dns_entries.yml
+  tags: [ deploy_nodes, idm ]
 
-- name: fail if pull secret does
-  fail:
-    msg: "Please download your pull-secret from {{ pull_secret_request }} to {{ ocp4_pull_secret }}"
-  when: not pull_secret_file.stat.exists
-  tags: [ setup ]
+- name: import tasks deploy_libvirt_network.yml
+  import_tasks: deploy_libvirt_network.yml
 
 - name: import tasks firewall_setup.yml
   import_tasks: firewall_setup.yml
-
-- name: import tasks install_podman.yml
-  import_tasks: install_podman.yml
 
 - name: import tasks ocp4_tools.yml
   import_tasks: ocp4_tools.yml
@@ -29,8 +21,28 @@
 - name: import tasks create_ignitions.yml
   import_tasks: create_ignitions.yml
 
-- name: import tasks deploy_libvirt_network.yml
-  import_tasks: deploy_libvirt_network.yml
+- name: import task download_rhcos_files.yml
+  import_tasks: download_rhcos_files.yml
+
+- name: import tasks install_podman.yml
+  import_tasks: install_podman.yml
+  when: not podman_is_installed.stat.exists
+
+- name: Create the directory to store the virt-install scripts
+  file:
+    path: "{{ virtinstall_dir }}"
+    state: directory
+    owner: "{{ local_user_account }}"
+  register: create_virtinstall_dir
+  tags: [ deploy_nodes ]
+
+- name: deploy a generated treeinfo that defines the location of the kernel and ramdisks
+  template:
+    src: treeinfo.j2
+    dest: "{{ virtinstall_dir }}/.treeinfo"
+    mode: "u=rw,g=r,o=r"
+    owner: "{{ local_user_account }}"
+  tags: [ deploy_nodes, rhcos ]
 
 - name: deploy the podman container load balancer for OCP4
   import_role:
@@ -54,28 +66,9 @@
     name: ocp4-bootstrap-webserver
   tags: [ webserver, deploy_nodes ]
 
-- name: import task download_rhcos_files.yml
-  import_tasks: download_rhcos_files.yml
-
-- name: Create the directory to store the virt-install scripts
-  file:
-    path: "{{ virtinstall_dir }}"
-    state: directory
-    owner: "{{ local_user_account }}"
-  register: create_virtinstall_dir
-  tags: [ deploy_nodes ]
-
-- name: deploy a generated treeinfo that defines the location of the kernel and ramdisks
-  template:
-    src: treeinfo.j2
-    dest: "{{ virtinstall_dir }}/.treeinfo"
-    mode: "u=rw,g=r,o=r"
-    owner: "{{ local_user_account }}"
-  tags: [ deploy_nodes, rhcos ]
-
-- name: import tasks configure_dns_entries.yml
-  import_tasks: configure_dns_entries.yml
-  tags: [ deploy_nodes, idm ]
+- name: verify ignitions files are accessible
+  include_tasks: check_webserver.yml
+  tags: [ deploy_nodes, rhcos, rhcos_wait, add_computes ]
 
 - name: import tasks from new_compute_ign.yml
   import_tasks: new_compute_ign.yml
@@ -95,10 +88,6 @@
     command: list_vms
   register: all_vms
   tags: [ deploy_nodes, rhcos, bootstrap, add_workers ]
-
-- name: verify ignitions files are accessible
-  include_tasks: check_webserver.yml
-  tags: [ deploy_nodes, rhcos, rhcos_wait, add_computes ]
 
 - name: deploy ocp4 nodes
   vars:

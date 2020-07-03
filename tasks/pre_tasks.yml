@@ -1,5 +1,17 @@
 ---
 # tasks file for ocp4-kvm-deployer
+- name: check for user pull-secret
+  stat:
+    path: "{{ ocp4_pull_secret }}"
+  register: pull_secret_file
+  tags: [ setup ]
+
+- name: fail if pull secret does
+  fail:
+    msg: "Please download your pull-secret from {{ pull_secret_request }} to {{ ocp4_pull_secret }}"
+  when: not pull_secret_file.stat.exists
+  tags: [ setup ]
+
 - name: set compute_node_count variable
   set_fact:
     compute_node_count: "{{ 1 if compute_count|int == 0 else compute_count }}"
@@ -86,7 +98,6 @@
   register: lb_service
   tags: [ setup, deploy_nodes, rhcos, bootstrap, idm, lb, startup]
 
-
 - name: ensure the jq command is installed from ocp4 repos
   shell: |
     if ! rpm -qa | grep -q 'jq-'
@@ -100,3 +111,10 @@
   changed_when: jq_command_install.stdout|length > 0
   register: jq_command_install
   tags: [ deploy_nodes, rhcos, postinstall ]
+
+- name: Verifiy podman is installed
+  stat:
+    path: "/usr/bin/podman"
+  register: podman_is_installed
+  tags: [ podman, pkg ]
+
