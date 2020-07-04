@@ -43,7 +43,9 @@
   tags: [ complete_install, check_cluster_status ]
 
 - name: get all cluster operators
-  shell: oc get clusteroperators --no-headers=true | awk '{print $1}'
+  shell: >
+    set -o pipefail
+    oc get clusteroperators --no-headers=true | awk '{print $1}'
   environment:
     KUBECONFIG: "{{ openshift_install_dir }}/auth/kubeconfig"
   register: all_cluster_operators

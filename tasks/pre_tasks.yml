@@ -1,5 +1,14 @@
 ---
 # tasks file for ocp4-kvm-deployer
+- name: create okd4 pull secret
+  copy:
+    content: '{"auths":{"fake":{"auth": "bar"}}}'
+    dest: "{{ project_dir }}/pull-secret.txt"
+    owner: "{{ admin_user }}"
+    group: "{{ admin_user }}"
+    backup: yes
+  when: ocp4_okd4 == 'okd4'
+
 - name: check for user pull-secret
   stat:
     path: "{{ ocp4_pull_secret }}"

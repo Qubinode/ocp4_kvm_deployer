@@ -4,7 +4,7 @@ COUNT=0
 SLEEP_FOR=0
 TIMEOUT=60
 
-if oc get nodes | grep okd
+if oc get nodes | grep -q okd
 then
     install_dir=okd4
     product=okd4

@@ -20,6 +20,7 @@
           - "You can verify the status of the operators with 'oc get clusteroperators'."
           - "Remove this attempt before running the installer again."
           - "Run './qubinode-installer -p {{ ocp4_okd4 }}'"
-    - fail:
+    - name: fail if cluster deployment was unsuccessful
+      fail:
         msg: The cluster deployment was unsuccessfull
   tags: [ deploy_nodes, bootstrap, postinstall, check_cluster_status, complete_install ]
