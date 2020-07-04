@@ -1,5 +1,5 @@
 ---
-# tasks file for ocp4-kvm-deployer
+# tasks file for ocp4_kvm_deployer
 
 - name: cluster deployment
   block:

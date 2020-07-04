@@ -1,7 +1,7 @@
-![Ansible Lint](https://github.com/Qubinode/ocp4-kvm-deployer/workflows/Ansible%20Lint/badge.svg?branch=dev)
+![Ansible Lint](https://github.com/Qubinode/ocp4_kvm_deployer/workflows/Ansible%20Lint/badge.svg?branch=dev)
 
 
-ocp4-kvm-deployer
+ocp4_kvm_deployer
 =================
 
 
@@ -84,9 +84,9 @@ Example Playbook Deploying OpenShift 4 Cluster
       IPA_PASS: "{{ user_idm_password }}"
 
     tasks:
-    - name: run the role ocp4-kvm-deployer
+    - name: run the role ocp4_kvm_deployer
       import_role:
-        name: ocp4-kvm-deployer
+        name: ocp4_kvm_deployer
 ```
 
 Example Playbook Deploying OKD 4 Cluster
@@ -150,9 +150,9 @@ Example Playbook Deploying OKD 4 Cluster
       IPA_PASS: "{{ user_idm_password }}"
 
     tasks:
-    - name: run the role ocp4-kvm-deployer
+    - name: run the role ocp4_kvm_deployer
       import_role:
-        name: ocp4-kvm-deployer
+        name: ocp4_kvm_deployer
 ```
 
 For OKD 4 Deployments use the following pull secert
