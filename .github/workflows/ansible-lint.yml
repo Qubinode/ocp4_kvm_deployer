@@ -28,5 +28,5 @@ jobs:
         git clone https://github.com/Qubinode/qubinode-installer.git
         cd qubinode-installer
         ansible-galaxy install git+https://github.com/Qubinode/ocp4-kvm-deployer.git,dev --force
-        ansible-lint -x 206,204 playbooks/deploy_ocp4.yml playbooks/deploy_ocp4.yml
+        ansible-lint -x 206,204 playbooks/deploy_ocp4.yml playbooks/deploy_okd4.yml
 
