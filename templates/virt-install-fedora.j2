@@ -58,8 +58,7 @@ sudo virt-install \
 {% endfor %}
   --memory {{ memory_size }} \
   --vcpus {{ cpu_size }} \
-  --os-type linux  \
-  --os-variant fedora31 \
+  --os-type generic \
   --rng /dev/urandom \
   --network network={{ libvirt_network_name }},model=virtio,mac=${mac_address} --noreboot --noautoconsole \
   --install kernel=${kernel_file},initrd=${initrd_file},kernel_args_overwrite=yes,kernel_args="${args}"
