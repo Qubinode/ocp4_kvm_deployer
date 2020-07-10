@@ -77,7 +77,6 @@ bootstrap_node_name: bootstrap
 
 # Ignition creation variables
 openshift_install_dir: ""
-pull_secret: ""
 external_domain_name: lab.example
 internal_domain_name: lab.example
 ssh_ocp4_public_key: ""
