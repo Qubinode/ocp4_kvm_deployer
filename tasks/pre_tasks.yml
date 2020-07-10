@@ -3,7 +3,7 @@
 - name: create okd4 pull secret
   copy:
     content: '{"auths":{"fake":{"auth": "bar"}}}'
-    dest: "{{ project_dir }}/pull-secret.txt"
+    dest: "{{ pull_secret }}"
     owner: "{{ admin_user }}"
     group: "{{ admin_user }}"
     backup: yes
@@ -11,13 +11,13 @@
 
 - name: check for user pull-secret
   stat:
-    path: "{{ ocp4_pull_secret }}"
+    path: "{{ pull_secret }}"
   register: pull_secret_file
   tags: [ setup ]
 
 - name: fail if pull secret does
   fail:
-    msg: "Please download your pull-secret from {{ pull_secret_request }} to {{ ocp4_pull_secret }}"
+    msg: "Please download your pull-secret from {{ pull_secret_request }} to {{ pull_secret }}"
   when: not pull_secret_file.stat.exists
   tags: [ setup ]
 

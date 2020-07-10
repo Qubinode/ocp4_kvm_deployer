@@ -2,7 +2,7 @@
 # defaults file for ocp4-rhcos-vms
 admin_user: admin
 project_dir:  /home/{{ admin_user }}/qubinode-installer/
-ocp4_pull_secret: /home/{{ admin_user }}/qubinode-installer/pull-secret.txt
+pull_secret: /home/{{ admin_user }}/qubinode-installer/pull-secret.txt
 
 # OCP release info
 ocp4_okd4: ocp4
