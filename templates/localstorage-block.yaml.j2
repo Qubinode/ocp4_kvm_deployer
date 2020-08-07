@@ -4,7 +4,7 @@ metadata:
   name: "localblock-disks"
   namespace: "local-storage"
   annotations:
-    storageclass.kubernetes.io/is-default-class: 'True'
+    storageclass.kubernetes.io/is-default-class: 'true'
 spec:
   nodeSelector:
     nodeSelectorTerms:
@@ -14,7 +14,7 @@ spec:
           values:
 {% for compute in ocp4_compute_nodes %}
 {% if 'compute' in compute %}
-            - {{ compute }}.{{cluster_name }}.{{ ocp4_cluster_domain }}
+            - {{ cluster_name }}-{{ compute }}.{{cluster_name }}.{{ ocp4_cluster_domain }}
 {% endif %}
 {% endfor %}
   storageClassDevices:

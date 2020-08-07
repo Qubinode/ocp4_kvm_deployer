@@ -30,3 +30,6 @@
     label: "{{ disk_name }}"
   when: item.enable
   changed_when: '"Disk attached successfully" in attached_disk.stdout'
+
+- name: End the play 
+  meta: end_host

@@ -112,7 +112,7 @@
         KUBECONFIG: "{{ openshift_install_dir }}/auth/kubeconfig"
       when: delete_deployment|bool
       ignore_errors: yes
-      tags: [ deploy_nodes, rhcos, localstorage ]
+      tags: [ localstorage ]
 
     - name: Remove to the local-storage localstorage-block.yaml
       command: "/usr/local/bin/oc delete -f {{ openshift_install_dir }}/localstorage-block.yaml"
@@ -120,7 +120,7 @@
         KUBECONFIG: "{{ openshift_install_dir }}/auth/kubeconfig"
       ignore_errors: yes
       when: delete_deployment|bool
-      tags: [ deploy_nodes, rhcos, localstorage ]
+      tags: [ localstorage ]
 
     - name: Remove to the local-storage Subscription
       command: "/usr/local/bin/oc delete -f {{ openshift_install_dir }}/localstorage-operator.yaml"
@@ -128,7 +128,7 @@
         KUBECONFIG: "{{ openshift_install_dir }}/auth/kubeconfig"
       when: delete_deployment|bool
       ignore_errors: yes
-      tags: [ deploy_nodes, rhcos, localstorage ]
+      tags: [ localstorage ]
 
     - name: Delete localstroage project
       command: "/usr/local/bin/oc delete project local-storage"
@@ -136,5 +136,5 @@
         KUBECONFIG: "{{ openshift_install_dir }}/auth/kubeconfig"
       ignore_errors: yes
       when: delete_deployment|bool
-      tags: [ deploy_nodes, rhcos, localstorage ]
+      tags: [ localstorage ]
   when: namespace_exist  and local_storage_operator_exist
