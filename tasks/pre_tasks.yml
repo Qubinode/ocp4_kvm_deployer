@@ -1,9 +1,37 @@
 ---
-# tasks file for ocp4-kvm-deployer
+# tasks file for ocp4_kvm_deployer
+- name: create okd4 pull secret
+  copy:
+    content: '{"auths":{"fake":{"auth": "bar"}}}'
+    dest: "{{ pull_secret }}"
+    owner: "{{ admin_user }}"
+    group: "{{ admin_user }}"
+    backup: yes
+  when: ocp4_okd4 == 'okd4'
+
+- name: check for user pull-secret
+  stat:
+    path: "{{ pull_secret }}"
+  register: pull_secret_file
+  tags: [ setup ]
+
+- name: fail if pull secret does
+  fail:
+    msg: "Please download your pull-secret from {{ pull_secret_request }} to {{ pull_secret }}"
+  when: not pull_secret_file.stat.exists
+  tags: [ setup ]
+
 - name: set compute_node_count variable
   set_fact:
     compute_node_count: "{{ 1 if compute_count|int == 0 else compute_count }}"
   tags: [ setup, deploy_nodes, rhcos, bootstrap, idm]
+
+- name: get users homedir
+  set_fact:
+    homedir: "{{ lookup('env','HOME') }}"
+  become: yes
+  become_user: "{{ admin_user }}"
+  tags: always
 
 - name: Setting Ingress information and machine configuration for bootstrap nodes and other machines
   set_fact:
@@ -17,11 +45,11 @@
     tmp_machine_config_server_listen: "['{{ listen_address }}:22623', '{{ ocp4_nat_gateway }}:22623']"
   tags: [ setup, deploy_nodes, rhcos, bootstrap, idm]
 
-- name: Point all ingress traffic to master nodes when compute count is zero
+- name: Point all ingress traffic to ctrlplane nodes when compute count is zero
   set_fact:
-    ingress_node: "{{ 'master' if compute_count|int == 0 else 'compute' }}"
-    ingress_node_octet: "{{ master_ip_octet if compute_count|int == 0 else compute_ip_octet }}"
-    ingress_count: "{{ master_count if compute_count|int == 0 else compute_count }}"
+    ingress_node: "{{ 'ctrlplane' if compute_count|int == 0 else 'compute' }}"
+    ingress_node_octet: "{{ ctrlplane_ip_octet if compute_count|int == 0 else compute_ip_octet }}"
+    ingress_count: "{{ ctrlplane_count if compute_count|int == 0 else compute_count }}"
   tags: [ setup, deploy_nodes, rhcos, bootstrap, idm]
 
 - name: Setting Ingress information and machine configuration for internal API Server
@@ -31,18 +59,18 @@
   ignore_errors: false
   tags: [ setup, deploy_nodes, rhcos, bootstrap, idm]
 
-- name: Setting Ingress information and machine configuration for master nodes
+- name: Setting Ingress information and machine configuration for ctrlplane nodes
   set_fact:
-    tmp_api: "{{ tmp_api }}  + [ 'master-{{ item }}={{ ocp4_nat_subnet.split('.')[:3] | join('.') }}.{{ master_ip_octet|int + item|int }}:6443' ]"
-    tmp_machine_config_server: "{{ tmp_machine_config_server }} + [ 'master-{{ item }}={{ ocp4_nat_subnet.split('.')[:3] | join('.') }}.{{ master_ip_octet|int + item|int }}:22623' ]"
-  with_sequence: start=0 end="{{ master_count|int - 1 }}" stride=1
+    tmp_api: "{{ tmp_api }}  + [ 'ctrlplane-{{ item }}={{ cluster_subnet }}.{{ ctrlplane_ip_octet|int + item|int }}:6443' ]"
+    tmp_machine_config_server: "{{ tmp_machine_config_server }} + [ 'ctrlplane-{{ item }}={{ cluster_subnet }}.{{ ctrlplane_ip_octet|int + item|int }}:22623' ]"
+  with_sequence: start=0 end="{{ ctrlplane_count|int - 1 }}" stride=1
   ignore_errors: false
   tags: [ setup, deploy_nodes, rhcos, bootstrap, idm]
 
 - name: Setting Ingress information and machine configuration
   set_fact:
-    tmp_ingress_http: "{{ tmp_ingress_http }} + [ '{{ ingress_node }}-{{ item }}={{ ocp4_nat_subnet.split('.')[:3] | join('.') }}.{{ ingress_node_octet|int + item|int }}:80' ]"
-    tmp_ingress_https: "{{ tmp_ingress_https }} + [ '{{ ingress_node }}-{{ item }}={{ ocp4_nat_subnet.split('.')[:3] | join('.') }}.{{ ingress_node_octet|int + item|int }}:443' ]"
+    tmp_ingress_http: "{{ tmp_ingress_http }} + [ '{{ ingress_node }}-{{ item }}={{ cluster_subnet }}.{{ ingress_node_octet|int + item|int }}:80' ]"
+    tmp_ingress_https: "{{ tmp_ingress_https }} + [ '{{ ingress_node }}-{{ item }}={{ cluster_subnet }}.{{ ingress_node_octet|int + item|int }}:443' ]"
   with_sequence: start=0 end="{{ ingress_count|int - 1 }}" stride=1
   ignore_errors: false
   tags: [ setup, deploy_nodes, rhcos, bootstrap, idm]
@@ -70,7 +98,7 @@
   set_fact:
     container_exited: "{{ true if container_result.stdout is defined and container_result.stdout == 'exited' else false }}"
     container_running: "{{ true if container_result.stdout is defined and container_result.stdout == 'running' else false }}"
-    container_exist: "{{ true if container_result.stdout is defined and container_result.stdout != '' else false }}"
+    container_exist: "{{ true if container_result.stdout is defined and container_result.stdout|length > 0  else false }}"
   tags: [ setup, deploy_nodes, rhcos, bootstrap, idm, lb, startup]
 
 - name: check if Loadbalancer SystemD service exists
@@ -78,7 +106,6 @@
     path: "/etc/systemd/system/{{ lb_name }}.service"
   register: lb_service
   tags: [ setup, deploy_nodes, rhcos, bootstrap, idm, lb, startup]
-
 
 - name: ensure the jq command is installed from ocp4 repos
   shell: |
@@ -90,6 +117,13 @@
         sudo subscription-manager repos --disable rhel-7-server-ose-"{{ ocp4_dependencies_version }}"-rpms
         sudo yum -y install ${rpmdir}/*.rpm
      fi
-  changed_when: jq_command_install.stdout != ""
+  changed_when: jq_command_install.stdout|length > 0
   register: jq_command_install
   tags: [ deploy_nodes, rhcos, postinstall ]
+
+- name: Verifiy podman is installed
+  stat:
+    path: "/usr/bin/podman"
+  register: podman_is_installed
+  tags: [ podman, pkg ]
+

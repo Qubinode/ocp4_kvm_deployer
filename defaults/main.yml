@@ -2,7 +2,7 @@
 # defaults file for ocp4-rhcos-vms
 admin_user: admin
 project_dir:  /home/{{ admin_user }}/qubinode-installer/
-ocp4_pull_secret: /home/{{ admin_user }}/qubinode-installer/pull-secret.txt
+pull_secret: /home/{{ admin_user }}/qubinode-installer/pull-secret.txt
 
 # OCP release info
 ocp4_okd4: ocp4
@@ -15,11 +15,11 @@ ocp4_client: "openshift-client-linux-{{ ocp4_release }}.tar.gz"
 ocp4_installer: "openshift-install-linux-{{ ocp4_release }}.tar.gz"
 tools_missing: false
 
-# treeinfo 
+# treeinfo
 family_tree: "Red Hat CoreOS"
 
-# add worker nodes
-add_workers: no
+# add compute nodes
+add_computes: no
 
 # Set to yes when expanding the qcow template from the default 10G
 expand_os_disk: no
@@ -27,11 +27,17 @@ expand_os_disk: no
 # set to true to tear down the cluster
 tear_down: no
 
+# set to yes to run smoketest after cluster is deployed
+smoketest_cluster: no
+
 # set to no to not deploy cluster
 deploy_cluster: yes
 
 # set to true to startup cluster
 startup_cluster: no
+
+# set to true to shutdown cluster
+shutdown_cluster: no
 
 # set to false to stop checking of existing cluster
 check_existing_cluster: yes
@@ -39,8 +45,8 @@ check_existing_cluster: yes
 # cluster deployed message
 cluster_deployed_msg: "not deployed"
 
-# Allow cluster to be shutdown without waiting 24hrs
-cluster_shutdown_before_cert_rotate: no
+# ssh command options
+ssh_options: "-q -o StrictHostKeyChecking=no -o BatchMode=yes"
 
 # set to configure local storaage
 configure_local_storage: no
@@ -63,15 +69,14 @@ old_libvirt_net: ocp42
 deploy_ocp4_configs: yes
 
 # ocp4 nodes attributes
-master_count: 3
+ctrlplane_count: 3
 compute_count: 3
-master_ip_octet: 10
+ctrlplane_ip_octet: 10
 compute_ip_octet: 20
 bootstrap_node_name: bootstrap
 
 # Ignition creation variables
 openshift_install_dir: ""
-pull_secret: ""
 external_domain_name: lab.example
 internal_domain_name: lab.example
 ssh_ocp4_public_key: ""
@@ -100,7 +105,7 @@ libivrt_network_domain: compute.local
 pull_secret_request: https://cloud.redhat.com/openshift/install/metal/user-provisioned
 
 ocp4_instances:
-  - name: master
+  - name: ctrlplane
     hd_size: 120G
     memory_size: 16192
     cpu_size: 4
@@ -111,9 +116,9 @@ ocp4_instances:
       - size: 50G
         enable: true
         name: vdc
-    qty: "{{ master_count }}"
-    vm_type: master
-    ip_octet: "{{ master_ip_octet }}"
+    qty: "{{ ctrlplane_count }}"
+    vm_type: ctrlplane
+    ip_octet: "{{ ctrlplane_ip_octet }}"
   - name: compute
     hd_size: 120G
     memory_size: 16192
@@ -160,8 +165,11 @@ podman_pkgs:
   - slirp4netns
   - nfs-utils
 
-# Defaults for additional worker 
+# Defaults for additional compute
 approve_work_csr: false
+
+# RHCOS default username
+rhcos_user: core
 
 # localstorage
 localstorage_version: '4.3'
@@ -179,9 +187,15 @@ nfs_server_ip:  changeme
 registry_pvc_size: 100Gi
 storage_class_result: true
 openshift_token: 1234567890
-openshift_url: https://master.example.com:6443 #https://master.example.com for openshift 3
+openshift_url: https://ctrlplane.example.com:6443 #https://ctrlplane.example.com for openshift 3
 openshift_version: ocp4
 project_namespace: nfs-provisioner
 set_as_default: false
 delete_deployment: false
 insecure_skip_tls_verify: true
+
+# this is temporary and should be updated to grab the type from ocp4_instances
+nodes_types:
+  - master
+  - worker
+  - bootstrap

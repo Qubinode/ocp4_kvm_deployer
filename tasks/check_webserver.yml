@@ -1,0 +1,25 @@
+---
+- name: try to download a ignition file from the webserver
+  uri:
+    url: "{{ rhcos_ignition_url }}/bootstrap.ign"
+  register: ignition_file_reachable
+  failed_when: False
+  tags: [ deploy_nodes, rhcos, node_profile, add_computes ]
+
+- name: restart podman httpd server when ignition file unreachable
+  command: systemctl restart qbn-httpd.service
+  args:
+    warn: no
+  when: ignition_file_reachable.status != 200
+  become: yes
+  tags: [ deploy_nodes, rhcos, node_profile, add_computes ]
+
+- name: wait for podman httpd to restart
+  uri:
+    url: "{{ rhcos_ignition_url }}/bootstrap.ign"
+  register: ignition_file_reachable
+  failed_when: False
+  until: ignition_file_reachable.status == 200
+  delay: 5
+  retries: 120
+  tags: [ deploy_nodes, rhcos, node_profile, add_computes ]

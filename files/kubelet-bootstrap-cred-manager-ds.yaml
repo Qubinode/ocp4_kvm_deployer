@@ -84,13 +84,13 @@ spec:
           - mountPath: /etc/kubernetes/
             name: kubelet-dir
       nodeSelector:
-        node-role.kubernetes.io/master: ""
+        node-role.kubernetes.io/ctrlplane: ""
       priorityClassName: "system-cluster-critical"
       restartPolicy: Always
       securityContext:
         runAsUser: 0
       tolerations:
-      - key: "node-role.kubernetes.io/master"
+      - key: "node-role.kubernetes.io/ctrlplane"
         operator: "Exists"
         effect: "NoSchedule"
       - key: "node.kubernetes.io/unreachable"

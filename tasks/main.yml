@@ -1,15 +1,15 @@
 ---
-# tasks file for ocp4-kvm-deployer
+# tasks file for ocp4_kvm_deployer
 
 - name: cluster deployment
   block:
     - name: import tasks pre_tasks.yml
       import_tasks: pre_tasks.yml
-    
+
     - name: check if cluster is deployed and report state of cluster
       import_tasks: check_cluster.yml
       when: check_existing_cluster|bool
-    
+
     - name: import task deploy.yml
       import_tasks: deploy.yml
       when: deploy_cluster|bool
@@ -23,14 +23,15 @@
       import_tasks: destroy_bootstrap_node.yml
       when: cluster_deployed_msg == 'deployed'
 
-    - name: enable shutdown before 24hrs lasped
-      import_tasks: enable_shutdown.yml
-      when: cluster_shutdown_before_cert_rotate|bool
-    
     - name: import configure-local-storage.yml
       import_tasks: configure-local-storage.yml
       tags: [ localstorage, deploy_nodes, rhcos, postinstall ]
       when: configure_local_storage|bool and cluster_deployed_msg == 'deployed' and compute_count|int != 0
+
+    - name: include tasksgenerate_inventory.yml
+      import_tasks: generate_inventory.yml
+      when: cluster_deployed_msg == 'deployed'
+
   when: not tear_down|bool
 
 - name: import tasks tear_down.yml
@@ -40,3 +41,11 @@
 - name: import startup task
   import_tasks: startup.yml
   when: not tear_down|bool and startup_cluster|bool
+
+- name: import shutdown task
+  import_tasks: shutdown.yml
+  when: not tear_down|bool and shutdown_cluster|bool
+
+- name: import smoke test task
+  import_tasks: smoketest.yml
+  when: not tear_down and smoketest_cluster|bool

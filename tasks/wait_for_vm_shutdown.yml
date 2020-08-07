@@ -1,7 +1,7 @@
 ---
-- name: waiting for {{ vm_name }} to shutdown
+- name: waiting for {{ vm_hostname }} to shutdown
   shell: |
-    result=$(virsh dominfo --domain {{ vm_name }}| awk '/State/ {print $2}')
+    result=$(virsh dominfo --domain {{ vm_hostname }}| awk '/State/ {print $2}')
     if [ $result == 'shut' ];
     then
        echo "shutoff"
@@ -10,4 +10,4 @@
   until: vm_shutdown_status.stdout.find('shutoff') != -1
   retries: 120
   delay: 3
-  tags: [ deploy_nodes, rhcos, rhcos_wait, bootstrap_shut, add_workers]
+  tags: [ deploy_nodes, rhcos, rhcos_wait, bootstrap_shut, add_computes]

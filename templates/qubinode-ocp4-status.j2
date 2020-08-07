@@ -2,9 +2,18 @@
 
 COUNT=0
 SLEEP_FOR=0
-TIMEOUT=30
-RC=0
-KUBEADMIN_PASS=$(cat {{ project_dir }}/ocp4/auth/kubeadmin-password)
+TIMEOUT=60
+
+if oc get nodes | grep -q okd
+then
+    install_dir=okd4
+    product=okd4
+else
+    install_dir=ocp4
+    product=ocp4
+fi
+
+KUBEADMIN_PASS=$(cat {{ project_dir }}/${install_dir}/auth/kubeadmin-password)
 TOTAL_OPERATORS=$(/usr/local/bin/oc get clusteroperators --no-headers=true | awk '{print $1}' | wc -l)
 OPERATORS=$(/usr/local/bin/oc get clusteroperators --no-headers=true | awk '{print $1}')
 sp="/-\|"
@@ -24,11 +33,11 @@ endspin() {
 }
 {% endraw %}
 
-printf "%s\n" "    Varifying all Cluster operators are UP!"
+printf "%s\n" "    Ensure all Cluster operators are available!"
 if [ -z  $KUBEADMIN_PASS ];
 then
   echo "OpenShift Cluster is not installed on machine"
-  echo "Please run ./qubinode-installer -p ocp4"
+  echo "Please run ./qubinode-installer -p ${product}"
   exit 0
 fi
 
@@ -40,6 +49,8 @@ do
         if [ "A${STATUS}" == "ATrue" ]
         then
             COUNT=$(($COUNT + 1))
+	else
+            printf "%s\n" "    Waiting on $operator status to change from $STATUS to True"
         fi
     done
     if [ $COUNT -eq $TOTAL_OPERATORS ]
@@ -83,4 +94,3 @@ else
     printf "%s\n" ""
 fi
 
-exit $RC

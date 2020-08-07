@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Add a new worker node to the clsuter
+# Add a new compute node to the clsuter
 
 node_name=$1
 WAIT_TIME=60

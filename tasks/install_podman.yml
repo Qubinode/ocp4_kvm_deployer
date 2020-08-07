@@ -1,42 +1,40 @@
 ---
-- name: Verifiy podman is installed
+- name: check for the podman command
   stat:
     path: "/usr/bin/podman"
-  register: podman_is_installed
+  register: podman_cmd
   tags: [ podman, pkg ]
 
 - name: Enable rhel-7-server-extras-rpms repository
   rhsm_repository:
     name: rhel-7-server-extras-rpms
     state: enabled
-  when: 
-    - not podman_is_installed.stat.exists
+  when:
+    - not podman_cmd.stat.exists
     - ansible_distribution == 'RedHat'
     - ansible_distribution_major_version == '7'
   tags: [ podman, pkg ]
-
 
 - name: Enable rhel-8-for-x86_64-appstream-rpms repository
   rhsm_repository:
     name: rhel-8-for-x86_64-appstream-rpms
     state: enabled
-  when: 
+  when:
     - not podman_is_installed.stat.exists
     - ansible_distribution == "RedHat"
     - ansible_distribution_major_version == '8'
   tags: [ podman, pkg ]
-
 
 - name: Enable rhel-8-for-x86_64-baseos-rpms repository
   rhsm_repository:
     name: rhel-8-for-x86_64-baseos-rpms
     state: enabled
-  when: 
+  when:
     - not podman_is_installed.stat.exists
     - ansible_distribution == "RedHat"
     - ansible_distribution_major_version == '8'
   tags: [ podman, pkg ]
-    
+
 - name: install podman, buildah, skopeo
   yum:
     name: "{{ podman_pkgs }}"

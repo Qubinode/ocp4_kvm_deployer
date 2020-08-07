@@ -5,8 +5,24 @@
 set -xe
 mac_address=$(sudo virsh net-dumpxml {{ libvirt_network_name }}|awk '/host mac/ {print $0}'| awk '/{{ vm_name }}/ {print $2}'|grep -o -E '([[:xdigit:]]{1,2}:){5}[[:xdigit:]]{1,2}')
 
-kernel=https://builds.coreos.fedoraproject.org/prod/streams/stable/builds/{{ major_version }}/x86_64/fedora-coreos-{{ major_version }}-live-kernel-x86_64
-initrd=https://builds.coreos.fedoraproject.org/prod/streams/stable/builds/{{ major_version }}/x86_64/fedora-coreos-{{ major_version }}-live-initramfs.x86_64.img
+project_dir={{ project_dir }}
+kernel=fedora-coreos-{{ major_version }}-live-kernel-x86_64
+initrd=fedora-coreos-{{ major_version }}-live-initramfs.x86_64.img
+kernel_url=https://builds.coreos.fedoraproject.org/prod/streams/stable/builds/{{ major_version }}/x86_64/${kernel}
+initrd_url=https://builds.coreos.fedoraproject.org/prod/streams/stable/builds/{{ major_version }}/x86_64/${initrd}
+kernel_file=${project_dir}/rhcos-install/${kernel}
+initrd_file=${project_dir}/rhcos-install/${initrd}
+
+if [ ! -f ${kernel_file} ]
+then
+    wget $kernel_url -O ${kernel_file}
+fi
+
+if [ ! -f ${initrd_file} ]
+then
+    wget $initrd_url -O ${initrd_file}
+fi
+
 
 args='nomodeset '
 args+='coreos.inst=yes '
@@ -16,12 +32,33 @@ args+='rd.neednet=1 '
 args+='coreos.inst.stream=stable '
 args+='coreos.inst.ignition_url={{ rhcos_ignition }} '
 args+='ip=dhcp '
-#args+='ip=192.168.50.2::192.168.50.1:255.255.255.0:{{ vm_name }}.{{ cluster_name }}.{{ ocp4_cluster_domain }}:eth0:none nameserver=10.90.30.161 nameserver=8.8.8.8 '
 
-sudo virt-install --name {{ vm_name }} --ram 16192 --vcpus 4 \
-  --disk size=120 \
-  --os-type linux  \
-  --os-variant fedora31 \
+{% if performance_disk %}
+qemu_mode=falloc
+{% else %}
+qemu_mode=metadata
+{% endif %}
+
+# {{ vm_type }} Node
+sudo qemu-img create -f qcow2 -o preallocation=$qemu_mode {{ kvm_host_libvirt_dir }}/{{ vm_name }}-vda.qcow2 {{ hd_size }}
+{% for item in extra_storage %}
+{%- if item.enable %}
+sudo qemu-img create -f qcow2 -o preallocation=$qemu_mode {{ kvm_host_libvirt_dir }}/{{ vm_name }}-{{ item.name }}.qcow2 {{ item.size }}
+{% endif %}
+{% endfor %}
+
+
+sudo virt-install \
+  --name {{ vm_name }} \
+  --disk {{ kvm_host_libvirt_dir }}/{{ vm_name }}-vda.qcow2,bus=virtio,format=qcow2 \
+{% for item in extra_storage %}
+{%- if item.enable %}
+  --disk {{ kvm_host_libvirt_dir }}/{{ vm_name }}-{{ item.name }}.qcow2,bus=virtio,format=qcow2 \
+{% endif %}
+{% endfor %}
+  --memory {{ memory_size }} \
+  --vcpus {{ cpu_size }} \
+  --os-type generic \
   --rng /dev/urandom \
   --network network={{ libvirt_network_name }},model=virtio,mac=${mac_address} --noreboot --noautoconsole \
-  --install kernel=${kernel},initrd=${initrd},kernel_args_overwrite=yes,kernel_args="${args}"
+  --install kernel=${kernel_file},initrd=${initrd_file},kernel_args_overwrite=yes,kernel_args="${args}"

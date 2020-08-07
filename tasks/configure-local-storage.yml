@@ -6,10 +6,11 @@
   block:
     - name: Get local operator version
       shell: |
-        /usr/local/bin/oc describe packagemanifests local-storage-operator -n openshift-marketplace | grep Name: | grep -v "Display\|storage\|Red Hat" | grep {{ ocp4_dependencies_version }}  | awk '{print $2}'
+        {{ oc_descr_pkgsmanifest_cmd }} | grep Name: | grep -v "Display\|storage\|Red Hat" | grep {{ ocp4_dependencies_version }}  | awk '{print $2}'
       environment:
         KUBECONFIG: "{{ openshift_install_dir }}/auth/kubeconfig"
       register: operator_version_check
+      become: no
 
     - name: setting localstorage-operator version
       set_fact:
@@ -65,7 +66,7 @@
 
 - name: add compute nodes to ocp4 nodes list
   vars:
-    vm_name: "compute-{{ '%00x' |format(item) }}"
+    vm_name: "{{ compute_node_name }}-{{ '%00x' |format(item) }}"
   set_fact:
     ocp4_compute_nodes: "{{ ocp4_compute_nodes + [ vm_name ] }}"
   loop: "{{ range(0, compute_count|int)|list }}"

@@ -1,6 +1,6 @@
 ---
 - set_fact:
-    master_nodes_count: 0
+    ctrlplane_nodes_count: 0
     compute_nodes_count: 0
 
 - name: start the loadbancer systemd service {{ lb_name }}.service
@@ -28,38 +28,38 @@
   register: all_vms
   tags: [ deploy_nodes, rhcos, bootstrap, startup ]
 
-- name: start ocp master nodes
+- name: start ocp ctrlplane nodes
   vars:
-    vm_name: "master-{{ '%00x' |format(item) }}"
+    vm_name: "{{ ctrlplane_node_name }}-{{ '%00x' |format(item) }}"
   virt:
     name: "{{ vm_name }}"
     state: running
-  loop: "{{ range(0, master_count|int)|list }}"
+  loop: "{{ range(0, ctrlplane_count|int)|list }}"
   delay: 10
   when: vm_name in all_vms.list_vms
   tags: [ deploy_nodes, rhcos, bootstrap, startup]
 
-- name: wait for master nodes to be available
+- name: wait for ctrlplane nodes to be available
   shell: >
-    /usr/local/bin/oc get nodes -o wide --no-headers=true | grep master| grep Ready|wc -l
+    /usr/local/bin/oc get nodes -o wide --no-headers=true | grep ctrlplane| grep Ready|wc -l
   ignore_errors: yes
   become: no
-  register: master_nodes_count
-  until: master_nodes_count.stdout|int == master_count|int
+  register: ctrlplane_nodes_count
+  until: ctrlplane_nodes_count.stdout|int == ctrlplane_count|int
   retries: 18
   delay: 10
   changed_when: False
   tags: [ deploy_nodes, rhcos, bootstrap, startup]
 
-- name: fail a total {{ master_count }} is not found
+- name: fail a total {{ ctrlplane_count }} is not found
   fail:
-    msg: "Was not able to confirm all {{ master_count }} master nodes are up"
-  when: master_nodes_count.stdout|int != master_count|int
+    msg: "Was not able to confirm all {{ ctrlplane_count }} ctrlplane nodes are up"
+  when: ctrlplane_nodes_count.stdout|int != ctrlplane_count|int
   tags: [ deploy_nodes, rhcos, bootstrap, startup]
 
 - name: start ocp compute nodes
   vars:
-    vm_name: "compute-{{ '%00x' |format(item) }}"
+    vm_name: "{{ compute_node_name }}-{{ '%00x' |format(item) }}"
   virt:
     name: "{{ vm_name }}"
     state: running
@@ -70,7 +70,7 @@
 
 - name: wait for compute nodes to be available
   shell: >
-    /usr/local/bin/oc get nodes -o wide --no-headers=true | grep worker| grep -v NotReady |grep Ready|wc -l
+    /usr/local/bin/oc get nodes -o wide --no-headers=true | grep compute| grep -v NotReady |grep Ready|wc -l
   ignore_errors: yes
   become: no
   register: compute_nodes_count
@@ -87,9 +87,14 @@
   when: compute_nodes_count.stdout|int != compute_count|int and compute_count|int != 0
   tags: [ deploy_nodes, rhcos, bootstrap, startup]
 
+- name: Wait 3m for nodes to settle and pods to start
+  pause:
+    seconds: 180
+  tags: [ deploy_nodes, rhcos, bootstrap, startup]
+
 - name: ensure compute nodes are set to schedulable
   vars:
-    vm_name: "compute-{{ '%00x' |format(item) }}.{{ cluster_name }}.{{ ocp4_cluster_domain }}"
+    vm_name: "{{ compute_node_name }}-{{ '%00x' |format(item) }}.{{ cluster_name }}.{{ ocp4_cluster_domain }}"
   shell: >
     /usr/local/bin/oc adm uncordon "{{ vm_name }}"
   register: schedule_state
@@ -97,4 +102,16 @@
   loop: "{{ range(0, compute_count|int)|list }}"
   delay: 10
   when: vm_name in all_vms.list_vms
+  tags: [ deploy_nodes, rhcos, bootstrap, startup]
+
+- name: Wait 10s for additional CSRs to appear
+  pause:
+    seconds: 10
+  tags: [ deploy_nodes, rhcos, bootstrap, startup]
+
+- name: Approve all additional Pending CSRs
+  shell: >
+    oc get csr -ojson | jq -r '.items[] | select(.status == {} ) | .metadata.name' | xargs oc adm certificate approve > /dev/null 2>&1
+  ignore_errors: yes
+  become: no
   tags: [ deploy_nodes, rhcos, bootstrap, startup]
