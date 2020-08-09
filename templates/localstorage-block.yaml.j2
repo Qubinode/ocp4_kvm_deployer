@@ -21,4 +21,7 @@ spec:
     - storageClassName: "localblock-sc"
       volumeMode: Block
       devicePaths:
-        - {{ localstorage_block_disk }}
+      {% for fs_disk in localstorage_fs_disk %}
+        - {{ fs_disk }}
+      {% endfor %}
+
