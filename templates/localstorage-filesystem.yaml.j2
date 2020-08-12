@@ -14,7 +14,7 @@ spec:
           values:
 {% for compute in ocp4_compute_nodes %}
 {% if 'compute' in compute %}
-            - {{ cluster_name }}-{{ compute }}.{{cluster_name }}.{{ ocp4_cluster_domain }}
+            - {{ compute }}.{{cluster_name }}.{{ ocp4_cluster_domain }}
 {% endif %}
 {% endfor %}
   storageClassDevices:
