@@ -6,7 +6,7 @@ pull_secret: /home/{{ admin_user }}/qubinode-installer/pull-secret.txt
 
 # OCP release info
 ocp4_okd4: ocp4
-ocp4_release: 4.4.6
+ocp4_release: 4.6.1
 ocp4_release_dir: "{{ ocp4_release }}"
 ocp4_release_url: "https://mirror.openshift.com/pub/openshift-v4/clients/ocp/{{ ocp4_release_dir }}"
 

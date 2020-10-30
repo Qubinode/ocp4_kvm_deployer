@@ -1,14 +1,40 @@
 #!/bin/bash
-
+##
+# Still in development preview
+##
+set -xe
 mac_address=$(sudo virsh net-dumpxml {{ libvirt_network_name }}|awk '/host mac/ {print $0}'| awk '/{{ vm_name }}/ {print $2}'|grep -o -E '([[:xdigit:]]{1,2}:){5}[[:xdigit:]]{1,2}')
+
+project_dir=/home/admin/qubinode-installer
+kernel=rhcos-{{ ocp4_release }}-x86_64-live-kernel-x86_64
+initrd=rhcos-{{ ocp4_release }}-x86_64-live-initramfs.x86_64.img
+kernel_url=https://mirror.openshift.com/pub/openshift-v4/x86_64/dependencies/rhcos/latest/{{ ocp4_release }}/${kernel}
+initrd_url=https://mirror.openshift.com/pub/openshift-v4/x86_64/dependencies/rhcos/latest/{{ ocp4_release }}/${initrd}
+kernel_file=${project_dir}/rhcos-install/${kernel}
+initrd_file=${project_dir}/rhcos-install/${initrd}
+
+
+if [ ! -f ${kernel_file} ]
+then
+    wget $kernel_url -O ${kernel_file}
+fi
+
+if [ ! -f ${initrd_file} ]
+then
+    wget $initrd_url -O ${initrd_file}
+fi
 
 args='nomodeset '
 args+='coreos.inst=yes '
-args+='coreos.inst.install_dev=vda '
-args+='coreos.inst.image_url={{ rhcos_metal_bios }} '
+args+='console=tty0 console=ttyS0 '
+args+='coreos.inst.install_dev=/dev/vda '
+args+='rd.neednet=1 '
+#args+='coreos.inst.stream=stable '
+args+='coreos.inst.insecure '
+args+='coreos.inst.image_url=https://mirror.openshift.com/pub/openshift-v4/x86_64/dependencies/rhcos/latest/{{ ocp4_release }}/rhcos-metal.x86_64.raw.gz  '
 args+='coreos.inst.ignition_url={{ rhcos_ignition }} '
-args+='ip={{ vm_ip }}::{{ ocp4_nat_gateway }}:{{ mask }}:{{ vm_name }}.{{ cluster_name }}.{{ ocp4_cluster_domain }}:ens3:none nameserver={{ dns_server_ip }} '
-args+='rd.neednet=1'
+args+='coreos.live.rootfs_url=https://mirror.openshift.com/pub/openshift-v4/x86_64/dependencies/rhcos/latest/{{ ocp4_release }}/rhcos-{{ ocp4_release }}-x86_64-live-rootfs.x86_64.img '
+args+='ip=dhcp '
 
 {% if performance_disk %}
 qemu_mode=falloc
@@ -24,18 +50,12 @@ sudo qemu-img create -f qcow2 -o preallocation=$qemu_mode {{ kvm_host_libvirt_di
 {% endif %}
 {% endfor %}
 
-
-sudo virt-install --name {{ vm_name }} \
-  --disk {{ kvm_host_libvirt_dir }}/{{ vm_name }}-vda.qcow2,bus=virtio,format=qcow2 \
-{% for item in extra_storage %}
-{%- if item.enable %}
-  --disk {{ kvm_host_libvirt_dir }}/{{ vm_name }}-{{ item.name }}.qcow2,bus=virtio,format=qcow2 \
-{% endif %}
-{% endfor %}
-  --memory {{ memory_size }} \
+sudo virt-install \
+  --name {{ vm_name }} \
+  --disk /var/lib/libvirt/images/{{ vm_name }}-vda.qcow2,bus=virtio,format=qcow2 \
+  --memory {{ memory_size } \
   --vcpus {{ cpu_size }} \
   --os-type generic \
-  --network network={{ libvirt_network_name }},mac=${mac_address},model=virtio --noreboot --noautoconsole\
-  --location {{ virtinstall_dir }} \
   --rng /dev/urandom \
-  --extra-args="${args}"
+  --network network={{ libvirt_network_name }},model=virtio,mac=${mac_address} --noreboot --noautoconsole \
+  --install kernel=${kernel_file},initrd=${initrd_file},kernel_args_overwrite=yes,kernel_args="${args}"
