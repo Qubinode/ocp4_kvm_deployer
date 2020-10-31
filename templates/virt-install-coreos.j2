@@ -8,16 +8,9 @@ mac_address=$(sudo virsh net-dumpxml {{ libvirt_network_name }} |awk '/host mac/
 project_dir=/home/admin/qubinode-installer
 kernel={{ coreos_installer_kernel }}
 initrd={{ coreos_installer_initramfs }}
+kernel_file=${project_dir}/rhcos-install/${kernel}
+initrd_file=${project_dir}/rhcos-install/${initrd}
 
-if [ ! -f ${kernel_file} ]
-then
-    wget $kernel_url -O ${kernel_file}
-fi
-
-if [ ! -f ${initrd_file} ]
-then
-    wget $initrd_url -O ${initrd_file}
-fi
 
 args='nomodeset '
 args+='coreos.inst=yes '
