@@ -55,36 +55,30 @@
     group: "{{ local_user_account }}"
   tags: [ download, ignitions, webserver ]
 
-- name: download the installer-initramfs.img metal-bios.raw.gz installer-kernel
+- name: download the coreos_rootfs
   get_url:
     url: "{{ openshift_mirror }}/{{ item }}"
     dest: "{{ webserver_images }}/{{ item }}"
     owner: "{{ local_user_account }}"
     group: "{{ local_user_account }}"
   with_items:
-    - "{{ coreos_installer_kernel }}"
-    - "{{ coreos_installer_initramfs }}"
-    - "{{ coreos_metal_bios }}"
+    - "{{ coreos_rootfs }}"
   register: rhcos_dependencies_dl
   notify:
     - restart {{ podman_webserver }}.service
   tags: [ download, ignition, deploy_nodes, webserver ]
 
-- name: copy {{ coreos_installer_kernel }} to {{ virtinstall_dir }}/vmlinuz
-  copy:
-    src: "{{ webserver_images }}/{{ coreos_installer_kernel }}"
-    dest: "{{ virtinstall_dir }}/vmlinuz"
-    owner: "{{ local_user_account }}"
-    group: "{{ local_user_account }}"
-  tags: [ download, virtinstall, deploy_nodes, webserver ]
 
-- name: copy {{ coreos_installer_initramfs }} to {{ virtinstall_dir }}/initramfs.img
-  copy:
-    src: "{{ webserver_images }}/{{ coreos_installer_initramfs }}"
-    dest: "{{ virtinstall_dir }}/initramfs.img"
+- name: download the installer-initramfs.img installer-kernel
+  get_url:
+    url: "{{ openshift_mirror }}/{{ item }}"
+    dest: "{{ virtinstall_dir }}/{{ item }}"
     owner: "{{ local_user_account }}"
     group: "{{ local_user_account }}"
-  tags: [ download, virtinstall, deploy_nodes, webserver ]
+  with_items:
+    - "{{ coreos_installer_kernel }}"
+    - "{{ coreos_installer_initramfs }}"
+  tags: [ download, ignition, deploy_nodes, webserver ]
 
 - name: get the status of the ignition files are available
   stat:
