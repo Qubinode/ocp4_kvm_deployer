@@ -20,11 +20,10 @@ args+='rd.neednet=1 '
 args+='coreos.inst.insecure '
 args+='coreos.inst.ignition_url={{ rhcos_ignition }} '
 args+='coreos.live.rootfs_url={{ coreos_rootfs_url }}  '
-{% if use_external_bridge %}
-args+='ip=dhcp '
-{% endif %}
 args+='ip={{ vm_ip }}::{{ ocp4_nat_gateway }}:{{ mask }}:{{ vm_name }}.{{ cluster_name }}.{{ ocp4_cluster_domain }}:ens3:none nameserver={{ dns_server_ip }} '
-
+{% if use_external_bridge %}
+args+='ip=ens4:dhcp '
+{% endif %}
 
 {% if performance_disk %}
 qemu_mode=falloc
