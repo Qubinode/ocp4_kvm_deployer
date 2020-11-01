@@ -11,6 +11,7 @@
 
 - name: import tasks deploy_libvirt_network.yml
   import_tasks: deploy_libvirt_network.yml
+  when: not use_external_bridge | bool 
 
 - name: import tasks firewall_setup.yml
   import_tasks: firewall_setup.yml

@@ -17,6 +17,17 @@
   set_fact:
     records: "{{ records|default([]) + [ {'hostname': name, 'ipaddr': ip, 'ptr_record': ptr} ] }}"
   tags: [api_dns]
+  when: not use_external_bridge | bool 
+
+- name: add api-int to dns records list
+  vars:
+    ip: "{{ kvm_host_ip }}"
+    name: api-int
+    ptr: 1
+  set_fact:
+    records: "{{ records|default([]) + [ {'hostname': name, 'ipaddr': ip, 'ptr_record': ptr} ] }}"
+  tags: [api_dns]
+  when: use_external_bridge | bool 
 
 - name: add api to dns records list
   vars:
