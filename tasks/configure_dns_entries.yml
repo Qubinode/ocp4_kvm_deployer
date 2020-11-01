@@ -39,13 +39,6 @@
     validate_certs: no
   tags: [idm, compute_dns, ctrlplane_dns, bootstrap_dns, api_dns, etcd_dns, wildcard_dns]
 
-- name: create reverse dns zone {{ idm_dns_reverse_zone }}
-  ipa_dnszone:
-    state: "{{ record_state }}"
-    zone_name: "{{ idm_dns_reverse_zone }}"
-    validate_certs: no
-  tags: [idm,  api_dns, wildcard_dns]
-
 - name: Create/Delete A Records
   ipa_dnsrecord:
     zone_name: "{{ idm_dns_forward_zone }}"
@@ -57,18 +50,6 @@
   with_items: "{{ records }}"
   when: not dns_teardown|bool
   tags: [idm, api_dns]
-
-- name: Create/Delete PTR Records
-  ipa_dnsrecord:
-    zone_name: "{{ idm_dns_reverse_zone }}"
-    record_name: "{{ item.ptr_record }}"
-    record_type: PTR
-    record_value: "{{ item.hostname }}.{{ cluster_name }}.{{ ocp4_cluster_domain }}."
-    state: "{{ record_state }}"
-    validate_certs: no
-  with_items: "{{ reverse_records }}"
-  when: not dns_teardown|bool
-  tags: [idm, compute_dns, ctrlplane_dns, bootstrap_dns, api_dns, etcd_dns]
 
 
 - name: Generate IPA Session Cookie
