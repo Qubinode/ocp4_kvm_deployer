@@ -29,31 +29,10 @@
   set_fact:
     stdout_lines: "{{ stdout_lines + validate_entry.stdout_lines }}"
 
-- name: Test if OpenShift ctrlplane node Entries Exist
-  command: "dig +short @{{ idm_server_ip }} {{ ctrlplane_node_name }}-{{ item }}.{{ cluster_name }}.{{ idm_dns_forward_zone }}"
-  register: validate_entry
-  with_sequence: start=0 end="{{ ctrlplane_count|int - 1 }}" stride=1
-  changed_when: false
-
 - name: show validate entry
   debug:
     var: validate_entry
     verbosity: 2
 
-- name: update stdout_lines list with ctrlplane node results
-  set_fact:
-    stdout_lines: "{{ stdout_lines + item.stdout_lines }}"
-  with_items: "{{ validate_entry.results }}"
 
-- name: Test compute node dns entries
-  block:
-    - name: Test if OpenShift compute nodes Entries Exist
-      command: "dig +short @{{ idm_server_ip }} {{ compute_node_name }}-{{ item }}.{{ cluster_name }}.{{ idm_dns_forward_zone }}"
-      register: validate_entry
-      with_sequence: start=0 end="{{ compute_node_count|int - 1 }}" stride=1
-
-    - set_fact:
-        stdout_lines: "{{ stdout_lines + item.stdout_lines }}"
-      with_items: "{{ validate_entry.results }}"
-  when: compute_count|int > 0
 

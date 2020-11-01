@@ -9,24 +9,6 @@
 #  include_tasks: check_dns_entries.yml
 #  tags: [idm, compute_dns, ctrlplane_dns]
 
-- name: add bootstrap to dns forward zone
-  vars:
-    ip: "{{ ocp4_nat_gateway.split('.')[:3] | join('.') }}.2"
-    name: "{{ bootstrap_node_name }}"
-    ptr: 2
-  set_fact:
-    records: "{{ records|default([]) + [ {'hostname': name, 'ipaddr': ip, 'ptr_record': ptr} ] }}"
-  tags: [bootstrap_dns]
-
-- name: add bootstrap to reverse forward zone
-  vars:
-    ip: "{{ ocp4_nat_gateway.split('.')[:3] | join('.') }}.2"
-    name: "{{ bootstrap_node_name }}"
-    ptr: 2
-  set_fact:
-    reverse_records: "{{ reverse_records|default([]) + [ {'hostname': name, 'ipaddr': ip, 'ptr_record': ptr} ] }}"
-  tags: [bootstrap_dns]
-
 - name: add api-int to dns records list
   vars:
     ip: "{{ ocp4_nat_gateway.split('.')[:3] | join('.') }}.1"
@@ -45,59 +27,6 @@
     records: "{{ records|default([]) + [ {'hostname': name, 'ipaddr': ip, 'ptr_record': ptr} ] }}"
   tags: [api_dns]
 
-- name: set ctrlplane nodes forward zone records
-  vars:
-    ip: "{{ ocp4_nat_gateway.split('.')[:3] | join('.') }}.{{ ctrlplane_ip_octet|int + item|int }}"
-    name: "{{ ctrlplane_node_name }}-{{ item }}"
-    ptr: "{{ ctrlplane_ip_octet|int + item|int }}"
-  set_fact:
-    records: "{{ records|default([]) + [ {'hostname': name, 'ipaddr': ip, 'ptr_record': ptr} ] }}"
-  with_sequence: start=0 end="{{ ctrlplane_count|int - 1 }}" stride=1
-  tags: [ctrlplane_dns]
-
-- name: set ctrlplane nodes reverse zone records
-  vars:
-    ip: "{{ ocp4_nat_gateway.split('.')[:3] | join('.') }}.{{ ctrlplane_ip_octet|int + item|int }}"
-    name: "{{ ctrlplane_node_name }}-{{ item }}"
-    ptr: "{{ ctrlplane_ip_octet|int + item|int }}"
-  set_fact:
-    reverse_records: "{{ reverse_records|default([]) + [ {'hostname': name, 'ipaddr': ip, 'ptr_record': ptr} ] }}"
-  with_sequence: start=0 end="{{ ctrlplane_count|int - 1 }}" stride=1
-  tags: [ctrlplane_dns]
-
-- name: set etcd nodes forward zone records
-  vars:
-    ip: "{{ ocp4_nat_gateway.split('.')[:3] | join('.') }}.{{ 10 + item|int }}"
-    name: "etcd-{{ item }}"
-    ptr: "{{ 10 + item|int }}"
-  set_fact:
-    records: "{{ records|default([]) + [ {'hostname': name, 'ipaddr': ip, 'ptr_record': ptr} ] }}"
-  with_sequence: start=0 end="{{ ctrlplane_count|int - 1 }}" stride=1
-  tags: [etcd_dns]
-
-- name: create compute nodes dns records
-  block:
-    - name: set compute nodes forward zone records
-      vars:
-        ip: "{{ ocp4_nat_gateway.split('.')[:3] | join('.') }}.{{ compute_ip_octet|int + item|int }}"
-        name: "{{ compute_node_name }}-{{ item }}"
-        ptr: "{{ compute_ip_octet|int + item|int }}"
-      set_fact:
-        records: "{{ records|default([]) + [ {'hostname': name, 'ipaddr': ip, 'ptr_record': ptr} ] }}"
-      with_sequence: start=0 end="{{ compute_node_count|int - 1 }}" stride=1
-      tags: [compute_dns]
-
-    - name: set compute nodes reverse zone records
-      vars:
-        ip: "{{ ocp4_nat_gateway.split('.')[:3] | join('.') }}.{{ compute_ip_octet|int + item|int }}"
-        name: "{{ compute_node_name }}-{{ item }}"
-        ptr: "{{ compute_ip_octet|int + item|int }}"
-      set_fact:
-        reverse_records: "{{ reverse_records|default([]) + [ {'hostname': name, 'ipaddr': ip, 'ptr_record': ptr} ] }}"
-      with_sequence: start=0 end="{{ compute_node_count|int - 1 }}" stride=1
-      tags: [compute_dns]
-  when: compute_count|int != 0
-
 - name: set dns record state
   set_fact:
     record_state: "{{ 'absent' if dns_teardown|bool else 'present' }}"
@@ -115,7 +44,7 @@
     state: "{{ record_state }}"
     zone_name: "{{ idm_dns_reverse_zone }}"
     validate_certs: no
-  tags: [idm, compute_dns, ctrlplane_dns, bootstrap_dns, api_dns, etcd_dns, wildcard_dns]
+  tags: [idm,  api_dns, wildcard_dns]
 
 - name: Create/Delete A Records
   ipa_dnsrecord:
@@ -127,7 +56,7 @@
     validate_certs: no
   with_items: "{{ records }}"
   when: not dns_teardown|bool
-  tags: [idm, compute_dns, ctrlplane_dns, bootstrap_dns, api_dns, etcd_dns]
+  tags: [idm, api_dns]
 
 - name: Create/Delete PTR Records
   ipa_dnsrecord:
@@ -179,30 +108,3 @@
     body_format: json
   when: not dns_teardown|bool
   tags: [wildcard_dns]
-
-- name: Create SRV Records
-  uri:
-    url: "https://{{ idm_server_fqdn }}/ipa/session/json"
-    validate_certs: no
-    method: POST
-    status_code: 200
-    headers:
-      Cookie: "{{ ipa_session.set_cookie }}"
-      Accept: "application/json"
-      Referer: "https://{{ idm_server_fqdn }}/ipa"
-    body:
-      method: dnsrecord_add
-      params:
-      - - "{{ idm_dns_forward_zone }}."
-        - "_etcd-server-ssl._tcp.{{ cluster_name }}"
-      - srv_part_priority: '0'
-        srv_part_weight: '10'
-        srv_part_port: '2380'
-        srv_part_target: "{{ item }}.{{ cluster_name }}.{{ idm_dns_forward_zone }}."
-    body_format: json
-  when: not dns_teardown|bool
-  with_items:
-    - "etcd-0"
-    - "etcd-1"
-    - "etcd-2"
-  tags: [etcd_dns]
