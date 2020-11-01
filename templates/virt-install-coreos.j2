@@ -3,7 +3,10 @@
 # Still in development preview
 ##
 set -xe
+{% if not use_external_bridge %}
 mac_address=$(sudo virsh net-dumpxml {{ libvirt_network_name }} |awk '/host mac/ {print $0}'| awk '/{{ vm_name }}/ {print $2}'|grep -o -E '([[:xdigit:]]{1,2}:){5}[[:xdigit:]]{1,2}')
+{% endif %}
+
 
 project_dir=/home/admin/qubinode-installer
 kernel={{ coreos_installer_kernel }}
