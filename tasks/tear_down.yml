@@ -110,6 +110,7 @@
     command: list_nets
   register: libvirt_nets
   tags: [ deploy_nodes, libvirt_net ]
+  when: not use_external_bridge | bool 
 
 - name: ensure {{ virtinstall_dir }} is removed
   file:
@@ -117,6 +118,7 @@
     state: absent
   tags: [ deploy_nodes, rhcos ]
   ignore_errors: yes
+  when: not use_external_bridge | bool 
 
 - name: ensure {{ openshift_install_dir }} is removed
   file:
