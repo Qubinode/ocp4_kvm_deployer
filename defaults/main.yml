@@ -97,8 +97,9 @@ mac_start: "52:54:00:"
 cluster_name: qbn
 dns_domain: lab.example
 dns_server_ip: 172.24.24.10
-libvirt_network_name: qubinat # set to qubinet for external network and set use_external_bridge: true 
-use_external_bridge: false 
+libvirt_network_name: qubinat 
+use_external_bridge: false  # set to qubinet for external network and set use_external_bridge: true 
+external_bridge_network: qubinet
 bootstrap_webserver_ip: 172.24.24.3
 rhcos_ignition_url: "http://{{ bootstrap_webserver_ip }}:8080/pub/{{ ocp4_dependencies_version }}/ignitions"
 rhcos_ignition: "{{ rhcos_ignition_url}}/{{ vm_type }}.ign"

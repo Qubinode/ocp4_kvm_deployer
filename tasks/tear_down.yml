@@ -111,6 +111,13 @@
   register: libvirt_nets
   tags: [ deploy_nodes, libvirt_net ]
   
+- name: stop the ocp4 nat libvirt network
+  virt_net:
+    state: inactive
+    name: "{{ item }}"
+  loop: "{{ libvirt_nets.list_nets }}"
+  when: item == libvirt_network_name 
+  tags: [ deploy_nodes, libvirt_net ]
 
 - name: ensure {{ virtinstall_dir }} is removed
   file:
@@ -118,15 +125,6 @@
     state: absent
   tags: [ deploy_nodes, rhcos ]
   ignore_errors: yes
-  when: not use_external_bridge | bool 
-
-- name: stop the ocp4 nat libvirt network
-  virt_net:
-    state: inactive
-    name: "{{ item }}"
-  loop: "{{ libvirt_nets.list_nets }}"
-  when: item == libvirt_network_name and not use_external_bridge | bool 
-  tags: [ deploy_nodes, libvirt_net ]
 
 - name: ensure {{ openshift_install_dir }} is removed
   file:
