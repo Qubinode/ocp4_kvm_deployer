@@ -20,7 +20,8 @@ args+='rd.neednet=1 '
 args+='coreos.inst.insecure '
 args+='coreos.inst.ignition_url={{ rhcos_ignition }} '
 args+='coreos.live.rootfs_url={{ coreos_rootfs_url }}  '
-args+='ip=dhcp '
+args+='ip={{ vm_ip }}::{{ ocp4_nat_gateway }}:{{ mask }}:{{ vm_name }}.{{ cluster_name }}.{{ ocp4_cluster_domain }}:ens3:none nameserver={{ dns_server_ip }} '
+#args+='ip=dhcp '
 
 {% if performance_disk %}
 qemu_mode=falloc
