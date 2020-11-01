@@ -22,10 +22,9 @@ args+='coreos.inst.ignition_url={{ rhcos_ignition }} '
 args+='coreos.live.rootfs_url={{ coreos_rootfs_url }}  '
 {% if use_external_bridge %}
 args+='ip=dhcp '
-args+='ip={{ vm_ip }}::{{ ocp4_nat_gateway }}:{{ mask }}:{{ vm_name }}.{{ cluster_name }}.{{ ocp4_cluster_domain }}:ens4:none nameserver={{ dns_server_ip }} '
-{% else %}
-args+='ip={{ vm_ip }}::{{ ocp4_nat_gateway }}:{{ mask }}:{{ vm_name }}.{{ cluster_name }}.{{ ocp4_cluster_domain }}:ens3:none nameserver={{ dns_server_ip }} '
 {% endif %}
+args+='ip={{ vm_ip }}::{{ ocp4_nat_gateway }}:{{ mask }}:{{ vm_name }}.{{ cluster_name }}.{{ ocp4_cluster_domain }}:ens3:none nameserver={{ dns_server_ip }} '
+
 
 {% if performance_disk %}
 qemu_mode=falloc
@@ -53,8 +52,8 @@ sudo virt-install \
   --vcpus {{ cpu_size }} \
   --os-type generic \
   --rng /dev/urandom \
+  --network network={{ libvirt_network_name }},model=virtio,mac=${mac_address} --noreboot --noautoconsole \
   {% if use_external_bridge %}
   --network network={{ external_bridge_network }},model=virtio --noreboot --noautoconsole \
   {% endif %}
-    --network network={{ libvirt_network_name }},model=virtio,mac=${mac_address} --noreboot --noautoconsole \
   --install kernel=${kernel_file},initrd=${initrd_file},kernel_args_overwrite=yes,kernel_args="${args}"
