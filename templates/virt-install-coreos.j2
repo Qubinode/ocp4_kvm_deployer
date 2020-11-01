@@ -55,7 +55,9 @@ sudo virt-install \
   --vcpus {{ cpu_size }} \
   --os-type generic \
   --rng /dev/urandom \
-  {% if not use_external_bridge %}
+  {% if use_external_bridge %}
   --network network={{ libvirt_network_name }},model=virtio --noreboot --noautoconsole \
+  {% else %}
+  --network network={{ libvirt_network_name }},model=virtio,mac=${mac_address} --noreboot --noautoconsole \
   {% endif %}
   --install kernel=${kernel_file},initrd=${initrd_file},kernel_args_overwrite=yes,kernel_args="${args}"
