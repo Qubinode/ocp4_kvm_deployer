@@ -55,6 +55,8 @@ ssh_options: "-q -o StrictHostKeyChecking=no -o BatchMode=yes"
 
 # set to configure local storaage
 configure_local_storage: no
+compute_vdb_size: 10
+compute_vdx_size: 10
 
 # deploy NFS persistent storage
 configure_nfs_storage: yes
@@ -110,6 +112,7 @@ kvm_host_libvirt_dir: /var/lib/libvirt/images
 libvirt_network_mode: nat
 libivrt_network_domain: compute.local
 pull_secret_request: https://cloud.redhat.com/openshift/install/metal/user-provisioned
+compute_local_storage: no
 
 ocp4_instances:
   - name: ctrlplane
@@ -131,12 +134,39 @@ ocp4_instances:
     memory_size: 16192
     cpu_size: 4
     extra_storage:
-      - size: 50G
-        name: vdb
-        enable: true
-      - size: 100G
-        name: vdc
-        enable: true
+    - size: "{{ compute_vdb_size }}G"
+      name: vdb
+      enable: "{{ compute_local_storage }}"
+    - size: "{{ compute_vdx_size }}G"
+      name: vdc
+      enable: "{{ compute_local_storage }}"
+    - size: "{{ compute_vdx_size }}G"
+      name: vdd
+      enable: "{{ compute_local_storage }}"
+    - size: "{{ compute_vdx_size }}G"
+      name: vde
+      enable: "{{ compute_local_storage }}"
+    - size: "{{ compute_vdx_size }}G"
+      name: vdf
+      enable: "{{ compute_local_storage }}"
+    - size: "{{ compute_vdx_size }}G"
+      name: vdg
+      enable: "{{ compute_local_storage }}"
+    - size: "{{ compute_vdx_size }}G"
+      name: vdh
+      enable: "{{ compute_local_storage }}"
+    - size: "{{ compute_vdx_size }}G"
+      name: vdi
+      enable: "{{ compute_local_storage }}"
+    - size: "{{ compute_vdx_size }}G"
+      name: vdj
+      enable: "{{ compute_local_storage }}"
+    - size: "{{ compute_vdx_size }}G"
+      name: vdk
+      enable: "{{ compute_local_storage }}"
+    - size: "{{ compute_vdx_size }}G"
+      name: vdl
+      enable: "{{ compute_local_storage }}"
     qty: "{{ compute_count }}"
     vm_type: worker
     ip_octet: "{{ compute_ip_octet }}"
