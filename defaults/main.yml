@@ -8,17 +8,20 @@ pull_secret: /home/{{ admin_user }}/qubinode-installer/pull-secret.txt
 ocp4_okd4: ocp4
 ocp4_release: 4.6.1
 ocp4_release_dir: "{{ ocp4_release }}"
-ocp4_release_url: "https://mirror.openshift.com/pub/openshift-v4/clients/ocp/{{ ocp4_release_dir }}"
+ocp4_release_url: "https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest"
 
 openshift_install_folder: ocp4
-ocp4_client: "openshift-client-linux-{{ ocp4_release }}.tar.gz"
-ocp4_installer: "openshift-install-linux-{{ ocp4_release }}.tar.gz"
+ocp4_client: "openshift-client-linux.tar.gz"
+ocp4_installer: "openshift-install-linux.tar.gz"
 tools_missing: false
 
 # OpenShift Dependencies
-coreos_installer_kernel: "rhcos-{{ major_version }}-x86_64-live-kernel-x86_64"
-coreos_installer_initramfs: "rhcos-{{ major_version }}-x86_64-live-initramfs.x86_64.img"
-coreos_rootfs: "rhcos-{{ ocp4_image_version }}-x86_64-live-rootfs.x86_64.img"
+#coreos_installer_kernel: "rhcos-{{ major_version }}-x86_64-live-kernel-x86_64"
+#coreos_installer_initramfs: "rhcos-{{ major_version }}-x86_64-live-initramfs.x86_64.img"
+#coreos_metal_bios: "rhcos-{{ major_version }}-x86_64-metal.x86_64.raw.gz"
+coreos_installer_kernel: "rhcos-live-kernel-x86_64"
+coreos_installer_initramfs: "rhcos-live-initramfs.x86_64.img"
+coreos_metal_bios: "rhcos-metal.x86_64.raw.gz"
 
 # treeinfo
 family_tree: "Red Hat CoreOS"
