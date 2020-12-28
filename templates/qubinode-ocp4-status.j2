@@ -45,12 +45,14 @@ until [[ $COUNT -eq $TOTAL_OPERATORS || $SLEEP_FOR -eq $TIMEOUT ]]
 do
     for operator in $(echo $OPERATORS)
     do
-        STATUS=$(/usr/local/bin/oc get clusteroperator $operator -o=jsonpath='{range .status.conditions[*]}{.type}{" "}{.status}{" "}{.message}{"\n"}{end}'|awk '/Available/ {print $2}'|grep -o True)
+        OP_STATUS=$(/usr/local/bin/oc get clusteroperator $operator -o=jsonpath='{range .status.conditions[*]}{.type}{" "}{.status}{" "}{.message}{"\n"}{end}'|awk '/Available/ {print $2}')
+        STATUS=$(echo $OP_STATUS | grep -o True)
+
         if [ "A${STATUS}" == "ATrue" ]
         then
             COUNT=$(($COUNT + 1))
-	else
-            printf "%s\n" "    Waiting on $operator status to change from $STATUS to True"
+	    else
+            printf "%s\n" "    Waiting on cluster operator $operator status to change from $STATUS to True"
         fi
     done
     if [ $COUNT -eq $TOTAL_OPERATORS ]
@@ -58,7 +60,7 @@ do
         break
     else
         sleep $SLEEP_FOR
-        let SLEEP_FOR=SLEEP_FOR+1
+        let SLEEP_FOR=SLEEP_FOR+20
     fi
 done
 
@@ -66,7 +68,8 @@ if [ $SLEEP_FOR -eq $TIMEOUT ]
 then
     for operator in $(echo $OPERATORS)
     do
-        STATUS=$(/usr/local/bin/oc get clusteroperator $operator -o=jsonpath='{range .status.conditions[*]}{.type}{" "}{.status}{" "}{.message}{"\n"}{end}'|awk '/Available/ {print $2}')
+        OP_STATUS=$(/usr/local/bin/oc get clusteroperator $operator -o=jsonpath='{range .status.conditions[*]}{.type}{" "}{.status}{" "}{.message}{"\n"}{end}'|awk '/Available/ {print $2}')
+        STATUS=$(echo $OP_STATUS | grep -o True)
         if [ "A${STATUS}" == "ATrue" ]
         then
             printf "%s\n" "*************************************"
