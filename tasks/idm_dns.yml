@@ -8,7 +8,6 @@
 #- name: check DNS entries
 #  include_tasks: check_dns_entries.yml
 #  tags: [idm, compute_dns, ctrlplane_dns]
-#
 
 - name: Set IdM dns record state to either absent or present
   set_fact:
@@ -99,14 +98,14 @@
     state: "{{ record_state }}"
     zone_name: "{{ idm_dns_forward_zone }}"
     validate_certs: no
-  tags: [idm, compute_dns, ctrlplane_dns, bootstrap_dns, api_dns, etcd_dns, wildcard_dns]
+  tags: [idm, dns, bootstrap_dns, api_dns, ctrlplane_dns, compute_dns, wildcard_dns, routes]
 
 - name: Create the IdM reverse dns zone {{ idm_dns_reverse_zone }}
   ipa_dnszone:
     state: "{{ record_state }}"
     zone_name: "{{ idm_dns_reverse_zone }}"
     validate_certs: no
-  tags: [idm, compute_dns, ctrlplane_dns, bootstrap_dns, api_dns, etcd_dns, wildcard_dns]
+  tags: [idm, dns, bootstrap_dns, api_dns, ctrlplane_dns, compute_dns, wildcard_dns, routes]
 
 - name: Ensure all defined A records are {{ record_state }}
   ipa_dnsrecord:
@@ -120,7 +119,7 @@
   loop_control:
     label: "{{ item.hostname }}.{{ cluster_name }}"
   when: not dns_teardown|bool
-  tags: [idm, api_dns, compute_dns, ctrlplane_dns, bootstrap_dns, api_dns, etcd_dns, dns]
+  tags: [idm, dns, bootstrap_dns, api_dns, ctrlplane_dns, compute_dns]
 
 - name: Ensure all defined PTR records are {{ record_state }}
   ipa_dnsrecord:
@@ -132,7 +131,7 @@
     validate_certs: no
   with_items: "{{ reverse_records }}"
   when: not dns_teardown|bool
-  tags: [idm, compute_dns, ctrlplane_dns, bootstrap_dns, api_dns, etcd_dns]
+  tags: [idm, dns, bootstrap_dns, api_dns, ctrlplane_dns, compute_dns]
 
 - name: Generate IdM Session Cookie
   vars:
