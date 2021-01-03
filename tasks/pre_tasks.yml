@@ -23,7 +23,7 @@
 
 - name: set compute_node_count variable
   set_fact:
-    compute_node_count: "{{ 1 if compute_count|int == 0 else compute_count }}"
+    compute_node_count: "{{ 1 if compute_node_count|int == 0 else compute_node_count }}"
   tags: [ setup, deploy_nodes, rhcos, bootstrap, idm]
 
 - name: get users homedir
@@ -47,9 +47,9 @@
 
 - name: Point all ingress traffic to ctrlplane nodes when compute count is zero
   set_fact:
-    ingress_node: "{{ 'ctrlplane' if compute_count|int == 0 else 'compute' }}"
-    ingress_node_octet: "{{ ctrlplane_ip_octet if compute_count|int == 0 else compute_ip_octet }}"
-    ingress_count: "{{ ctrlplane_count if compute_count|int == 0 else compute_count }}"
+    ingress_node: "{{ 'ctrlplane' if compute_node_count|int == 0 else 'compute' }}"
+    ingress_node_octet: "{{ ctrlplane_ip_octet if compute_node_count|int == 0 else compute_ip_octet }}"
+    ingress_count: "{{ ctrlplane_count if compute_node_count|int == 0 else compute_node_count }}"
   tags: [ setup, deploy_nodes, rhcos, bootstrap, idm]
 
 - name: Setting Ingress information and machine configuration for internal API Server

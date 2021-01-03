@@ -92,7 +92,7 @@ api_int_ip: "{{ ocp4_gateway_ip.split('.')[:3] | join('.') }}.api_int_octet"
 ## The kubernetes api is pointed to the kvm host ip
 ## the kvmhost is running a podman haproxy. This needs to be
 ## resolvable by both internal and external clients
-default_api_ip: {{ kvm_host_ip }}
+default_api_ip: "{{ kvm_host_ip }}"
 
 ## PTR definition for created IdM reverse zone record
 bootstrap_ptr: "{{ bootstrap_octet }}"
@@ -115,10 +115,14 @@ dns_server: 'idm'
 ## END - OCP Nodes Networking Info
 ##********************************
 
-# How many of each node should be deployed
-# The minimum for ctrl nodes is 3
+## How many of each node should be deployed
+## The minimum for ctrl nodes is 3
 ctrlplane_count: 3
 compute_count: 3
+
+## This is same as above, the above var is used by previous versions of this code.
+## The below is the current var name being used.
+compute_node_count: "{{ compute_count }}"
 
 
 kvm_host_ip: 172.24.24.3
@@ -216,7 +220,7 @@ ocp4_instances:
     - size: "{{ compute_vdx_size }}G"
       name: vdl
       enable: "{{ compute_local_storage }}"
-    qty: "{{ compute_count }}"
+    qty: "{{ compute_node_count }}"
     vm_type: worker
     ip_octet: "{{ compute_ip_octet }}"
   - name: bootstrap

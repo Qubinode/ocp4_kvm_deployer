@@ -69,7 +69,7 @@
     vm_name: "{{ compute_node_name }}-{{ '%00x' |format(item) }}"
   set_fact:
     ocp4_compute_nodes: "{{ ocp4_compute_nodes + [ vm_name ] }}"
-  loop: "{{ range(0, compute_count|int)|list }}"
+  loop: "{{ range(0, compute_node_count|int)|list }}"
 
 - name: provision local volumes
   block:

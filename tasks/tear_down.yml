@@ -6,7 +6,7 @@
 
 - name: set compute_node_count variable
   set_fact:
-    compute_node_count: "{{ 1 if compute_count|int == 0 else compute_count }}"
+    compute_node_count: "{{ 1 if compute_node_count|int == 0 else compute_node_count }}"
 
 - name: remove OpenShift 4 bootstrap webserver
   import_role:

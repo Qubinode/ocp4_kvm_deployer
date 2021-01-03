@@ -26,7 +26,7 @@
     - name: import configure-local-storage.yml
       import_tasks: configure-local-storage.yml
       tags: [ localstorage, deploy_nodes, rhcos, postinstall ]
-      when: configure_local_storage|bool and cluster_deployed_msg == 'deployed' and compute_count|int != 0
+      when: configure_local_storage|bool and cluster_deployed_msg == 'deployed' and compute_node_count|int != 0
 
     - name: include tasksgenerate_inventory.yml
       import_tasks: generate_inventory.yml

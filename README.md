@@ -227,7 +227,28 @@ Configure nfs provisioner
 ansible-playbook playbooks/deploy_ocp4.yml --start-at-task="Waiting for Installation to Complete"
 ```
 
-Example Usage:
+Available Ansible Tags
+----------------------
+
+**IdM dns**
+
+ * idm - Create all IdM dns entries
+ * dns - Same as above
+ * bootstrap_dns - Only bootstrap node
+ * api_dns - Only api entries
+ * ctrlplane_dns - Only control nodes
+ * compute_dns - Only compute nodes
+ * wildcard_dns - Create wild card *.apps
+ * routes - same as above
+ * fwd_zone
+ * ptr_zone
+ 
+Example - Populate dns for worker/compute nodes
+
+```
+ansible-playbook playbooks/deploy_ocp4.yml -t compute_dns
+```
+
 
 ```
 ansible-playbook rhcos.yml -t setup
