@@ -14,13 +14,21 @@
     record_state: "{{ 'absent' if dns_teardown|bool else 'present' }}"
   tags: always
 
+- name: Define empty list vars for records and reverse_records
+  set_fact:
+    idm_a_records: []
+    idm_ptr_records: []
+    reverse_records: []
+    records: []
+  tags: [always]  
+
 - name: Add the bootstrap node to the IdM dns forward zone records list
   vars:
     ip: "{{ bootstrap_ip }}"
     name: "{{ bootstrap_node_name }}"
     ptr: "{{ bootstrap_ptr }}"
   set_fact:
-    records: "{{ records|default([]) + [ {'hostname': name, 'ipaddr': ip, 'ptr_record': ptr} ] }}"
+    records: "{{ idm_a_records + [ {'hostname': name, 'ipaddr': ip, 'ptr_record': ptr} ] }}"
   tags: [idm, dns, bootstrap_dns]
 
 - name: Add the bootstrap node to the IdM dns reverse forward zone records list
@@ -29,16 +37,16 @@
     name: "{{ bootstrap_node_name }}"
     ptr: "{{ bootstrap_ptr }}"
   set_fact:
-    reverse_records: "{{ reverse_records|default([]) + [ {'hostname': name, 'ipaddr': ip, 'ptr_record': ptr} ] }}"
+    reverse_records: "{{ idm_ptr_records + [ {'hostname': name, 'ipaddr': ip, 'ptr_record': ptr} ] }}"
   tags: [idm, dns, bootstrap_dns]
 
 - name: Add the api-int ip to the IdM dns forward zone records list
   vars:
-    ip: "{{ api_int }}"
+    ip: "{{ api_int_ip }}"
     name: api-int
     ptr: "{{ api_int_ptr }}"
   set_fact:
-    records: "{{ records|default([]) + [ {'hostname': name, 'ipaddr': ip, 'ptr_record': ptr} ] }}"
+    records: "{{ idm_a_records + [ {'hostname': name, 'ipaddr': ip, 'ptr_record': ptr} ] }}"
   tags: [idm, dns, api_dns]
 
 - name: Add the api ip to the IdM dns forward zone records list
@@ -47,7 +55,7 @@
     name: api
     ptr: "{{ api_ip_ptr | default(api_ip_ptr) }}"
   set_fact:
-    records: "{{ records|default([]) + [ {'hostname': name, 'ipaddr': ip, 'ptr_record': ptr} ] }}"
+    records: "{{ idm_a_records + [ {'hostname': name, 'ipaddr': ip, 'ptr_record': ptr} ] }}"
   tags: [idm, dns, api_dns]
 
 - name: Add the control plane nodes A records to the IdM dns forward zone records list
@@ -56,7 +64,7 @@
     name: "{{ ctrl_plane_prefix }}{{ item }}"
     ptr: "{{ ctrlplane_ip_octet|int + item|int }}"
   set_fact:
-    records: "{{ records|default([]) + [ {'hostname': name, 'ipaddr': ip, 'ptr_record': ptr} ] }}"
+    records: "{{ idm_a_records + [ {'hostname': name, 'ipaddr': ip, 'ptr_record': ptr} ] }}"
   with_sequence: start=0 end="{{ ctrlplane_count|int - 1 }}" stride=1
   tags: [idm, dns, ctrlplane_dns]
 
@@ -66,7 +74,7 @@
     name: "{{ ctrl_plane_prefix }}{{ item }}"
     ptr: "{{ ctrlplane_ip_octet|int + item|int }}"
   set_fact:
-    reverse_records: "{{ reverse_records|default([]) + [ {'hostname': name, 'ipaddr': ip, 'ptr_record': ptr} ] }}"
+    reverse_records: "{{ idm_ptr_records + [ {'hostname': name, 'ipaddr': ip, 'ptr_record': ptr} ] }}"
   with_sequence: start=0 end="{{ ctrlplane_count|int - 1 }}" stride=1
   tags: [idm, dns, ctrlplane_dns]
 
@@ -78,7 +86,7 @@
         name: "{{ worker_node_prefix }}{{ item }}"
         ptr: "{{ compute_ip_octet|int + item|int }}"
       set_fact:
-        records: "{{ records|default([]) + [ {'hostname': name, 'ipaddr': ip, 'ptr_record': ptr} ] }}"
+        records: "{{ idm_a_records + [ {'hostname': name, 'ipaddr': ip, 'ptr_record': ptr} ] }}"
       with_sequence: start=0 end="{{ compute_node_count|int - 1 }}" stride=1
       tags: [idm, dns, compute_dns]
     
@@ -88,7 +96,7 @@
         name: "{{ worker_node_prefix }}{{ item }}"
         ptr: "{{ compute_ip_octet|int + item|int }}"
       set_fact:
-        reverse_records: "{{ reverse_records|default([]) + [ {'hostname': name, 'ipaddr': ip, 'ptr_record': ptr} ] }}"
+        reverse_records: "{{ idm_ptr_records + [ {'hostname': name, 'ipaddr': ip, 'ptr_record': ptr} ] }}"
       with_sequence: start=0 end="{{ compute_node_count|int - 1 }}" stride=1
       tags: [idm, dns, compute_dns]
   when: compute_node_count|int != 0
@@ -131,7 +139,7 @@
     validate_certs: no
   with_items: "{{ reverse_records }}"
   when: not dns_teardown|bool
-  tags: [idm, dns, bootstrap_dns, api_dns, ctrlplane_dns, compute_dns]
+  tags: [idm, dns, bootstrap_dns, ctrlplane_dns, compute_dns]
 
 - name: Generate IdM Session Cookie
   vars:

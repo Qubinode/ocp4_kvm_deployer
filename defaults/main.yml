@@ -74,6 +74,7 @@ configure_ocs_storage: yes
 
 ## Define the subnet that the ocp nodes will live on
 ocp4_subnet: 192.168.50.0
+mask: 255.255.255.0
 
 ## The ocp subnet gateway ip. This ip is also used by the load balancer
 ## to listen on for incoming connections to the cluster
@@ -83,26 +84,34 @@ ocp4_gateway_ip: "{{ ocp4_subnet.split('.')[:3] | join('.')}}.1"
 bootstrap_octet: '2'
 api_int_octet: '1'
 api_octet: '1'
-bootstrap_ip: "{{ ocp4_subnet.split('.')[:3] | join('.')}}.bootstrap_octet"
+bootstrap_ip: "{{ ocp4_subnet.split('.')[:3] | join('.')}}.{{ bootstrap_octet }}"
+
+## Mac address start for nodes
+mac_start: "52:54:00:"
 
 ## The kubernetes internal api endpoint points to the gateway on the nat interface
 ## this only needs to be resolvable by the nodes within the same subnet
-api_int_ip: "{{ ocp4_gateway_ip.split('.')[:3] | join('.') }}.api_int_octet"
+api_int_ip: "{{ ocp4_gateway_ip.split('.')[:3] | join('.') }}.{{ api_int_octet }}"
 
 ## The kubernetes api is pointed to the kvm host ip
 ## the kvmhost is running a podman haproxy. This needs to be
 ## resolvable by both internal and external clients
-default_api_ip: "{{ kvm_host_ip }}"
+api_ip: "{{ kvm_host_ip }}"
 
 ## PTR definition for created IdM reverse zone record
 bootstrap_ptr: "{{ bootstrap_octet }}"
 api_int_ptr: "{{ api_int_octet }}"
+
+## This only defined because the ansible idm module requires a PTR value
+## This is not created.
+api_ip_ptr: "{{ api_int_octet }}"
 
 ## The forward and reverse IP address for the ctrl and worker nodes are
 ## autogeneated in a sequence. Starting from the defined starting octet
 ## below.
 ctrlplane_ip_octet: 10
 compute_ip_octet: 20
+storage_ip_octet: 30
 
 ## The hostname or hostname prefix for nodes
 bootstrap_node_name: bootstrap
@@ -124,8 +133,7 @@ compute_count: 3
 ## The below is the current var name being used.
 compute_node_count: "{{ compute_count }}"
 
-
-kvm_host_ip: 172.24.24.3
+kvm_host_ip: ""
 listen_address: "{{ kvm_host_ip }}"
 
 ocp4_lb_container: qbn-lb
@@ -147,8 +155,6 @@ virtinstall_dir: /tmp/rhcos
 local_user_account: admin
 #subnet: 192.168.50.0
 #gateway: 192.168.50.1
-mask: 255.255.255.0
-mac_start: "52:54:00:"
 cluster_name: qbn
 dns_domain: lab.example
 dns_server_ip: 172.24.24.10
