@@ -1,6 +1,6 @@
 ---
-# set up empty list that will be populated later
-- set_fact:
+- name: Set up empty list that will be populated later 
+  set_fact:
     ocp4_nodes: []
     new_nodes: []
   tags: always
