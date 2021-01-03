@@ -99,10 +99,11 @@
   delay: 10
   tags: [ deploy_nodes, rhcos ]
 
-- name: import tasks configure_dns_entries.yml
+- name: import tasks idm_dns.yml
+  when: dns_server == 'idm'
   vars:
     dns_teardown: yes
-  import_tasks: configure_dns_entries.yml
+  import_tasks: idm_dns.yml
   tags: [ deploy_nodes, idm ]
 
 - name: get a list of all libvirt networks

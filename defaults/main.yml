@@ -109,6 +109,9 @@ bootstrap_node_name: bootstrap
 ctrl_plane_prefix: ctrlplane
 worker_node_prefix: compute
 
+## DNS Server backend
+dns_server == 'idm'
+
 ## END - OCP Nodes Networking Info
 ##********************************
 

@@ -5,8 +5,9 @@
     new_nodes: []
   tags: always
 
-- name: import tasks configure_dns_entries.yml
-  import_tasks: configure_dns_entries.yml
+- name: import tasks idm_dns.yml
+  when: dns_server == 'idm'
+  import_tasks: idm_dns.yml
   tags: [ deploy_nodes, idm ]
 
 - name: import tasks deploy_libvirt_network.yml
