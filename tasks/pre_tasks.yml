@@ -61,8 +61,8 @@
 
 - name: Setting Ingress information and machine configuration for ctrlplane nodes
   set_fact:
-    tmp_api: "{{ tmp_api }}  + [ '{{ ctrl_plane_prefix }}{{ item }}={{ cluster_subnet }}.{{ ctrlplane_ip_octet|int + item|int }}:6443' ]"
-    tmp_machine_config_server: "{{ tmp_machine_config_server }} + [ '{{ ctrl_plane_prefix }}{{ item }}={{ cluster_subnet }}.{{ ctrlplane_ip_octet|int + item|int }}:22623' ]"
+    tmp_api: "{{ tmp_api }}  + [ '{{ compute_node_name }}{{ item }}={{ cluster_subnet }}.{{ ctrlplane_ip_octet|int + item|int }}:6443' ]"
+    tmp_machine_config_server: "{{ tmp_machine_config_server }} + [ '{{ compute_node_name }}{{ item }}={{ cluster_subnet }}.{{ ctrlplane_ip_octet|int + item|int }}:22623' ]"
   with_sequence: start=0 end="{{ ctrlplane_count|int - 1 }}" stride=1
   ignore_errors: false
   tags: [ setup, deploy_nodes, rhcos, bootstrap, idm]

@@ -243,10 +243,24 @@ Available Ansible Tags
  * fwd_zone
  * ptr_zone
  
-Example - Populate dns for worker/compute nodes
+Examples 
+
+* Populate dns for worker/compute nodes
 
 ```
 ansible-playbook playbooks/deploy_ocp4.yml -t compute_dns
+```
+
+* Delete all A and PTR records
+
+```
+ansible-playbook playbooks/deploy_ocp4.yml -t idm -e "idm_record_state=absent"
+```
+
+* Delete the forward zone
+
+```
+ansible-playbook playbooks/deploy_ocp4.yml -t idm -e "idm_fwd_zone_state=absent"
 ```
 
 
