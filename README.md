@@ -263,6 +263,53 @@ ansible-playbook playbooks/deploy_ocp4.yml -t idm -e "idm_record_state=absent"
 ansible-playbook playbooks/deploy_ocp4.yml -t idm -e "idm_fwd_zone_state=absent"
 ```
 
+**Create Libvirt NAT network**
+
+```
+ansible-playbook playbooks/deploy_ocp4.yml -t libvirt_nat
+```
+
+**Setup Firewall**
+
+```
+ansible-playbook playbooks/deploy_ocp4.yml -t firewall
+```
+
+**Setup OpenShift client tools**
+
+```
+ansible-playbook playbooks/deploy_ocp4.yml -t tools
+```
+
+**Create OpenShift Ignitions**
+
+```
+ansible-playbook playbooks/deploy_ocp4.yml -t ignitions
+```
+
+**Download RHCOS kernel, initramfs, rootfs**
+
+```
+ansible-playbook playbooks/deploy_ocp4.yml -t rhcos_files
+```
+
+**Generate virt-install scripts for deploying RHCOS nodes**
+
+```
+ansible-playbook playbooks/deploy_ocp4.yml -t node_profile
+```
+
+**Start required containers**
+
+```
+ansible-playbook playbooks/deploy_ocp4.yml -t containers -e "container_exist=no" -e "tear_down=no"
+```
+
+**Deploy RHCOS VMs**
+
+```
+ansible-playbook playbooks/deploy_ocp4.yml -t deploy_nodes -e "container_exist=no" -e "tear_down=no" -e "check_existing_cluster=no"
+```
 
 ```
 ansible-playbook rhcos.yml -t setup

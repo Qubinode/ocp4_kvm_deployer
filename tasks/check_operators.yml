@@ -23,4 +23,4 @@
     - name: fail if cluster deployment was unsuccessful
       fail:
         msg: The cluster deployment was unsuccessfull
-  tags: [ deploy_nodes, bootstrap, postinstall, check_cluster_status, complete_install ]
+  tags: [bootstrap, postinstall, check_cluster_status, complete_install ]

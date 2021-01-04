@@ -5,7 +5,7 @@
   block:
     - name: import tasks pre_tasks.yml
       import_tasks: pre_tasks.yml
-
+      
     - name: check if cluster is deployed and report state of cluster
       import_tasks: check_cluster.yml
       when: check_existing_cluster|bool
@@ -17,7 +17,7 @@
     - name: import tasks nfs_server.yml
       import_tasks: nfs_server.yml
       when: cluster_deployed_msg == 'deployed' and configure_nfs_storage|bool
-      tags: [ deploy_nodes, rhcos, postinstall, nfs ]
+      tags: [ postinstall, nfs ]
 
     - name: import tasks destroy_bootstrap_node.yml
       import_tasks: destroy_bootstrap_node.yml
@@ -25,7 +25,7 @@
 
     - name: import configure-local-storage.yml
       import_tasks: configure-local-storage.yml
-      tags: [ localstorage, deploy_nodes, rhcos, postinstall ]
+      tags: [ localstorage, postinstall ]
       when: configure_local_storage|bool and cluster_deployed_msg == 'deployed' and compute_node_count|int != 0
 
     - name: include tasksgenerate_inventory.yml

@@ -2,25 +2,25 @@
 - name: Get a list of all libvirt networks
   virt_net:
     command: list_nets
-  register: libvirt_nets
-  tags: [ deploy_nodes, libvirt_net ]
+  register: libvirt_nats
+  tags: [libvirt_nat ]
 
 - name: Create {{ libvirt_network_name }} libvirt network
   virt_net:
     name: "{{ libvirt_network_name }}"
     command: define
     xml: '{{ (lookup("template", "nat_network.xml.j2")) }}'
-  tags: [ deploy_nodes, libvirt_net ]
+  tags: [ deploy_nodes, libvirt_nat ]
 
 - name: Start {{ libvirt_network_name }} libvirt network
   virt_net:
     name: "{{ libvirt_network_name }}"
     state: active
     autostart: yes
-  tags: [ deploy_nodes, libvirt_net ]
+  tags: [libvirt_nat ]
 
 - name: Set {{ libvirt_network_name }} libvirt network autostart on boot
   virt_net:
     name: "{{ libvirt_network_name }}"
     autostart: yes
-  tags: [ deploy_nodes, libvirt_net ]
+  tags: [libvirt_nat ]

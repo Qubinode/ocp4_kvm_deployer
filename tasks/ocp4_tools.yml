@@ -26,15 +26,17 @@
   tags: [ setup, tools, client, ignitions ]
   when: not oc_client_cmd.stat.exists or not oc_client_cmd.stat.exists
 
-- name: Check if OpenShift Versions match
+- name: Check if OpenShift version match
   vars:
     current_version: "Client Version: {{ ocp4_release }}"
+    current_oc_version: "{{ oc_client_version.stdout }}|bool"
+    declared_oc_version: "{{ current_version }}|bool"
   set_fact:
-    oc_version_match: "{{ true if oc_client_version.stdout == current_version else false }}"
+    oc_version_match: "{{ true if current_oc_version|bool is version(declared_oc_version|bool, '>=') else false }}"
   tags: [ setup, tools, client, ignitions ]
   when:  oc_client_cmd.stat.exists and oc_client_cmd.stat.exists
 
-- name: check if the oc client tool version is matches {{ ocp4_release }}
+- name: Check if the oc client tool version is matches {{ ocp4_release }}
   set_fact:
     download_tools: "{{ true if tools_missing or not oc_version_match else false }}"
   tags: [ setup, tools, client, ignitions ]
@@ -78,9 +80,19 @@
   when: extract_ocp_client.changed
   tags: [ setup, tools, client ]
 
-- name: Remove openshift installer  tar file
+- name: Remove openshift installer tar file
   file:
     path: "/tmp/{{ ocp4_installer }}"
     state: absent
   when: extract_ocp_installer.changed
   tags: [ setup , tools, installer]
+
+- name: Clean openshift tools install
+  file:
+    path: "{{ item }}"
+    state: absent
+  when: extract_ocp_client.changed
+  loop:
+    - /usr/local/bin/README.md
+    - /usr/local/bin/__pycache__
+  tags: [ setup, tools, client ]

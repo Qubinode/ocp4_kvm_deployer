@@ -15,12 +15,12 @@
   register: bootstrap_complete
   changed_when: false
   ignore_errors: yes
-  tags: [ deploy_nodes, bootstrap, postinstall, check_cluster_status, complete_install ]
+  tags: [bootstrap, postinstall, check_cluster_status, complete_install ]
 
 - name: set bootstrap status
   set_fact:
     bootstrap_complete: "{{ true if bootstrap_complete.stderr is defined and bootstrap_complete.stderr.find(bs_complete_s) != -1 else false }}"
-  tags: [ deploy_nodes, bootstrap, postinstall, check_cluster_status, complete_install ]
+  tags: [bootstrap, postinstall, check_cluster_status, complete_install ]
 
 - name: check the cluster install status
   command: |
@@ -29,12 +29,12 @@
   ignore_errors: yes
   changed_when: false
   when: bootstrap_complete|bool
-  tags: [ deploy_nodes, bootstrap, postinstall, check_cluster_status, complete_install ]
+  tags: [bootstrap, postinstall, check_cluster_status, complete_install ]
 
 - name: set openshift-install status
   set_fact:
     cluster_install_status: "{{ true if install_complete.stderr is defined and install_complete.stderr.find(clus_in_stat_string) != -1 else false }}"
-  tags: [ deploy_nodes, bootstrap, postinstall, check_cluster_status, complete_install ]
+  tags: [bootstrap, postinstall, check_cluster_status, complete_install ]
 
 - name: fail if bootstrap process was attempted
   fail:
@@ -51,7 +51,7 @@
   register: all_cluster_operators
   become: no
   when: cluster_install_status|bool
-  tags: [ deploy_nodes, bootstrap, postinstall, check_cluster_status, complete_install ]
+  tags: [bootstrap, postinstall, check_cluster_status, complete_install ]
 
 - name: ensure all cluster operators are up
   include_tasks: check_operators.yml
@@ -59,4 +59,4 @@
   loop_control:
     loop_var: operator_name
   when: cluster_install_status|bool
-  tags: [ deploy_nodes, bootstrap, postinstall, check_cluster_status, complete_install ]
+  tags: [bootstrap, postinstall, check_cluster_status, complete_install ]
