@@ -248,7 +248,7 @@ Examples
 * Populate dns for worker/compute nodes
 
 ```
-ansible-playbook playbooks/deploy_ocp4.yml -t compute_dns
+ansible-playbook playbooks/deploy_ocp4.yml -t fwd_zone,ptr_zone,compute_dns
 ```
 
 * Delete all A and PTR records
@@ -309,6 +309,11 @@ ansible-playbook playbooks/deploy_ocp4.yml -t containers -e "container_exist=no"
 
 ```
 ansible-playbook playbooks/deploy_ocp4.yml -t deploy_nodes -e "container_exist=no" -e "tear_down=no" -e "check_existing_cluster=no"
+```
+
+**Bootstrap the OCP4 Cluster**
+```
+ansible-playbook playbooks/deploy_ocp4.yml -t bootstrap -e "container_exist=no" -e "tear_down=no" -e "check_existing_cluster=no" -e "cluster_install_status=no"
 ```
 
 ```

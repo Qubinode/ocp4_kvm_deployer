@@ -1,5 +1,5 @@
 ---
-- name: Checking Registry health
+- name: NFS STORAGE - Gatther information openshift-image-registry pods
   shell: |
     oc get pods -n openshift-image-registry | grep node-ca
   register: registry_health_status
@@ -9,7 +9,7 @@
   become: no
   tags: [ postinstall, nfs ]
 
-- name: Checking Image Registry pod health
+- name: NFS STORAGE - Get the openshift-image-registry pod health
   shell: |
     oc get pods -n openshift-image-registry | grep -E image-registry-[a-z0-9]{10}
   register: image_registry_health_status
@@ -19,7 +19,7 @@
   become: no
   tags: [ postinstall, nfs ]
 
-- name: Configure NFS provisioner
+- name: NFS STORAGE - Configure NFS provisioner
   import_role:
     name: nfs-provisioner-role
   when: (registry_health_status.rc != 0 or image_registry_health_status.rc != 0)

@@ -133,7 +133,8 @@ startup_cluster: no
 # set to true to shutdown cluster
 shutdown_cluster: no
 
-# set to false to stop checking of existing cluster
+## set to false to stop checking of existing cluster
+## This var is being phased out
 check_existing_cluster: yes
 
 # cluster deployed message
@@ -153,6 +154,8 @@ configure_nfs_storage: yes
 # deploy OCS persistent storage
 configure_ocs_storage: yes
 
+## Default user kubeconfig directory
+USER_KUBECONFIG_DIR: /home/{{ local_user_account  }}/.kube
 
 
 kvm_host_ip: ""

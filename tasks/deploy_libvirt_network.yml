@@ -10,7 +10,7 @@
     name: "{{ libvirt_network_name }}"
     command: define
     xml: '{{ (lookup("template", "nat_network.xml.j2")) }}'
-  tags: [ deploy_nodes, libvirt_nat ]
+  tags: [ libvirt_nat ]
 
 - name: Start {{ libvirt_network_name }} libvirt network
   virt_net:

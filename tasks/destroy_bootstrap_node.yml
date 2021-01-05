@@ -1,31 +1,34 @@
 ---
-- name: list all libvirt vms
+- name: REMOVE THE BOOTSTRAP NODE - List all running vms 
   virt:
     command: list_vms
   register: all_vms
-  tags: [ postinstall, bootstrap_shut ]
+  tags: [ postinstall, bootstrap_shut, bootstrap ]
 
-- name: shutdown bootstrap node
-  tags: [ postinstall, bootstrap_shut ]
+- name: REMOVE THE BOOTSTRAP NODE - {{ bootstrap_node_name }} shutdown steps
+  tags: [ postinstall, bootstrap_shut, bootstrap ]
+  when: bootstrap_node_name in all_vms.list_vms
   vars:
     vm_name: "{{ bootstrap_node_name }}"
     vm_hostname: "{{ vm_name }}"
   block:
-    - name: shutdown {{ bootstrap_node_name }}
+    - name: REMOVE THE BOOTSTRAP NODE - Virsh shutdown {{ bootstrap_node_name }}
       virt:
         name: "{{ vm_name }}"
         command: shutdown
       register: shutdown_vms
-      when: bootstrap_node_name in all_vms.list_vms
 
-    - name: include wait_for_vm_shutdown.yml
+    - name: REMOVE THE BOOTSTRAP NODE - Wait for {{ bootstrap_node_name }} to shutdown
       include_tasks: wait_for_vm_shutdown.yml
-      tags: [ postinstall, bootstrap_shut]
-      when: bootstrap_node_name in all_vms.list_vms
-
-    - name: destroy bootstrap node
+  rescue:
+    - name: REMOVE THE BOOTSTRAP NODE - Unable to shutdown VM
+      debug:
+        msg: "{{ vm_name }} is not running"
+        command: undefine
+  always:
+    - name: REMOVE THE BOOTSTRAP NODE - Virsh undefine {{ bootstrap_node_name }}
       virt:
         name: "{{ vm_name }}"
         command: undefine
-      tags: [ postinstall, bootstrap_shut ]
-      when: bootstrap_node_name in all_vms.list_vms
+
+

@@ -51,7 +51,7 @@
     ingress_node: "{{ 'ctrlplane' if compute_node_count|int == 0 else 'compute' }}"
     ingress_node_octet: "{{ ctrlplane_ip_octet if compute_node_count|int == 0 else compute_ip_octet }}"
     ingress_count: "{{ ctrlplane_count if compute_node_count|int == 0 else compute_node_count }}"
-  tags: [ setup, bootstrap, idm]
+  tags: [ setup, bootstrap, idm, containers]
 
 - name: Setting Ingress information and machine configuration for internal API Server
   set_fact:
@@ -74,7 +74,7 @@
     tmp_ingress_https: "{{ tmp_ingress_https }} + [ '{{ ingress_node }}-{{ item }}={{ cluster_subnet }}.{{ ingress_node_octet|int + item|int }}:443' ]"
   with_sequence: start=0 end="{{ ingress_count|int - 1 }}" stride=1
   ignore_errors: false
-  tags: [ setup, bootstrap, idm]
+  tags: [ setup, bootstrap, idm, containers]
 
 - name: setup Ingress information and machine configuration variables
   set_fact:
@@ -93,20 +93,20 @@
   register: container_result
   failed_when: false
   changed_when: false
-  tags: [ setup, bootstrap, idm, lb, startup]
+  tags: [ setup, bootstrap, idm, lb, startup, containers]
 
 - name: set {{ ocp4_lb_container }} container state
   set_fact:
     container_exited: "{{ true if container_result.stdout is defined and container_result.stdout == 'exited' else false }}"
     container_running: "{{ true if container_result.stdout is defined and container_result.stdout == 'running' else false }}"
     container_exist: "{{ true if container_result.stdout is defined and container_result.stdout|length > 0  else false }}"
-  tags: [ setup, bootstrap, idm, lb, startup]
+  tags: [ setup, bootstrap, idm, lb, startup, containers]
 
 - name: check if Loadbalancer SystemD service exists
   stat:
     path: "/etc/systemd/system/{{ lb_name }}.service"
   register: lb_service
-  tags: [ setup, bootstrap, idm, lb, startup]
+  tags: [ setup, bootstrap, idm, lb, startup, containers]
 
 - name: ensure the jq command is installed from ocp4 repos
   shell: |
@@ -126,5 +126,5 @@
   stat:
     path: "/usr/bin/podman"
   register: podman_is_installed
-  tags: [ podman, pkg, deploy_nodes ]
+  tags: [ podman, pkg, deploy_nodes, containers ]
 

@@ -1,11 +1,11 @@
 ---
-- name: Set up empty list that will be populated later 
+- name: INFRASTRUCTURE SETUP - Declare ocp4_nodes and new_nodes list 
   set_fact:
     ocp4_nodes: []
     new_nodes: []
   tags: always
 
-- name: Create the directory to store the virt-install scripts
+- name: INFRASTRUCTURE SETUP - Create {{ virtinstall_dir }}
   file:
     path: "{{ virtinstall_dir }}"
     state: directory
@@ -15,7 +15,7 @@
 
 ## This may no longer be needed as it apprears the latest version
 ## of virt-install supports passing the initrd and kernel via the --install option
-- name: Deploy virt-install .treeinfo file to {{ virtinstall_dir }}
+- name: INFRASTRUCTURE SETUP - Deploy virt-install .treeinfo file to {{ virtinstall_dir }}
   template:
     src: treeinfo.j2
     dest: "{{ virtinstall_dir }}/.treeinfo"
@@ -23,38 +23,48 @@
     owner: "{{ local_user_account }}"
   tags: [deploy_nodes, rhcos]
 
-- name: import tasks idm_dns.yml
+- name: INFRASTRUCTURE SETUP - Ensure {{ USER_KUBECONFIG_DIR }} exist
+  file:
+    path: "{{ USER_KUBECONFIG_DIR }}"
+    state: directory
+    mode: '0755'
+  become: true
+  become_user: "{{ local_user_account }}"
+  tags: [ postinstall, enable_shutdown, complete_install, bootstrap ]
+
+- name: INFRASTRUCTURE SETUP - IdM DNS
   when: dns_server == 'idm'
   import_tasks: idm_dns.yml
   tags: [idm ]
 
 ## This should be optional when the var external_bridge_network is set to true
-- name: import tasks deploy_libvirt_network.yml
+- name: INFRASTRUCTURE SETUP - Libvirt NAT network
   import_tasks: deploy_libvirt_network.yml
   tags: [libvirt_nat]
 
-- name: import tasks firewall_setup.yml
+- name: INFRASTRUCTURE SETUP - Configure firewall
   import_tasks: firewall_setup.yml
   tags: [firewall]
 
-- name: import tasks ocp4_tools.yml
+- name: INFRASTRUCTURE SETUP - Deploy OpenShift client tools
   import_tasks: ocp4_tools.yml
   tags: [setup , tools, installer, rhcos]
 
-- name: import tasks create_ignitions.yml
+- name: INFRASTRUCTURE SETUP - Generate the Ignition config files
   import_tasks: create_ignitions.yml
   tags: [ignitions, deploy_nodes, rhcos ]
 
-- name: include tasks install_podman.yml
+- name: INFRASTRUCTURE SETUP -  Install Podman
   include_tasks: install_podman.yml
   when: not podman_is_installed.stat.exists
   tags: [podman, pkg, rhcos ]
 
-- name: Download the RHCOS files - kernel initramfs rootfs
+## Downloads the kernel, initramfs, rootfs
+- name: INFRASTRUCTURE SETUP - Download the RHCOS files
   import_tasks: download_rhcos_files.yml
   tags: [deploy_nodes, rhcos_files, download, webserver, rhcos ]
 
-- name: Deploy the haproxy container
+- name: INFRASTRUCTURE SETUP - Deploy the HAPROXY Podman container
   import_role:
     name: openshift-4-loadbalancer
     tasks_from: create.yml
@@ -71,21 +81,21 @@
   when: (container_exist is defined and not container_exist|bool) and not tear_down|bool
   tags: [lb, containers]
 
-- name: Deploy the httpd webserver container
+- name: INFRASTRUCTURE SETUP - Deploy the httpd webserver Podman container
   import_role:
     name: ocp4-bootstrap-webserver
   tags: [webserver, containers]
 
-- name: Verify ignitions files are accessible
+- name: INFRASTRUCTURE SETUP - Verify ignitions files are accessible from the webserver
   include_tasks: check_webserver.yml
   tags: [deploy_nodes, rhcos, rhcos_wait, add_computes ]
 
-- name: Import tasks for generating new ignitions when certs have changes
+- name: INFRASTRUCTURE SETUP - Generate new ignitions when certs have changed
   import_tasks: new_compute_ign.yml
   when: approve_work_csr|bool
   tags: [ deploy_nodes, rhcos, node_profile, add_computes]
 
-- name: Import tasks to generate virt-install scripts for RHCOS nodes deployment
+- name: INFRASTRUCTURE SETUP - General virt-install shell scripts for RHCOS nodes deployment
   include_tasks: build_cluster_nodes_profile.yml
   loop: "{{ ocp4_instances }}"
   loop_control:
@@ -93,13 +103,13 @@
     label: outer_item.name
   tags: [deploy_nodes, rhcos, node_profile, add_computes ]
 
-- name: Build a list of all libvirt VMs
+- name: INFRASTRUCTURE SETUP - Build a list of all libvirt VMs
   virt:
     command: list_vms
   register: all_vms
   tags: [ deploy_nodes, rhcos, bootstrap, add_workers ]
 
-- name: Run virt-install to create all RHCOS cluster nodes
+- name: INFRASTRUCTURE SETUP - Run virt-install to create all RHCOS cluster nodes
   vars:
     vm_name: "{{ item }}"
   shell: "{{ virtinstall_dir }}/{{ vm_name }}.sh"
@@ -108,7 +118,7 @@
     label: "Installing RHCOS on VM {{ item }}"
   tags: [ deploy_nodes, rhcos, add_computes]
 
-- name: Build a list of newly created RHCOS nodes
+- name: INFRASTRUCTURE SETUP - Build a list of newly created RHCOS nodes
   vars:
     vm_name: "{{ item }}"
   set_fact:
@@ -117,7 +127,7 @@
   loop: "{{ ocp4_nodes }}"
   tags: [ deploy_nodes, rhcos, add_computes]
 
-- name: RHCOS nodes installation progress
+- name: INFRASTRUCTURE SETUP - Monitor RHCOS nodes installation progress
   vars:
     vm_name: "{{ item }}"
   virt:
@@ -132,7 +142,7 @@
     label: "RHCOS node {{ item }} installation is compeleted"
   tags: [ deploy_nodes, rhcos, rhcos_wait, bootstrap_shut, add_computes]
 
-- name: ensure all nodes are started
+- name: INFRASTRUCTURE SETUP - Ensure all RHCOS nodes are started
   vars:
     vm_name: "{{ item }}"
   virt:
@@ -140,57 +150,13 @@
     state: running
   loop: "{{ ocp4_nodes }}"
   delay: 10
-  tags: [ deploy_nodes, bootstrap, add_computes]
+  tags: [ deploy_nodes, bootstrap, add_computes ]
 
-- name: ensure kube folder exist
-  file:
-    path: "/home/{{ local_user_account  }}/.kube/"
-    state: directory
-    mode: '0755'
-  become: true
-  become_user: "{{ local_user_account }}"
-  tags: [ postinstall, enable_shutdown ]
-
-- name: setup kubeconfig
+- name: INFRASTRUCTURE SETUP - Setup kubeconfig for user {{ local_user_account }}
   copy:
     src: "{{ project_dir }}/{{ ocp4_okd4 }}/auth/kubeconfig"
     dest: "/home/{{ local_user_account }}/.kube/config"
     owner: "{{ local_user_account }}"
     group: "{{ local_user_account }}"
     backup: yes
-  tags: [ postinstall, enable_shutdown ]
-
-- name: Waiting for bootstrap Complete
-  shell: |
-    openshift-install --dir "{{ openshift_install_dir }}"  wait-for bootstrap-complete --log-level debug 2>&1 | tee "{{ bootstrap_log }}" &
-  register: install_status
-  until: "'Bootstrap status: complete' in install_status.stdout"
-  retries: 220
-  delay: 30
-  tags: [ bootstrap, postinstall ]
-  become: no
-
-- name: Waiting for Installation to Complete
-  shell: |
-    oc get csr -ojson | jq -r '.items[] | select(.status == {} ) | .metadata.name' | xargs oc adm certificate approve
-    timeout 10 openshift-install --dir "{{ openshift_install_dir }}"  wait-for install-complete --log-level debug 2>&1 | tee -a {{ install_complete_log }}
-  register: install_status
-  until: "'Install complete!' in install_status.stdout"
-  retries: 120
-  delay: 30
-  environment:
-    KUBECONFIG: "{{ openshift_install_dir }}/auth/kubeconfig"
-  become: no
-  tags: [ complete_install ]
-
-- name: import check_cluster.yml
-  import_tasks: check_cluster.yml
-  tags: [ complete_install, check_cluster_status ]
-
-- name: include cluster verify tags from smoketest task
-  include_tasks:
-    file: smoketest.yml
-    apply:
-      tags:
-        - smoketest-verify
-  tags: verify-cluster
+  tags: [ postinstall, enable_shutdown, complete_install, bootstrap]

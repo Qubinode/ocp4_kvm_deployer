@@ -15,7 +15,7 @@ galaxy_info:
   # this branch. If Travis integration is configured, only notifications for this
   # branch will be accepted. Otherwise, in all cases, the repo's default branch
   # (usually ctrlplane) will be used.
-  github_branch: ctrlplane
+  github_branch: master
 
   #
   # platforms is a list of platforms, and each platform has a name and a list of versions.
@@ -34,6 +34,7 @@ galaxy_info:
     - k8s
     - kubernetes
 
-dependencies: []
-  # List your role dependencies here, one per line. Be sure to remove the '[]' above,
-  # if you add dependencies to this list.
+dependencies:
+  - nfs-provisioner-role
+  - openshift-4-loadbalancer
+  - ocp4-bootstrap-webserver

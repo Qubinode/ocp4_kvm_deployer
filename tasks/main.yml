@@ -1,39 +1,72 @@
 ---
 # tasks file for ocp4_kvm_deployer
 
-- name: cluster deployment
+- name: Bootstrap the cluster
+  when: deploy_cluster|bool and not tear_down|bool
+  tags: bootstrap_cluster
   block:
-    - name: import tasks pre_tasks.yml
+    - name: Setup prerequisites
       import_tasks: pre_tasks.yml
       
-    - name: check if cluster is deployed and report state of cluster
+    - name: Check if the cluster is already deployed
       import_tasks: check_cluster.yml
-      when: check_existing_cluster|bool
 
-    - name: import task deploy.yml
-      import_tasks: deploy.yml
-      when: deploy_cluster|bool
+    - name: Setup the infrastructure
+      import_tasks: setup_cluster_infrastructure.yml
+      when: not cluster_install_status|bool
 
-    - name: import tasks nfs_server.yml
-      import_tasks: nfs_server.yml
-      when: cluster_deployed_msg == 'deployed' and configure_nfs_storage|bool
-      tags: [ postinstall, nfs ]
+    - name: Bootstrap the cluster  
+      import_tasks: bootstrap_cluster.yml
+      when: not cluster_install_status|bool
 
-    - name: import tasks destroy_bootstrap_node.yml
-      import_tasks: destroy_bootstrap_node.yml
-      when: cluster_deployed_msg == 'deployed'
-
-    - name: import configure-local-storage.yml
-      import_tasks: configure-local-storage.yml
-      tags: [ localstorage, postinstall ]
-      when: configure_local_storage|bool and cluster_deployed_msg == 'deployed' and compute_node_count|int != 0
-
-    - name: include tasksgenerate_inventory.yml
-      import_tasks: generate_inventory.yml
-      when: cluster_deployed_msg == 'deployed'
-
-  when: not tear_down|bool
-
+- name: Setup Storage and OpenShift Registry
+  when: bootstrap_complete|bool or and not tear_down|bool
+  block:
+     - debug:
+         msg: "Post Cluster Setup"
+#    - name: Configure NFS storage
+#      import_tasks: nfs_server.yml
+#      when: cluster_deployed_msg == 'deployed' and configure_nfs_storage|bool
+#      tags: [ postinstall, nfs ]
+#
+#    - name: import tasks destroy_bootstrap_node.yml
+#      import_tasks: destroy_bootstrap_node.yml
+#      when: cluster_deployed_msg == 'deployed'
+#
+#    - name: import configure-local-storage.yml
+#      import_tasks: configure-local-storage.yml
+#      tags: [ localstorage, postinstall ]
+#      when: configure_local_storage|bool and cluster_deployed_msg == 'deployed' and #compute_node_count|int != 0
+#
+#    - name: include tasksgenerate_inventory.yml
+#      import_tasks: generate_inventory.yml
+#      when: cluster_deployed_msg == 'deployed'
+#
+#    - name: Waiting for Installation to Complete
+#      shell: |
+#        oc get csr -ojson | jq -r '.items[] | select(.status == {} ) | .metadata.name' | #xargs oc     adm certificate approve
+#        timeout 10 openshift-install --dir "{{ openshift_install_dir }}"  wait-for     #install-complete --log-level debug 2>&1 | tee -a {{ install_complete_log }}
+#      register: install_status
+#      until: "'Install complete!' in install_status.stdout"
+#      retries: 120
+#      delay: 30
+#      environment:
+#        KUBECONFIG: "{{ openshift_install_dir }}/auth/kubeconfig"
+#      become: no
+#      tags: [ complete_install ]
+#
+#    - name: import check_cluster.yml
+#      import_tasks: check_cluster.yml
+#      tags: [ complete_install, check_cluster_status ]
+#    
+#    - name: include cluster verify tags from smoketest task
+#      include_tasks:
+#        file: smoketest.yml
+#        apply:
+#          tags:
+#            - smoketest-verify
+#      tags: [verify-cluster, complete_install]      
+#
 - name: import tasks tear_down.yml
   import_tasks: tear_down.yml
   when: tear_down|bool

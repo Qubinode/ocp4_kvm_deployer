@@ -8,7 +8,7 @@
     immediate: yes
   loop: "{{ ocp4_firewall_ports }}"
   register: enable_firewall_ports
-  tags: [ add_computes, firewall ]
+  tags: [ firewall ]
 
 - name: Allow NFS traffic from VM's to Host
   firewalld:
@@ -22,7 +22,7 @@
     - rpc-bind
   register: enable_nfs_ports
   notify: 'reload firewalld'
-  tags: [ idm_dns.ymladd_computes, firewall ]
+  tags: [ nfs, firewall ]
 
 - name: Allow OpenShift traffic from VM's to Host
   firewalld:
@@ -37,7 +37,7 @@
     - 22623/tcp
   notify: 'reload firewalld'
   register: allow_vm_traffic
-  tags: [add_computes, firewall ]
+  tags: [firewall ]
 
 - name: Allow OpenShift traffic from public to Host
   firewalld:
@@ -51,12 +51,12 @@
     - 6443/tcp
     - 8080/tcp
   notify: 'reload firewalld'
-  tags: [add_computes, firewall ]
+  tags: [firewall ]
   register: allow_traffic
 
 ## This task should be replaced with a handler
 - name: reload firewalld
   command: 'firewall-cmd --reload'
-  tags: [add_computes, firewall ]
+  tags: [firewall ]
   when:
     - allow_traffic.changed or allow_vm_traffic.changed or enable_nfs_ports.changed or enable_firewall_ports.changed

@@ -7,4 +7,4 @@
   until: vm_name in shutdown_vms.list_vms
   retries: 120
   delay: 30
-  tags: [ deploy_nodes, rhcos, rhcos_wait, bootstrap_shut, add_computes]
+  #tags: [ rhcos_wait, bootstrap_shut]
