@@ -24,7 +24,6 @@
     - name: REMOVE THE BOOTSTRAP NODE - Unable to shutdown VM
       debug:
         msg: "{{ vm_name }} is not running"
-        command: undefine
   always:
     - name: REMOVE THE BOOTSTRAP NODE - Virsh undefine {{ bootstrap_node_name }}
       virt:

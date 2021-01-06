@@ -313,7 +313,17 @@ ansible-playbook playbooks/deploy_ocp4.yml -t deploy_nodes -e "container_exist=n
 
 **Bootstrap the OCP4 Cluster**
 ```
-ansible-playbook playbooks/deploy_ocp4.yml -t bootstrap -e "container_exist=no" -e "tear_down=no" -e "check_existing_cluster=no" -e "cluster_install_status=no"
+ansible-playbook playbooks/deploy_ocp4.yml -t bootstrap_cluster -e "container_exist=no" -e "tear_down=no" -e "check_existing_cluster=no" -e "cluster_install_status=no" -e "bootstrap_precheck=yes"
+```
+
+**Deploy Registry**
+```
+ansible-playbook playbooks/deploy_ocp4.yml -t configure_registry -e "container_exist=no" -e "tear_down=no" -e "check_existing_cluster=no" -e "cluster_install_status=no" -e "bootstrap_precheck=yes" -e "bootstrap_complete=yes"
+```
+
+**Complete OpenShift Install**
+```
+ansible-playbook playbooks/deploy_ocp4.yml -t complete_cluster_install -e "tear_down=no" -e "check_existing_cluster=no" -e "cluster_install_status=no" -e "bootstrap_precheck=yes" -e "bootstrap_complete=yes"
 ```
 
 ```

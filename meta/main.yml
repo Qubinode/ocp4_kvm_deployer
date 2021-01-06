@@ -34,7 +34,7 @@ galaxy_info:
     - k8s
     - kubernetes
 
-dependencies:
-  - nfs-provisioner-role
-  - openshift-4-loadbalancer
-  - ocp4-bootstrap-webserver
+dependencies: []
+#  - nfs-provisioner-role
+#  - openshift-4-loadbalancer
+#  - ocp4-bootstrap-webserver

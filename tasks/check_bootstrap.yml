@@ -23,7 +23,7 @@
 
          Then restart the cluster deployment with:
              ./qubinode-installer -p {{ ocp4_okd4 }}
-  when: not bootstrap_complete|bool
+  when: not bootstrap_complete|bool and not bootstrap_precheck|bool
   tags: [ complete_install, check_cluster_status ]
 
 - name: BOOTSTRAPING THE CLUSTER - Get all Cluster Operators

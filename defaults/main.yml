@@ -130,6 +130,9 @@ deploy_cluster: yes
 # set to true to startup cluster
 startup_cluster: no
 
+## Set this to yes to skip failing the playbook if the bootstrap verficiation fails
+bootstrap_precheck: no
+
 # set to true to shutdown cluster
 shutdown_cluster: no
 
@@ -148,7 +151,9 @@ configure_local_storage: no
 compute_vdb_size: 10
 compute_vdx_size: 10
 
-# deploy NFS persistent storage
+## Set to no to disable create a NFS provisioner
+## This should be removed since the NFS provisioner is
+## now the default storage option
 configure_nfs_storage: yes
 
 # deploy OCS persistent storage
