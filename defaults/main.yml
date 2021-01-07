@@ -18,6 +18,7 @@ idm_record_state: present
 ocp4_subnet: 192.168.50.0
 mask: 255.255.255.0
 
+
 ## Name of the libvirt nat network
 libvirt_network_name: qubinat
 
@@ -333,10 +334,11 @@ localstorage_fs_disk:
 
 # Defaults for NFS Provisioner role
 provision_nfs_server: true
+nfs_client_subnet: "{{ ocp4_subnet }}/24"
 nfs_server_directory_path: /export
 provision_nfs_provisoner: true
 configure_registry: false
-nfs_server_ip:  changeme
+nfs_server_ip: 192.168.50.1
 registry_pvc_size: 100Gi
 storage_class_result: true
 openshift_token: 1234567890

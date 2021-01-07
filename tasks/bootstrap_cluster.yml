@@ -15,35 +15,17 @@
   become: no
   changed_when: False
 
-- name: BOOTSTRAPING THE CLUSTER - Check for pending CSRs
+- name: BOOTSTRAPING THE CLUSTER - Check for and approve pending CSRs
+  async: 2400
+  poll: 0
   shell: |
-    oc get csr -ojson | jq -r '.items[] | select(.status == {} ) | .metadata.name'
-  environment:
-    KUBECONFIG: "{{ openshift_install_dir }}/auth/kubeconfig"
-  become: no
-  ignore_errors: yes
-  register: pending_csrs
-  changed_when: False
-  tags: [ complete_install, bootstrap ]
-
-- name: BOOTSTRAPING THE CLUSTER - Create a list of CSRs to approve
-  set_fact:
-    csrs_to_approve: "{{ pending_csrs.stdout_lines if pending_csrs.stdout_lines is defined else ''  }}"
-  tags: [ complete_install, bootstrap ]
-
-- name: BOOTSTRAPING THE CLUSTER - Approve pending CSRs
-  when: csrs_to_approve | length > 0
-  shell: |
-    oc adm certificate approve {{ item }}
-  environment:
-    KUBECONFIG: "{{ openshift_install_dir }}/auth/kubeconfig"
-  become: no
-  ignore_errors: yes
-  changed_when: False
-  loop: "{{ csrs_to_approve }}"
-  loop_control:
-    label: "Approving csr {{ item }}"
-  tags: [ complete_install, bootstrap ]
+    while true
+    do
+      oc get csr --no-headers | \
+        awk '/Pending/ {print $1}' | \
+        xargs --no-run-if-empty oc adm certificate approve
+      sleep 1
+    done
 
 - name: BOOTSTRAPING THE CLUSTER - Verify the cluster bootstrapping is completed and all operators are up
   import_tasks: check_bootstrap.yml
