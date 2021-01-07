@@ -142,6 +142,15 @@
     label: "RHCOS node {{ item }} installation is compeleted"
   tags: [ deploy_nodes, rhcos, rhcos_wait, bootstrap_shut, add_computes]
 
+## There seems to be an issue where Libvirt IPtables rules are loaded
+## This ensures the rules are loaded
+- name: INFRASTRUCTURE SETUP - Restart libvirtd service
+  systemd:
+    state: restarted
+    daemon_reload: yes
+    name: libvirtd
+  tags: [ deploy_nodes, bootstrap, add_computes ]
+  
 - name: INFRASTRUCTURE SETUP - Ensure all RHCOS nodes are started
   vars:
     vm_name: "{{ item }}"

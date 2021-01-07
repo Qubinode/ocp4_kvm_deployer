@@ -1,5 +1,5 @@
 ---
-- name:  BOOTSTRAPING THE CLUSTER - Declare empty list csrs_to_approve
+- name: BOOTSTRAPING THE CLUSTER - Declare empty list csrs_to_approve
   set_fact:
     csrs_to_approve: []
   tags: [ complete_install, bootstrap ]
