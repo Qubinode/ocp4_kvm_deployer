@@ -8,9 +8,7 @@
 - name: Bootstrap the cluster
   when: >
     deploy_cluster|bool and
-    not tear_down|bool or 
-    not startup_cluster|bool or
-    not shutdown_cluster|bool
+    not tear_down|bool 
   tags: bootstrap_cluster
   block:
     - name: Setup prerequisites
@@ -43,16 +41,17 @@
           All the control nodes should be in a Ready state and most
           of the cluster operators available status should be True
 
-- name: Setup OpenShift Registry with NFS storage provisioner
-  when: bootstrap_complete|bool and not tear_down|bool
-  tags: configure_registry
-  block:
-    - name: Configure OpenShift Registry and NFS Storage
+    - name: Setup OpenShift Registry with NFS storage provisioner
+      when: >
+         bootstrap_complete|bool and
+         configure_nfs_storage|bool
       import_tasks: openshift_registry.yml
-      #when: cluster_deployed_msg == 'deployed' and configure_nfs_storage|bool
+      tags: configure_registry
 
 - name: Complete the OpenShift Cluster Deployment
-  when: bootstrap_complete|bool and not tear_down|bool
+  when: > 
+    bootstrap_complete|bool and 
+    not tear_down|bool
   tags: complete_cluster_install
   block:
     - name: Running openshift-install wait-for install-complete command
@@ -76,6 +75,11 @@
             - smoketest-verify
       tags: [verify-cluster, complete_install]      
 
+- name: Shutdown Cluster Nodes
+  when: >
+    shutdown_cluster|bool
+  import_tasks: shutdown.yml
+
 - name: Additional Cluster Tasks
   when: not tear_down|bool
   block: 
@@ -89,9 +93,7 @@
       import_tasks: startup.yml
       when: startup_cluster|bool
     
-    - name: Shutdown the OpenShift Cluster
-      import_tasks: shutdown.yml
-      when: shutdown_cluster|bool
+
     
     - name: import smoke test task
       vars:

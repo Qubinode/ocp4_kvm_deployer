@@ -1,35 +1,47 @@
 ---
-- name: getting all ocp4 nodes
-  shell: oc get nodes -o wide --no-headers=true | awk '{print $1,$6,$3}'
-  register: all_ocp_nodes
-  ignore_errors: yes
-  changed_when: False
-  become: no
+- name: list all running libvirt vms
+  virt:
+    command: list_vms
+    state: running
+  register: running_vms
   tags: generate_inventory
 
-- name: getting compute nodes
-  shell: oc get nodes -o wide --no-headers=true | awk '/compute/ {print $1,$6,$3}'
-  register: compute_ocp4_nodes
-  ignore_errors: yes
-  changed_when: False
-  when: all_ocp_nodes and all_ocp_nodes.rc == 0
-  become: no
-  tags: generate_inventory
 
-- name: getting control nodes
-  shell: oc get nodes -o wide --no-headers=true | awk '/ctrlplane/ {print $1,$6,$3}'
-  register: control_ocp4_nodes
-  ignore_errors: yes
-  when: all_ocp_nodes and all_ocp_nodes.rc == 0
-  changed_when: False
-  become: no
-  tags: generate_inventory
-
-- name: create/update ocp4 nodes ansible inventory
-  template:
-    src: ocp4-nodes-inventory.yml
-    dest: "{{ project_dir }}/inventory/ocp4-nodes"
-    owner: "{{ admin_user }}"
-    group: "{{ admin_user }}"
-  tags: generate_inventory
-
+- name: Build list of cluster node types
+  when: "'hostname_prefix' in running_vms"
+  block:
+    - name: getting all ocp4 nodes
+      shell: oc get nodes -o wide --no-headers=true | awk '{print $1,$6,$3}'
+      register: all_ocp_nodes
+      ignore_errors: yes
+      changed_when: False
+      become: no
+      tags: generate_inventory
+    
+    - name: getting compute nodes
+      shell: oc get nodes -o wide --no-headers=true | awk '/compute/ {print $1,$6,$3}'
+      register: compute_ocp4_nodes
+      ignore_errors: yes
+      changed_when: False
+      when: all_ocp_nodes and all_ocp_nodes.rc == 0
+      become: no
+      tags: generate_inventory
+    
+    - name: getting control nodes
+      shell: oc get nodes -o wide --no-headers=true | awk '/ctrlplane/ {print $1,$6,$3}'
+      register: control_ocp4_nodes
+      ignore_errors: yes
+      when: all_ocp_nodes and all_ocp_nodes.rc == 0
+      changed_when: False
+      become: no
+      tags: generate_inventory
+    
+    - name: create/update ocp4 nodes ansible inventory
+      template:
+        src: ocp4-nodes-inventory.yml
+        dest: "{{ project_dir }}/inventory/ocp4-nodes"
+        owner: "{{ admin_user }}"
+        group: "{{ admin_user }}"
+      tags: generate_inventory
+    
+    
