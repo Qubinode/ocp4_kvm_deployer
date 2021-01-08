@@ -6,7 +6,11 @@
   when: tear_down|bool
 
 - name: Bootstrap the cluster
-  when: deploy_cluster|bool and not tear_down|bool
+  when: >
+    deploy_cluster|bool and
+    not tear_down|bool or 
+    not startup_cluster|bool or
+    not shutdown_cluster|bool
   tags: bootstrap_cluster
   block:
     - name: Setup prerequisites
@@ -85,15 +89,9 @@
       import_tasks: startup.yml
       when: startup_cluster|bool
     
-    - name: import shutdown task
-      vars:
-        container_exist: yes
-        check_existing_cluster: no
-        cluster_install_status: yes
-        bootstrap_precheck: yes
-        bootstrap_complete: yes
+    - name: Shutdown the OpenShift Cluster
       import_tasks: shutdown.yml
-      when: not tear_down|bool and shutdown_cluster|bool
+      when: shutdown_cluster|bool
     
     - name: import smoke test task
       vars:

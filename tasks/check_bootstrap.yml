@@ -23,6 +23,9 @@
 
          Then restart the cluster deployment with:
              ./qubinode-installer -p {{ ocp4_okd4 }}
+
+         The bootstrap message is:
+           "{{ bootstrap_complete.stderr }}"
   when: not bootstrap_complete|bool and not bootstrap_precheck|bool
   tags: [ complete_install, check_cluster_status ]
 

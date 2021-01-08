@@ -337,7 +337,7 @@ provision_nfs_server: true
 nfs_client_subnet: "{{ ocp4_subnet }}/24"
 nfs_server_directory_path: /export
 provision_nfs_provisoner: true
-configure_registry: false
+configure_registry: yes
 nfs_server_ip: 192.168.50.1
 registry_pvc_size: 100Gi
 storage_class_result: true
