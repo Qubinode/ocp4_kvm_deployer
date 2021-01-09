@@ -47,6 +47,7 @@ do
     do
         OP_STATUS=$(/usr/local/bin/oc get clusteroperator $operator -o=jsonpath='{range .status.conditions[*]}{.type}{" "}{.status}{" "}{.message}{"\n"}{end}'|awk '/Available/ {print $2}')
         STATUS=$(echo $OP_STATUS | grep -o True)
+        oc get csr -ojson | jq -r '.items[] | select(.status == {} ) | .metadata.name'|xargs --no-run-if-empty oc adm certificate approve > /dev/null 2>&1
 
         if [ "A${STATUS}" == "ATrue" ]
         then

@@ -1,13 +1,22 @@
 ---
-- name: Check on the cluster install-complete status
-  command: |
-    /usr/bin/timeout 40 /usr/local/bin/openshift-install wait-for install-complete --dir "{{ openshift_install_dir }}" --log-level debug
-  register: install_complete
-  ignore_errors: yes
-  changed_when: false
-  tags: [postinstall, check_cluster_status, complete_install ]
+- name: Check for /usr/local/bin/openshift-install
+  stat:
+    path: /usr/local/bin/openshift-install
+  register: openshift_install_tool_check
+  tags: [bootstrap, cluster_install]
 
-- name: Set the cluster install-complete status to ture or false
-  set_fact:
-    cluster_install_status: "{{ true if install_complete.stderr is defined and install_complete.stderr.find(clus_in_stat_string) != -1 else false }}"
-  tags: [postinstall, check_cluster_status, complete_install ]
+- name: Set the var cluster_install_status
+  when: openshift_install_tool_check.stat.exists
+  block:
+    - name: Check on the cluster install-complete status
+      command: |
+        /usr/bin/timeout 40 /usr/local/bin/openshift-install wait-for install-complete --dir "{{     openshift_install_dir }}" --log-level debug
+      register: install_complete
+      ignore_errors: yes
+      changed_when: false
+      tags: [postinstall, check_cluster_status, complete_install ]
+    
+    - name: Set the cluster install-complete status to ture or false
+      set_fact:
+        cluster_install_status: "{{ true if install_complete.stderr is defined and     install_complete.stderr.find(clus_in_stat_string) != -1 else false }}"
+      tags: [postinstall, check_cluster_status, complete_install ]

@@ -3,7 +3,7 @@
   set_fact:
     ocp4_nodes: []
     new_nodes: []
-  tags: always
+  tags: [deploy_nodes, rhcos]
 
 - name: INFRASTRUCTURE SETUP - Create {{ virtinstall_dir }}
   file:

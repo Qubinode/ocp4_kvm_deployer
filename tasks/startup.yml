@@ -1,9 +1,10 @@
 ---
-- set_fact:
+- name: Define vars fpr control and compute nodes
+  set_fact:
     ctrlplane_nodes_count: 0
     compute_nodes_count: 0
 
-- name: start the loadbancer systemd service {{ lb_name }}.service
+- name: Ensure the loadbancer systemd service {{ lb_name }}.service is started
   systemd:
     name: "{{ lb_name }}.service"
     enabled: yes
@@ -35,6 +36,8 @@
     name: "{{ vm_name }}"
     state: running
   loop: "{{ range(0, ctrlplane_count|int)|list }}"
+  loop_control:
+    label: "Starting controle node {{ vm_name }}"
   delay: 10
   when: vm_name in all_vms.list_vms
   tags: [ start_nodes, rhcos, bootstrap, startup]
@@ -64,6 +67,8 @@
     name: "{{ vm_name }}"
     state: running
   loop: "{{ range(0, compute_node_count|int)|list }}"
+  loop_control:
+    label: "Starting compute node {{ vm_name }}"
   delay: 10
   when: vm_name in all_vms.list_vms and compute_node_count|int != 0
   tags: [ start_nodes, rhcos, bootstrap, startup]
@@ -110,8 +115,14 @@
   tags: [ start_nodes, rhcos, bootstrap, startup]
 
 - name: Approve all additional Pending CSRs
-  shell: >
-    oc get csr -ojson | jq -r '.items[] | select(.status == {} ) | .metadata.name' | xargs oc adm certificate approve > /dev/null 2>&1
-  ignore_errors: yes
-  become: no
+  async: 900
+  poll: 0
+  shell: |
+    while true
+    do
+      oc get csr --no-headers | \
+        awk '/Pending/ {print $1}' | \
+        xargs --no-run-if-empty oc adm certificate approve
+      sleep 1
+    done
   tags: [ start_nodes, rhcos, bootstrap, startup]
