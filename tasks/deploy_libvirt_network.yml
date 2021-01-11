@@ -1,4 +1,13 @@
 ---
+## There seems to be an issue where Libvirt IPtables rules are loaded
+## This ensures the rules are loaded
+- name: Restart libvirtd service
+  systemd:
+    state: restarted
+    daemon_reload: yes
+    name: libvirtd
+  tags: [ libvirt_nat ]
+
 - name: Get a list of all libvirt networks
   virt_net:
     command: list_nets

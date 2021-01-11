@@ -1,8 +1,13 @@
 #!/bin/bash
 
+# Value for operator count
 COUNT=0
-SLEEP_FOR=0
-TIMEOUT=60
+
+# How long to wait in between loop
+SLEEP_FOR=5
+
+# How long to check for operators before timingout
+TIMEOUT=120
 
 if oc get nodes | grep -q okd
 then
@@ -22,18 +27,7 @@ COLOR_RED=`tput setaf 1`
 COLOR_GREEN=`tput setaf 2`
 COLOR_RESET=`tput sgr0`
 
-{% raw %}
-spin() {
-   printf "\b${sp:sc++:1}"
-   ((sc==${#sp})) && sc=0
-}
-
-endspin() {
-   printf "\r%s\n" "$@"
-}
-{% endraw %}
-
-printf "%s\n" "    Ensure all Cluster operators are available!"
+printf "%s\n" "    Checking on the state of the cluster!"
 if [ -z  $KUBEADMIN_PASS ];
 then
   echo "OpenShift Cluster is not installed on machine"
@@ -41,21 +35,28 @@ then
   exit 0
 fi
 
+## Check on the state of the cluster operators
 until [[ $COUNT -eq $TOTAL_OPERATORS || $SLEEP_FOR -eq $TIMEOUT ]]
 do
     for operator in $(echo $OPERATORS)
     do
         OP_STATUS=$(/usr/local/bin/oc get clusteroperator $operator -o=jsonpath='{range .status.conditions[*]}{.type}{" "}{.status}{" "}{.message}{"\n"}{end}'|awk '/Available/ {print $2}')
         STATUS=$(echo $OP_STATUS | grep -o True)
-        oc get csr -ojson | jq -r '.items[] | select(.status == {} ) | .metadata.name'|xargs --no-run-if-empty oc adm certificate approve > /dev/null 2>&1
 
+        ## Show the status of the operator  
+        ## and add to the timeout count
         if [ "A${STATUS}" == "ATrue" ]
         then
             COUNT=$(($COUNT + 1))
 	    else
-            printf "%s\n" "    Waiting on cluster operator $operator status to change from $STATUS to True"
-        fi
+            printf "%s\n" "    Waiting on cluster operator $operator status to change from $OP_STATUS to True"
+
+            ## Check for and approve any pending CSRs
+             oc get csr -ojson | jq -r '.items[] | select(.status == {} ) | .metadata.name'|xargs      --no-run-if-empty oc adm certificate approve > /dev/null 2>&1
+             fi
     done
+
+    ## Exit if all operators count is true
     if [ $COUNT -eq $TOTAL_OPERATORS ]
     then
         break
@@ -71,30 +72,35 @@ then
     do
         OP_STATUS=$(/usr/local/bin/oc get clusteroperator $operator -o=jsonpath='{range .status.conditions[*]}{.type}{" "}{.status}{" "}{.message}{"\n"}{end}'|awk '/Available/ {print $2}')
         STATUS=$(echo $OP_STATUS | grep -o True)
-        if [ "A${STATUS}" == "ATrue" ]
+        if [ "A${STATUS}" != "ATrue" ]
         then
             printf "%s\n" "*************************************"
             printf "%s\n" "${COLOR_RED}FAILLED OPERATOR${COLOR_RESET} ${COLOR_GREEN}$operator${COLOR_RESET} ${COLOR_RED}STATUS${COLOR_RESET}"
-            /usr/local/bin/oc get clusteroperator $operator
-            printf "%s\n" ""
+            #/usr/local/bin/oc get clusteroperator $operator
+            #printf "%s\n" ""
+
+            printf "%s\n" "++++++++++++++++++++++++++++++++++++"
             /usr/local/bin/oc get clusteroperator $operator -o=jsonpath='{range .status.conditions[*]}{.type}{" "}{.status}{" "}{.message}{"\n"}{end}'
+            printf "%s\n" "++++++++++++++++++++++++++++++++++++"
+
             printf "%s\n" "*************************************"
             printf "%s\n" ""
         fi
     done
 
-    /usr/local/bin/oc get nodes
     printf "%s\n" ""
     printf "%s\n" "    ${COLOR_RED}Timeout waiting for all cluster operators to come up${COLOR_RESET}"
     printf "%s\n" ""
 else
-    printf "%s\n" "    ${COLOR_GREEN}All cluster operators are up${COLOR_RESET}"
+    OCP_CONSOLE=$(oc get routes -n openshift-console -ojson | jq -r '.items[0].spec.host')
+    printf "%s\n" "    ${COLOR_GREEN}The OpenShift Cluster is Up${COLOR_RESET}"
     /usr/local/bin/oc get nodes -o wide --no-headers=true| awk 'BEGIN{printf("    %-3s%-40s%-16s%-8s%-7s\n","#","FQDN","External IP","ROLE","STATUS")}{printf("    %-3s%-40s%-16s%-8s%-7s\n",NR,$1,$6,$3,$2)}'
     printf "%s\n" ""
     printf "%s\n" ""
-    printf "%s\n" "    ${COLOR_GREEN}Console: https://console-openshift-console.apps.{{ cluster_name }}.{{ ocp4_cluster_domain }}"${COLOR_RESET}
+    printf "%s\n" "    ${COLOR_GREEN}Console: https://${OCP_CONSOLE}"${COLOR_RESET}
     printf "%s\n" "    ${COLOR_GREEN}Username: kubeadmin"${COLOR_RESET}
     printf "%s\n" "    ${COLOR_GREEN}Password: $KUBEADMIN_PASS"${COLOR_RESET}
     printf "%s\n" ""
 fi
 
+exit 0
