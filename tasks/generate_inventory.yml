@@ -1,14 +1,17 @@
 ---
-- name: list all running libvirt vms
-  virt:
-    command: list_vms
-    state: running
-  register: running_vms
+- name: Get a list of running vms
+  shell: |
+    if virsh list --state-running | grep -q {{ hostname_prefix }}
+    then
+        echo "Running"
+    else
+        echo "NotRunning"
+    fi
+  register: active_vms
   tags: generate_inventory
 
-
 - name: Build list of cluster node types
-  when: "'hostname_prefix' in running_vms"
+  when: active_vms.stdout == 'Running'
   block:
     - name: getting all ocp4 nodes
       shell: oc get nodes -o wide --no-headers=true | awk '{print $1,$6,$3}'

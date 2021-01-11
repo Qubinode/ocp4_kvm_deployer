@@ -6,7 +6,7 @@
 # and just rely an the virt module to shutdown the VM as it appears
 # shutdown with the command module does not work as well as virt
 - name: try to shutdown all nodes with the shutdown command
-  when: "'hostname_prefix' in running_vms"
+  when: active_vms.stdout == 'Running'
   tags: shutdown
   block:
     - name: SHUTDOWN CLUSTER - backup etcd on {{ control_ocp4_nodes.stdout_lines | first }}
