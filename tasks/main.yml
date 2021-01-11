@@ -44,6 +44,17 @@
     not tear_down|bool
   tags: complete_cluster_install
   block:
+    - name: Deploy /usr/local/bin/qubinode-ocp4-status
+      when: not tear_down|bool 
+      template:
+        src: templates/qubinode-ocp4-status.j2
+        dest: /usr/local/bin/qubinode-ocp4-status
+        group: "{{ local_user_account }}"
+        owner: "{{ local_user_account }}"
+        mode: u=rwx,g=rx,o=rx
+      become: yes
+      tags: [ complete_install, check_cluster_status, status_script, bootstrap ]
+
     - name: Setup OpenShift Registry with NFS storage provisioner
       import_tasks: openshift_registry.yml
       tags: configure_registry
@@ -75,3 +86,15 @@
       when: >
         configure_local_storage|bool and 
         compute_node_count|int != 0
+
+    - name: Shutdown Cluster Nodes
+      when: >
+        shutdown_cluster|bool
+      import_tasks: shutdown.yml
+      tags: [shutdown]
+
+    - name: Startup Cluster Nodes
+      when: >
+        startup_cluster|bool
+      import_tasks: startup.yml
+      tags: [startup]
