@@ -46,5 +46,3 @@
         owner: "{{ admin_user }}"
         group: "{{ admin_user }}"
       tags: generate_inventory
-    
-    

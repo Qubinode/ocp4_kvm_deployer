@@ -2,6 +2,13 @@
 - name: Generate a updated inventory of current cluster nodes
   import_tasks: generate_inventory.yml
 
+- name: list all running libvirt vms
+  virt:
+    command: list_vms
+    state: running
+  register: running_vms
+  tags: generate_inventory
+  
 # eventually going to remove shutting down nodes with shutdown command
 # and just rely an the virt module to shutdown the VM as it appears
 # shutdown with the command module does not work as well as virt
