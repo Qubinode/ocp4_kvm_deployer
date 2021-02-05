@@ -1,0 +1,78 @@
+---
+- name: create new worker ignition when certs have been rotated
+  vars:
+    - ocp4_dir: "{{ project_dir }}/{{ openshift_install_folder }}"
+    - worker_ign: "{{ ocp4_dir }}/worker.ign"
+    - cert_base64: "{{ ocp4_dir }}/api-int.base64"
+    - api_int: "api-int.{{ cluster_name }}.{{ ocp4_cluster_domain }}:22623"
+  block:
+    - name: get cluster running hours
+      shell: |
+        oc get clusteroperators | awk '/authentication/ {print $6}'|tr -d 'h'|tr -d 'd'
+      changed_when: False
+      register: cluster_hours
+      tags: [ deploy_nodes, rhcos, node_profile, add_workers ]
+      become: no
+
+    - name: check if certs have been rotated
+      shell: |
+        MCS={{ api_int }}
+        echo "q" | openssl s_client -connect $MCS  -showcerts | awk '/-----BEGIN CERTIFICATE-----/,/-----END CERTIFICATE-----/' > {{ ocp4_dir }}/current.crt
+        cat ocp4/worker.ign | jq ".ignition.security.tls.certificateAuthorities[0].source"|awk -F, '{print $2}'|sed 's/"//'|base64 -d > {{ ocp4_dir }}/old.crt
+        if cmp -s {{ ocp4_dir }}/old.crt {{ ocp4_dir }}/current.crt
+        then
+            echo "notrotated"
+        else
+            test -f {{ worker_ign }}.orig || cp {{ worker_ign }} {{ worker_ign }}.orig
+            echo "rotated"
+        fi
+      changed_when: False
+      register: certs_rotation_status
+      when: cluster_hours.stdout|int > 24
+      tags: [ deploy_nodes, rhcos, node_profile, add_workers ]
+      become: no
+  
+    - name: generate new worker.ign
+      shell: |
+        WORKER_API_INT={{ api_int }}/config/worker
+        ROOT_CA=$( cat {{ ocp4_dir }}/current.crt)
+        base64 --wrap=0 {{ ocp4_dir }}/current.crt | tee {{ ocp4_dir }}/api-int.base64
+        jq ".ignition.security.tls.certificateAuthorities[0].source = \"data:text/plain;charset=utf-8;base64,$(base64 -w0 <<< "$ROOT_CA")\" | .ignition.config.append[0].source = \"$WORKER_API_INT\"" <<< '{"ignition":{"config":{"append":[{"verification":{}}]},"security":{"tls":{"certificateAuthorities":[{"verification":{}}]}},"timeouts":{},"version":"2.2.0"},"networkd":{},"passwd":{},"storage":{},"systemd":{}}' > {{ worker_ign }}.new
+        sed --regexp-extended --in-place=.backup "s%base64,[^,]+%base64,$(cat {{ ocp4_dir }}/api-int.base64)\"%" {{ dest_ignitions_web_directory }}/worker.ign
+        sed --regexp-extended --in-place=.backup "s%base64,[^,]+%base64,$(cat {{ ocp4_dir }}/api-int.base64)\"%" {{ worker_ign }}.new
+      register: new_worker_ign
+      when: certs_rotation_status.stdout == 'rotated'
+      tags: [ deploy_nodes, rhcos, node_profile, add_workers ]
+      become: no
+
+    - name: Restart podman webserver
+      shell: |
+          podman stop {{ podman_webserver }}
+          podman inspect -f {%raw%}"{{.State.Status}}"{%endraw%} {{ podman_webserver }}
+          sleep 10s
+          if podman inspect -f {%raw%}"{{.State.Status}}"{%endraw%} {{ podman_webserver }} | grep exited
+          then
+              podman start {{ podman_webserver }}
+          fi
+          sleep 60s
+          podman inspect -f {%raw%}"{{.State.Status}}"{%endraw%} {{ podman_webserver }}
+      register: container_status
+      until: "'running' in container_status.stdout"
+      retries: 10
+      delay: 30
+      become: yes
+
+    - name: add remove worker csr script
+      copy:
+        src: files/qubinode-remove-worker-node
+        dest: /usr/local/bin/qubinode-remove-worker-node
+        mode: '0755'
+      become: yes
+
+    - name: add worker csr script
+      copy:
+        src: files/qubinode-add-worker-node
+        dest: /usr/local/bin/qubinode-add-worker-node
+        mode: '0755'
+      become: yes
+
