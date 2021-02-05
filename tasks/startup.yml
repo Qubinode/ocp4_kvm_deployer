@@ -1,9 +1,10 @@
 ---
-- set_fact:
+- name: Define vars fpr control and compute nodes
+  set_fact:
     ctrlplane_nodes_count: 0
     compute_nodes_count: 0
 
-- name: start the loadbancer systemd service {{ lb_name }}.service
+- name: Ensure the loadbancer systemd service {{ lb_name }}.service is started
   systemd:
     name: "{{ lb_name }}.service"
     enabled: yes
@@ -26,7 +27,7 @@
   virt:
     command: list_vms
   register: all_vms
-  tags: [ deploy_nodes, rhcos, bootstrap, startup ]
+  tags: [ start_nodes, rhcos, bootstrap, startup ]
 
 - name: start ocp ctrlplane nodes
   vars:
@@ -35,9 +36,11 @@
     name: "{{ vm_name }}"
     state: running
   loop: "{{ range(0, ctrlplane_count|int)|list }}"
+  loop_control:
+    label: "Starting controle node {{ vm_name }}"
   delay: 10
   when: vm_name in all_vms.list_vms
-  tags: [ deploy_nodes, rhcos, bootstrap, startup]
+  tags: [ start_nodes, rhcos, bootstrap, startup]
 
 - name: wait for ctrlplane nodes to be available
   shell: >
@@ -49,13 +52,13 @@
   retries: 18
   delay: 10
   changed_when: False
-  tags: [ deploy_nodes, rhcos, bootstrap, startup]
+  tags: [ start_nodes, rhcos, bootstrap, startup]
 
 - name: fail a total {{ ctrlplane_count }} is not found
   fail:
     msg: "Was not able to confirm all {{ ctrlplane_count }} ctrlplane nodes are up"
   when: ctrlplane_nodes_count.stdout|int != ctrlplane_count|int
-  tags: [ deploy_nodes, rhcos, bootstrap, startup]
+  tags: [ start_nodes, rhcos, bootstrap, startup]
 
 - name: start ocp compute nodes
   vars:
@@ -63,10 +66,12 @@
   virt:
     name: "{{ vm_name }}"
     state: running
-  loop: "{{ range(0, compute_count|int)|list }}"
+  loop: "{{ range(0, compute_node_count|int)|list }}"
+  loop_control:
+    label: "Starting compute node {{ vm_name }}"
   delay: 10
-  when: vm_name in all_vms.list_vms and compute_count|int != 0
-  tags: [ deploy_nodes, rhcos, bootstrap, startup]
+  when: vm_name in all_vms.list_vms and compute_node_count|int != 0
+  tags: [ start_nodes, rhcos, bootstrap, startup]
 
 - name: wait for compute nodes to be available
   shell: >
@@ -74,23 +79,23 @@
   ignore_errors: yes
   become: no
   register: compute_nodes_count
-  until: compute_nodes_count.stdout|int == compute_count|int
+  until: compute_nodes_count.stdout|int == compute_node_count|int
   retries: 18
   delay: 10
   changed_when: False
-  when: compute_count|int != 0
-  tags: [ deploy_nodes, rhcos, bootstrap, startup]
+  when: compute_node_count|int != 0
+  tags: [ start_nodes, rhcos, bootstrap, startup]
 
-- name: fail a total {{ compute_count }} is not found
+- name: fail a total {{ compute_node_count }} is not found
   fail:
-    msg: "Was not able to confirm all {{ compute_count }} compute nodes are up"
-  when: compute_nodes_count.stdout|int != compute_count|int and compute_count|int != 0
-  tags: [ deploy_nodes, rhcos, bootstrap, startup]
+    msg: "Was not able to confirm all {{ compute_node_count }} compute nodes are up"
+  when: compute_nodes_count.stdout|int != compute_node_count|int and compute_node_count|int != 0
+  tags: [ start_nodes, rhcos, bootstrap, startup]
 
 - name: Wait 3m for nodes to settle and pods to start
   pause:
     seconds: 180
-  tags: [ deploy_nodes, rhcos, bootstrap, startup]
+  tags: [ start_nodes, rhcos, bootstrap, startup]
 
 - name: ensure compute nodes are set to schedulable
   vars:
@@ -99,19 +104,25 @@
     /usr/local/bin/oc adm uncordon "{{ vm_name }}"
   register: schedule_state
   ignore_errors: yes
-  loop: "{{ range(0, compute_count|int)|list }}"
+  loop: "{{ range(0, compute_node_count|int)|list }}"
   delay: 10
   when: vm_name in all_vms.list_vms
-  tags: [ deploy_nodes, rhcos, bootstrap, startup]
+  tags: [ start_nodes, rhcos, bootstrap, startup]
 
 - name: Wait 10s for additional CSRs to appear
   pause:
     seconds: 10
-  tags: [ deploy_nodes, rhcos, bootstrap, startup]
+  tags: [ start_nodes, rhcos, bootstrap, startup]
 
 - name: Approve all additional Pending CSRs
-  shell: >
-    oc get csr -ojson | jq -r '.items[] | select(.status == {} ) | .metadata.name' | xargs oc adm certificate approve > /dev/null 2>&1
-  ignore_errors: yes
-  become: no
-  tags: [ deploy_nodes, rhcos, bootstrap, startup]
+  async: 900
+  poll: 0
+  shell: |
+    while true
+    do
+      oc get csr --no-headers | \
+        awk '/Pending/ {print $1}' | \
+        xargs --no-run-if-empty oc adm certificate approve
+      sleep 1
+    done
+  tags: [ start_nodes, rhcos, bootstrap, startup]

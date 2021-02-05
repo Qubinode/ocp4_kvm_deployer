@@ -8,64 +8,65 @@
     group: "{{ admin_user }}"
     backup: yes
   when: ocp4_okd4 == 'okd4'
+  tags: [preqs, okd4]
 
 - name: check for user pull-secret
   stat:
     path: "{{ pull_secret }}"
   register: pull_secret_file
-  tags: [ setup ]
+  tags: [ preqs, setup ]
 
 - name: fail if pull secret does
   fail:
     msg: "Please download your pull-secret from {{ pull_secret_request }} to {{ pull_secret }}"
   when: not pull_secret_file.stat.exists
-  tags: [ setup ]
+  tags: [ preqs, setup ]
 
 - name: set compute_node_count variable
   set_fact:
-    compute_node_count: "{{ 1 if compute_count|int == 0 else compute_count }}"
-  tags: [ setup, deploy_nodes, rhcos, bootstrap, idm]
+    compute_node_count: "{{ 1 if compute_node_count|int == 0 else compute_node_count }}"
+  tags: [preqs]
 
 - name: get users homedir
   set_fact:
     homedir: "{{ lookup('env','HOME') }}"
   become: yes
   become_user: "{{ admin_user }}"
-  tags: always
+  tags: [preqs]
 
 - name: Setting Ingress information and machine configuration for bootstrap nodes and other machines
   set_fact:
     tmp_api: "[ '{{ bootstrap_ip }}:6443' ]"
     tmp_api_listen: "[ '{{ listen_address }}:6443' ]"
     tmp_ingress_http: "[]"
-    tmp_ingress_http_listen: "['{{ listen_address }}:80', '{{ ocp4_nat_gateway }}:80' ]"
+    tmp_ingress_http_listen: "['{{ listen_address }}:80', '{{ ocp4_gateway_ip }}:80' ]"
     tmp_ingress_https: "[]"
-    tmp_ingress_https_listen: "['{{ listen_address }}:443', '{{ ocp4_nat_gateway }}:443' ]"
+    tmp_ingress_https_listen: "['{{ listen_address }}:443', '{{ ocp4_gateway_ip }}:443' ]"
     tmp_machine_config_server: "[ '{{ bootstrap_ip }}:22623' ]"
-    tmp_machine_config_server_listen: "['{{ listen_address }}:22623', '{{ ocp4_nat_gateway }}:22623']"
-  tags: [ setup, deploy_nodes, rhcos, bootstrap, idm]
+    tmp_machine_config_server_listen: "['{{ listen_address }}:22623', '{{ ocp4_gateway_ip }}:22623']"
+  tags: [ preqs, setup, deploy_no, bootstrap, idm, containers]
 
 - name: Point all ingress traffic to ctrlplane nodes when compute count is zero
   set_fact:
-    ingress_node: "{{ 'ctrlplane' if compute_count|int == 0 else 'compute' }}"
-    ingress_node_octet: "{{ ctrlplane_ip_octet if compute_count|int == 0 else compute_ip_octet }}"
-    ingress_count: "{{ ctrlplane_count if compute_count|int == 0 else compute_count }}"
-  tags: [ setup, deploy_nodes, rhcos, bootstrap, idm]
+    ingress_node: "{{ 'ctrlplane' if compute_node_count|int == 0 else 'compute' }}"
+    ingress_node_octet: "{{ ctrlplane_ip_octet if compute_node_count|int == 0 else compute_ip_octet }}"
+    ingress_count: "{{ ctrlplane_count if compute_node_count|int == 0 else compute_node_count }}"
+  tags: [ preqs, setup, bootstrap, idm, containers]
 
 - name: Setting Ingress information and machine configuration for internal API Server
   set_fact:
-    tmp_api: "{{ tmp_api }}  + [ '{{ ocp4_nat_gateway }}:6443' ]"
-    tmp_api_listen: "{{ tmp_api_listen }}  + [ '{{ ocp4_nat_gateway }}:6443' ]"
+    tmp_api: "{{ tmp_api }}  + [ '{{ ocp4_gateway_ip }}:6443' ]"
+    tmp_api_listen: "{{ tmp_api_listen }}  + [ '{{ ocp4_gateway_ip }}:6443' ]"
   ignore_errors: false
-  tags: [ setup, deploy_nodes, rhcos, bootstrap, idm]
+  tags: [ preqs, setup, bootstrap, idm, containers]
 
 - name: Setting Ingress information and machine configuration for ctrlplane nodes
   set_fact:
-    tmp_api: "{{ tmp_api }}  + [ 'ctrlplane-{{ item }}={{ cluster_subnet }}.{{ ctrlplane_ip_octet|int + item|int }}:6443' ]"
-    tmp_machine_config_server: "{{ tmp_machine_config_server }} + [ 'ctrlplane-{{ item }}={{ cluster_subnet }}.{{ ctrlplane_ip_octet|int + item|int }}:22623' ]"
+    tmp_api: "{{ tmp_api }}  + [ '{{ compute_node_name }}{{ item }}={{ cluster_subnet }}.{{ ctrlplane_ip_octet|int + item|int }}:6443' ]"
+    tmp_machine_config_server: "{{ tmp_machine_config_server }} + [ '{{ compute_node_name }}{{ item }}={{ cluster_subnet }}.{{ ctrlplane_ip_octet|int + item|int }}:22623' ]"
   with_sequence: start=0 end="{{ ctrlplane_count|int - 1 }}" stride=1
   ignore_errors: false
-  tags: [ setup, deploy_nodes, rhcos, bootstrap, idm]
+  tags: [ preqs, setup, bootstrap, idm, containers]
 
 - name: Setting Ingress information and machine configuration
   set_fact:
@@ -73,7 +74,7 @@
     tmp_ingress_https: "{{ tmp_ingress_https }} + [ '{{ ingress_node }}-{{ item }}={{ cluster_subnet }}.{{ ingress_node_octet|int + item|int }}:443' ]"
   with_sequence: start=0 end="{{ ingress_count|int - 1 }}" stride=1
   ignore_errors: false
-  tags: [ setup, deploy_nodes, rhcos, bootstrap, idm]
+  tags: [ preqs, setup, bootstrap, idm, containers]
 
 - name: setup Ingress information and machine configuration variables
   set_fact:
@@ -85,27 +86,7 @@
     lb_ingress_https_listen: "{{ tmp_ingress_https_listen | join(',') }}"
     lb_machine_config_server: "{{ tmp_machine_config_server | join(',') }}"
     lb_machine_config_server_listen: "{{ tmp_machine_config_server_listen | join(',') }}"
-  tags: [ setup, deploy_nodes, rhcos, bootstrap, idm]
-
-- name: get {{ ocp4_lb_container }} container info
-  shell: podman inspect -f {%raw%}"{{ .State.Status }}"{%endraw%} {{ ocp4_lb_container }}
-  register: container_result
-  failed_when: false
-  changed_when: false
-  tags: [ setup, deploy_nodes, rhcos, bootstrap, idm, lb, startup]
-
-- name: set {{ ocp4_lb_container }} container state
-  set_fact:
-    container_exited: "{{ true if container_result.stdout is defined and container_result.stdout == 'exited' else false }}"
-    container_running: "{{ true if container_result.stdout is defined and container_result.stdout == 'running' else false }}"
-    container_exist: "{{ true if container_result.stdout is defined and container_result.stdout|length > 0  else false }}"
-  tags: [ setup, deploy_nodes, rhcos, bootstrap, idm, lb, startup]
-
-- name: check if Loadbalancer SystemD service exists
-  stat:
-    path: "/etc/systemd/system/{{ lb_name }}.service"
-  register: lb_service
-  tags: [ setup, deploy_nodes, rhcos, bootstrap, idm, lb, startup]
+  tags: [ preqs, setup, bootstrap, idm, containers]
 
 - name: ensure the jq command is installed from ocp4 repos
   shell: |
@@ -119,11 +100,32 @@
      fi
   changed_when: jq_command_install.stdout|length > 0
   register: jq_command_install
-  tags: [ deploy_nodes, rhcos, postinstall ]
+  tags: [ setup ]
 
 - name: Verifiy podman is installed
   stat:
     path: "/usr/bin/podman"
   register: podman_is_installed
-  tags: [ podman, pkg ]
+  tags: [ podman, pkg, deploy_nodes, containers ]
+
+## these task should only run if podman_is_installed.stat.exists
+- name: check if Loadbalancer SystemD service exists
+  stat:
+    path: "/etc/systemd/system/{{ lb_name }}.service"
+  register: lb_service
+  tags: [ setup, bootstrap, idm, lb, startup, containers]
+
+- name: get {{ ocp4_lb_container }} container info
+  shell: podman inspect -f {%raw%}"{{ .State.Status }}"{%endraw%} {{ ocp4_lb_container }}
+  register: container_result
+  failed_when: false
+  changed_when: false
+  tags: [ setup, bootstrap, idm, lb, startup, containers]
+
+- name: set {{ ocp4_lb_container }} container state
+  set_fact:
+    container_exited: "{{ true if container_result.stdout is defined and container_result.stdout == 'exited' else false }}"
+    container_running: "{{ true if container_result.stdout is defined and container_result.stdout == 'running' else false }}"
+    container_exist: "{{ true if container_result.stdout is defined and container_result.stdout|length > 0  else false }}"
+  tags: [ setup, bootstrap, idm, lb, startup, containers]
 

@@ -1,0 +1,186 @@
+---
+- name: fail when idm server ip address isn't provided
+  fail: msg="Bailing out. this play requires 'idm_server_ipaddr'  your idm server ip"
+  when: idm_server_ipaddr |length == 0
+  tags: [idm, compute_dns, ctrlplane_dns, bootstrap_dns, api_dns, etcd_dns, wildcard_dns]
+
+# NOTE: this may not be needed, uncomment if role fails
+#- name: check DNS entries
+#  include_tasks: check_dns_entries.yml
+#  tags: [idm, compute_dns, ctrlplane_dns]
+
+- name: Define empty list vars for records and reverse_records
+  set_fact:
+    idm_a_records: []
+    idm_ptr_records: []
+  tags: [always]  
+
+- name: Set IdM dns record states to either absent or present
+  set_fact:
+    idm_fwd_zone_state: "{{ 'absent' if dns_teardown|bool else 'present' }}"
+    idm_ptr_zone_state: "{{ 'absent' if dns_teardown|bool else 'present' }}"
+  tags: [always]
+
+- name: Create the IdM forward dns zone {{ idm_dns_forward_zone }}
+  ipa_dnszone:
+    state: "{{ idm_fwd_zone_state }}"
+    zone_name: "{{ idm_dns_forward_zone }}"
+    validate_certs: no
+  tags: [idm, dns, bootstrap_dns, api_dns, ctrlplane_dns, compute_dns, wildcard_dns, routes, fwd_zone]
+
+- name: Create the IdM reverse dns zone {{ idm_dns_reverse_zone }}
+  ipa_dnszone:
+    state: "{{ idm_ptr_zone_state }}"
+    zone_name: "{{ idm_dns_reverse_zone }}"
+    validate_certs: no
+  tags: [idm, dns, bootstrap_dns, api_dns, ctrlplane_dns, compute_dns, wildcard_dns, routes, ptr_zone]
+
+- name: Build zone records list
+  when: not dns_teardown|bool
+  block:
+    - name: Add the bootstrap node to the IdM dns forward zone records list
+      vars:
+        ip: "{{ bootstrap_ip }}"
+        name: "{{ bootstrap_node_name }}"
+        ptr: "{{ bootstrap_ptr }}"
+      set_fact:
+        idm_a_records: "{{ idm_a_records + [ {'hostname': name, 'ipaddr': ip, 'ptr_record': ptr}     ] }}"
+      tags: [idm, dns, bootstrap_dns]
+    
+    - name: Add the bootstrap node to the IdM dns reverse forward zone records list
+      vars:
+        ip: "{{ bootstrap_ip }}"
+        name: "{{ bootstrap_node_name }}"
+        ptr: "{{ bootstrap_ptr }}"
+      set_fact:
+        idm_ptr_records: "{{ idm_ptr_records + [ {'hostname': name, 'ipaddr': ip, 'ptr_record':     ptr} ] }}"
+      tags: [idm, dns, bootstrap_dns]
+    
+    - name: Add the api-int ip to the IdM dns forward zone records list
+      vars:
+        ip: "{{ api_int_ip }}"
+        name: api-int
+        ptr: "{{ api_int_ptr }}"
+      set_fact:
+        idm_a_records: "{{ idm_a_records + [ {'hostname': name, 'ipaddr': ip, 'ptr_record': ptr}     ] }}"
+      tags: [idm, dns, api_dns]
+    
+    - name: Add the api ip to the IdM dns forward zone records list
+      vars:
+        ip: "{{ api_ip | default(api_ip) }}"
+        name: api
+        ptr: "{{ api_ip_ptr | default(api_ip_ptr) }}"
+      set_fact:
+        idm_a_records: "{{ idm_a_records + [ {'hostname': name, 'ipaddr': ip, 'ptr_record': ptr}     ] }}"
+      tags: [idm, dns, api_dns]
+    
+    - name: Add the control plane nodes A records to the IdM dns forward zone records list
+      vars:
+        ip: "{{ ocp4_gateway_ip.split('.')[:3] | join('.') }}.{{ ctrlplane_ip_octet|int + item|    int }}"
+        name: "{{ ctrlplane_node_name }}-{{ item }}"
+        #name: "{{ ctrlplane_node_name }}-{{ item }}"
+        ptr: "{{ ctrlplane_ip_octet|int + item|int }}"
+      set_fact:
+        idm_a_records: "{{ idm_a_records + [ {'hostname': name, 'ipaddr': ip, 'ptr_record': ptr}     ] }}"
+      with_sequence: start=0 end="{{ ctrlplane_count|int - 1 }}" stride=1
+      tags: [idm, dns, ctrlplane_dns]
+    
+    - name: Add the control plane nodes PTR records to the IdM dns reverse zone records list
+      vars:
+        ip: "{{ ocp4_gateway_ip.split('.')[:3] | join('.') }}.{{ ctrlplane_ip_octet|int + item|    int }}"
+        name: "{{ ctrlplane_node_name }}-{{ item }}"
+        ptr: "{{ ctrlplane_ip_octet|int + item|int }}"
+      set_fact:
+        idm_ptr_records: "{{ idm_ptr_records + [ {'hostname': name, 'ipaddr': ip, 'ptr_record':     ptr} ] }}"
+      with_sequence: start=0 end="{{ ctrlplane_count|int - 1 }}" stride=1
+      tags: [idm, dns, ctrlplane_dns]
+    
+- name: Generate worker nodes A and PTR records
+  when: compute_node_count|int != 0 and not dns_teardown|bool
+  block:
+    - name: Add worker nodes A records to the IdM forward zone records list
+      vars:
+        ip: "{{ ocp4_gateway_ip.split('.')[:3] | join('.') }}.{{ compute_ip_octet|int + item|int }}"
+        name: "{{ compute_node_name }}-{{ item }}"
+        ptr: "{{ compute_ip_octet|int + item|int }}"
+      set_fact:
+        idm_a_records: "{{ idm_a_records + [ {'hostname': name, 'ipaddr': ip, 'ptr_record': ptr} ] }}"
+      with_sequence: start=0 end="{{ compute_node_count|int - 1 }}" stride=1
+      tags: [idm, dns, compute_dns]
+    
+    - name: Add worker nodes PTR records to the IdM reverse zone records list
+      vars:
+        ip: "{{ ocp4_gateway_ip.split('.')[:3] | join('.') }}.{{ compute_ip_octet|int + item|int }}"
+        name: "{{ compute_node_name }}-{{ item }}"
+        ptr: "{{ compute_ip_octet|int + item|int }}"
+      set_fact:
+        idm_ptr_records: "{{ idm_ptr_records + [ {'hostname': name, 'ipaddr': ip, 'ptr_record': ptr} ] }}"
+      with_sequence: start=0 end="{{ compute_node_count|int - 1 }}" stride=1
+      tags: [idm, dns, compute_dns]
+
+- name: Ensure all defined A records are {{ idm_record_state }}
+  ipa_dnsrecord:
+    zone_name: "{{ idm_dns_forward_zone }}"
+    record_name: "{{ item.hostname }}.{{ cluster_name }}"
+    record_type: A
+    record_value: "{{ item.ipaddr }}"
+    state: "{{ idm_record_state }}"
+    validate_certs: no
+  loop: "{{ idm_a_records }}"
+  loop_control:
+    label: "{{ item.hostname }}.{{ cluster_name }}"
+  when: not dns_teardown|bool
+  tags: [idm, dns, bootstrap_dns, api_dns, ctrlplane_dns, compute_dns]
+
+- name: Ensure all defined PTR records are {{ idm_record_state }}
+  ipa_dnsrecord:
+    zone_name: "{{ idm_dns_reverse_zone }}"
+    record_name: "{{ item.ptr_record }}"
+    record_type: PTR
+    record_value: "{{ item.hostname }}.{{ cluster_name }}.{{ ocp4_cluster_domain }}."
+    state: "{{ idm_record_state }}"
+    validate_certs: no
+  with_items: "{{ reverse_records }}"
+  loop: "{{ idm_ptr_records }}"
+  loop_control:
+    label: "PTR octet {{ item.ptr_record }}"
+  when: not dns_teardown|bool
+  tags: [idm, dns, bootstrap_dns, ctrlplane_dns, compute_dns]
+
+- name: Generate IdM Session Cookie
+  vars:
+  uri:
+    url: "https://{{ idm_server_fqdn }}/ipa/session/login_password"
+    validate_certs: no
+    method: POST
+    status_code: 200
+    headers:
+      Content-Type: "application/x-www-form-urlencoded"
+      Accept: "text/plain"
+      Referer: "https://{{ idm_server_fqdn }}/ipa"
+    body: "user={{ user_idm_admin }}&password={{ user_idm_password }}"
+  register: ipa_session
+  run_once: true
+  when: not dns_teardown|bool
+  tags: [idm, dns, wildcard_dns, routes]
+
+- name: Create IdM dns apps wildcard for applicaitons routes A record
+  uri:
+    url: "https://{{ idm_server_fqdn }}/ipa/session/json"
+    validate_certs: no
+    method: POST
+    status_code: 200
+    headers:
+      Cookie: "{{ ipa_session.set_cookie }}"
+      Accept: "application/json"
+      Referer: "https://{{ idm_server_fqdn }}/ipa"
+    body:
+      method: dnsrecord_add
+      params:
+      - - "{{ idm_dns_forward_zone }}"
+        - "{{ dns_wildcard }}"
+      - a_part_ip_address: "{{ kvm_host_ip }}"
+        a_extra_create_reverse: false
+    body_format: json
+  when: not dns_teardown|bool
+  tags: [idm, dns, wildcard_dns, routes]

@@ -1,62 +1,22 @@
 ---
-- name: deploy qubinode-ocp4-status script
-  template:
-    src: templates/qubinode-ocp4-status.j2
-    dest: /usr/local/bin/qubinode-ocp4-status
-    group: "{{ local_user_account }}"
-    owner: "{{ local_user_account }}"
-    mode: u=rwx,g=rx,o=rx
-  become: yes
-  tags: [ complete_install, check_cluster_status, status_script ]
+- name: Check for /usr/local/bin/openshift-install
+  stat:
+    path: /usr/local/bin/openshift-install
+  register: openshift_install_tool_check
+  tags: [bootstrap, cluster_install]
 
-- name: check the bootstrap status
-  command: |
-    /usr/bin/timeout 40 /usr/local/bin/openshift-install wait-for bootstrap-complete --dir "{{ openshift_install_dir }}" --log-level debug
-  register: bootstrap_complete
-  changed_when: false
-  ignore_errors: yes
-  tags: [ deploy_nodes, bootstrap, postinstall, check_cluster_status, complete_install ]
-
-- name: set bootstrap status
-  set_fact:
-    bootstrap_complete: "{{ true if bootstrap_complete.stderr is defined and bootstrap_complete.stderr.find(bs_complete_s) != -1 else false }}"
-  tags: [ deploy_nodes, bootstrap, postinstall, check_cluster_status, complete_install ]
-
-- name: check the cluster install status
-  command: |
-    /usr/bin/timeout 40 /usr/local/bin/openshift-install wait-for install-complete --dir "{{ openshift_install_dir }}" --log-level debug
-  register: install_complete
-  ignore_errors: yes
-  changed_when: false
-  when: bootstrap_complete|bool
-  tags: [ deploy_nodes, bootstrap, postinstall, check_cluster_status, complete_install ]
-
-- name: set openshift-install status
-  set_fact:
-    cluster_install_status: "{{ true if install_complete.stderr is defined and install_complete.stderr.find(clus_in_stat_string) != -1 else false }}"
-  tags: [ deploy_nodes, bootstrap, postinstall, check_cluster_status, complete_install ]
-
-- name: fail if bootstrap process was attempted
-  fail:
-    msg: "It appears an installation of the cluster has been attempted. Run /usr/local/bin/qubinode-ocp4-status for more details."
-  when: bootstrap_complete|bool and not cluster_install_status|bool
-  tags: [ complete_install, check_cluster_status ]
-
-- name: get all cluster operators
-  shell: >
-    set -o pipefail
-    oc get clusteroperators --no-headers=true | awk '{print $1}'
-  environment:
-    KUBECONFIG: "{{ openshift_install_dir }}/auth/kubeconfig"
-  register: all_cluster_operators
-  become: no
-  when: cluster_install_status|bool
-  tags: [ deploy_nodes, bootstrap, postinstall, check_cluster_status, complete_install ]
-
-- name: ensure all cluster operators are up
-  include_tasks: check_operators.yml
-  loop: "{{ all_cluster_operators.stdout_lines }}"
-  loop_control:
-    loop_var: operator_name
-  when: cluster_install_status|bool
-  tags: [ deploy_nodes, bootstrap, postinstall, check_cluster_status, complete_install ]
+- name: Set the var cluster_install_status
+  when: openshift_install_tool_check.stat.exists
+  block:
+    - name: Check on the cluster install-complete status
+      command: |
+        /usr/bin/timeout 40 /usr/local/bin/openshift-install wait-for install-complete --dir "{{     openshift_install_dir }}" --log-level debug
+      register: install_complete
+      ignore_errors: yes
+      changed_when: false
+      tags: [postinstall, check_cluster_status, complete_install ]
+    
+    - name: Set the cluster install-complete status to ture or false
+      set_fact:
+        cluster_install_status: "{{ true if install_complete.stderr is defined and     install_complete.stderr.find(clus_in_stat_string) != -1 else false }}"
+      tags: [postinstall, check_cluster_status, complete_install ]

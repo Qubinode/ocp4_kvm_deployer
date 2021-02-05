@@ -1,0 +1,50 @@
+---
+- name: BOOTSTRAPING THE CLUSTER - Verify the bootstrap status
+  command: |
+    /usr/bin/timeout 40 /usr/local/bin/openshift-install wait-for bootstrap-complete --dir "{{ openshift_install_dir }}" --log-level debug
+  register: bootstrap_complete
+  changed_when: false
+  ignore_errors: yes
+  tags: [ bootstrap, postinstall, check_cluster_status, complete_install ]
+
+- name: BOOTSTRAPING THE CLUSTER - Define bootstrap status as true or false
+  set_fact:
+    bootstrap_complete: "{{ true if bootstrap_complete.stderr is defined and bootstrap_complete.stderr.find(bs_complete_s) != -1 else false }}"
+  tags: [bootstrap, postinstall, check_cluster_status, complete_install ]
+
+- name: BOOTSTRAPING THE CLUSTER - Fail if cannot verify cluster bootstrap
+  fail:
+    msg: |
+         It appears an installation of the cluster has been attempted or failed.
+         Run /usr/local/bin/qubinode-ocp4-status to get the status of the cluster.
+
+         You can also delete the failed cluster deployment with:
+            ./qubinode-installer -p {{ ocp4_okd4 }} -d
+
+         Then restart the cluster deployment with:
+             ./qubinode-installer -p {{ ocp4_okd4 }}
+
+         The bootstrap message is:
+           "{{ bootstrap_complete.stderr }}"
+  when: not bootstrap_complete|bool and not bootstrap_precheck|bool
+  tags: [ complete_install, check_cluster_status ]
+
+- name: BOOTSTRAPING THE CLUSTER - Get all Cluster Operators
+  shell: >
+    set -o pipefail
+    oc get clusteroperators --no-headers=true | awk '{print $1}'
+  environment:
+    KUBECONFIG: "{{ openshift_install_dir }}/auth/kubeconfig"
+  register: all_cluster_operators
+  become: no
+  changed_when: False
+  when: bootstrap_complete|bool
+  tags: [bootstrap, postinstall, check_cluster_status, complete_install ]
+
+- name: BOOTSTRAPING THE CLUSTER - Ensure all cluster operators are up
+  include_tasks: check_operators.yml
+  loop: "{{ all_cluster_operators.stdout_lines }}"
+  loop_control:
+    loop_var: operator_name
+  when: bootstrap_complete|bool
+  tags: [bootstrap, postinstall, check_cluster_status, complete_install ]

@@ -1,11 +1,11 @@
 ---
-- name: check if web directory
+- name: Get the status of {{ webserver_directory }}
   stat:
     path: "{{ webserver_directory }}"
   register: webserver_dir
-  tags: [ download, webserver ]
+  tags: [rhcos_files, download, webserver ]
 
-- name: Create a web directory
+- name: Ensure the {{ webserver_directory }} exist
   file:
     path: "{{ webserver_directory }}"
     state: directory
@@ -13,15 +13,15 @@
     group: "{{ local_user_account }}"
   register: create_webdir
   when: not webserver_dir.stat.exists
-  tags: [ download, webserver ]
+  tags: [rhcos_files, download, webserver ]
 
-- name: check if {{ virtinstall_dir }} exist
+- name: Check the status on {{ virtinstall_dir }}
   stat:
     path: "{{ virtinstall_dir }}"
   register: virtinstall_directory
-  tags: [ download, virtinstall, deploy_nodes, webserver ]
+  tags: [rhcos_files, download, virtinstall, webserver ]
 
-- name: create directory {{ virtinstall_dir }}
+- name: Ensure {{ virtinstall_dir }} exit
   file:
     path: "{{ virtinstall_dir }}"
     state: directory
@@ -29,82 +29,92 @@
     group: "{{ local_user_account }}"
   register: create_webdir
   when: not virtinstall_directory.stat.exists
-  tags: [ download, virtinstall, deploy_nodes, webserver ]
+  tags: [rhcos_files, download, virtinstall, webserver ]
 
-- name: Create a {{ ocp4_dependencies_version }} directory
+- name: Ensure {{ ocp4_dependencies_version }} exit
   file:
     path: "{{ webserver_dependencies }}"
     state: directory
     owner: "{{ local_user_account }}"
     group: "{{ local_user_account }}"
-  tags: [ download, webserver ]
+  tags: [rhcos_files, download, webserver ]
 
-- name: Create a images directory
+- name: Ensure {{ webserver_images }} exist
   file:
     path: "{{ webserver_images }}"
     state: directory
     owner: "{{ local_user_account }}"
     group: "{{ local_user_account }}"
-  tags: [ download, webserver ]
+  tags: [rhcos_files, download, webserver ]
 
-- name: Create ignition directory
+- name: Ensure {{ dest_ignitions_web_directory }} exit
   file:
     path: "{{ dest_ignitions_web_directory }}"
     state: directory
     owner: "{{ local_user_account }}"
     group: "{{ local_user_account }}"
-  tags: [ download, ignitions, webserver ]
+  tags: [rhcos_files, download, ignitions, webserver ]
 
-- name: download the coreos_rootfs
+- name: Download RHCOS rootfs {{ coreos_rootfs }}
   get_url:
-    url: "{{ openshift_mirror }}/{{ item }}"
-    dest: "{{ webserver_images }}/{{ item }}"
+    url: "{{ openshift_mirror }}/{{ coreos_rootfs }}"
+    dest: "{{ webserver_images }}/{{ coreos_rootfs }}"
     owner: "{{ local_user_account }}"
     group: "{{ local_user_account }}"
-  with_items:
-    - "{{ coreos_rootfs }}"
   register: rhcos_dependencies_dl
   notify:
     - restart {{ podman_webserver }}.service
-  tags: [ download, ignition, deploy_nodes, webserver ]
+  tags: [rhcos_files, download, ignition, webserver ]
 
+#- name: Download RHCOS qcow {{ rhcos_qcow_image }}
+#  get_url:
+#    url: "{{ openshift_mirror }}/{{ rhcos_qcow_image }}"
+#    dest: "{{ webserver_images }}/{{ rhcos_qcow_image }}"
+#    owner: "{{ local_user_account }}"
+#    group: "{{ local_user_account }}"
+#  register: rhcos_qcow_dl
+#  tags: [rhcos_files, download, ignition, webserver ]
 
-- name: download the installer-initramfs.img installer-kernel
+- name: Download RHCOS initramfs and kernel image
   get_url:
     url: "{{ openshift_mirror }}/{{ item }}"
     dest: "{{ virtinstall_dir }}/{{ item }}"
     owner: "{{ local_user_account }}"
     group: "{{ local_user_account }}"
-  with_items:
+  loop:
     - "{{ coreos_installer_kernel }}"
     - "{{ coreos_installer_initramfs }}"
-  tags: [ download, ignition, deploy_nodes, webserver ]
+  loop_control:
+    label: "{{ item }}"
+  tags: [rhcos_files, download, ignition, webserver ]
 
-- name: get the status of the ignition files are available
+- name: Get the status of the RHCOS ignition files
   stat:
     path: "{{ ignition_files_dir }}/{{ item }}.ign"
   loop: "{{ nodes_types }}"
   register: rhcos_igition_files_exist
-  tags: [ download, ignition, deploy_nodes, webserver ]
+  tags: [rhcos_files, download, ignition, webserver ]
 
-- name: check if ignition files exist
+- name: Check if ignition files are available under {{ ignition_files_dir }}
   fail:
     msg: One or more igition file does not exist! Please ensure the igition files have been created under {{ ignition_files_dir }}.
   with_items: "{{ rhcos_igition_files_exist.results }}"
   when: not item.stat.exists
-  tags: [ download, ignition, deploy_nodes, webserver ]
+  tags: [rhcos_files, download, ignition, webserver ]
 
-- name: copy over ignition files to webserver pub directory
+- name: Copy ignition files to websrv pub dir {{ dest_ignitions_web_directory }}
   copy:
     src: "{{ ignition_files_dir }}/{{ item }}.ign"
     dest: "{{ dest_ignitions_web_directory }}/{{ item }}.ign"
     owner: "{{ local_user_account }}"
     group: "{{ local_user_account }}"
   loop: "{{ nodes_types }}"
+  loop_control:
+    label: "{{ item }}"
   register: rhcos_igition_files_cp
   notify:
     - restart {{ podman_webserver }}.service
-  tags: [ download, ignition, deploy_nodes, webserver ]
+  tags: [rhcos_files, download, ignition, webserver ]
 
 - name: Apply new SELinux file context to {{ webserver_directory }}
   sefcontext:
@@ -112,9 +122,9 @@
     setype: container_file_t
     state: present
   when: rhcos_igition_files_cp.changed or rhcos_dependencies_dl.changed
-  tags: [ download, ignition, deploy_nodes, webserver ]
+  tags: [rhcos_files, download, ignition, webserver ]
 
 - name: run restorecon on {{ webserver_directory }}
   command: restorecon -RFv {{ webserver_directory }}
   when: rhcos_igition_files_cp.changed or rhcos_dependencies_dl.changed
-  tags: [ download, ignition, deploy_nodes, webserver ]
+  tags: [rhcos_files, download, ignition, webserver ]

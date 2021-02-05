@@ -1,0 +1,46 @@
+---
+- name: Deploy /usr/local/bin/qubinode-ocp4-status
+  template:
+    src: templates/qubinode-ocp4-status.j2
+    dest: /usr/local/bin/qubinode-ocp4-status
+    group: "{{ local_user_account }}"
+    owner: "{{ local_user_account }}"
+    mode: u=rwx,g=rx,o=rx
+  become: yes
+  tags: [ complete_install, check_cluster_status, status_script, bootstrap ]
+
+- name: BOOTSTRAPING THE CLUSTER - Waiting on cluster {{ cluster_name }} bootstrap to complete
+  shell: |
+    openshift-install --dir "{{ openshift_install_dir }}"  wait-for bootstrap-complete --log-level debug 2>&1 | tee "{{ bootstrap_log }}" &
+  register: bootstrap_wait_for_status
+  until: "'Bootstrap status: complete' in bootstrap_wait_for_status.stdout"
+  retries: 220
+  delay: 60
+  tags: [ bootstrap ]
+  become: no
+  changed_when: False
+
+- name: BOOTSTRAPING THE CLUSTER - Check for and approve pending CSRs
+  async: 2400
+  poll: 0
+  shell: |
+    while true
+    do
+      oc get csr --no-headers | \
+        awk '/Pending/ {print $1}' | \
+        xargs --no-run-if-empty oc adm certificate approve
+      sleep 1
+    done
+  tags: [ bootstrap ]
+
+- name: BOOTSTRAPING THE CLUSTER - Verify the cluster bootstrapping is completed and all operators are up
+  import_tasks: check_bootstrap.yml
+  tags: [ bootstrap ]
+
+- name: BOOTSTRAPING THE CLUSTER - Remove the boostrap RHCOS node
+  import_tasks: destroy_bootstrap_node.yml
+  tags: [ bootstrap, bootstrap_shut ]
+
+## These should be the next tasks
+## - Image registry storage configuration
+## - Configure OpenShift Internal register

@@ -227,7 +227,104 @@ Configure nfs provisioner
 ansible-playbook playbooks/deploy_ocp4.yml --start-at-task="Waiting for Installation to Complete"
 ```
 
-Example Usage:
+Available Ansible Tags
+----------------------
+
+**IdM dns**
+
+ * idm - Create all IdM dns entries
+ * dns - Same as above
+ * bootstrap_dns - Only bootstrap node
+ * api_dns - Only api entries
+ * ctrlplane_dns - Only control nodes
+ * compute_dns - Only compute nodes
+ * wildcard_dns - Create wild card *.apps
+ * routes - same as above
+ * fwd_zone
+ * ptr_zone
+ 
+Examples 
+
+* Populate dns for worker/compute nodes
+
+```
+ansible-playbook playbooks/deploy_ocp4.yml -t fwd_zone,ptr_zone,compute_dns
+```
+
+* Delete all A and PTR records
+
+```
+ansible-playbook playbooks/deploy_ocp4.yml -t idm -e "idm_record_state=absent"
+```
+
+* Delete the forward zone
+
+```
+ansible-playbook playbooks/deploy_ocp4.yml -t idm -e "idm_fwd_zone_state=absent"
+```
+
+**Create Libvirt NAT network**
+
+```
+ansible-playbook playbooks/deploy_ocp4.yml -t libvirt_nat
+```
+
+**Setup Firewall**
+
+```
+ansible-playbook playbooks/deploy_ocp4.yml -t firewall
+```
+
+**Setup OpenShift client tools**
+
+```
+ansible-playbook playbooks/deploy_ocp4.yml -t tools
+```
+
+**Create OpenShift Ignitions**
+
+```
+ansible-playbook playbooks/deploy_ocp4.yml -t ignitions
+```
+
+**Download RHCOS kernel, initramfs, rootfs**
+
+```
+ansible-playbook playbooks/deploy_ocp4.yml -t rhcos_files
+```
+
+**Generate virt-install scripts for deploying RHCOS nodes**
+
+```
+ansible-playbook playbooks/deploy_ocp4.yml -t node_profile
+```
+
+**Start required containers**
+
+```
+ansible-playbook playbooks/deploy_ocp4.yml -t containers -e "container_exist=no" -e "tear_down=no"
+```
+
+**Deploy RHCOS VMs**
+
+```
+ansible-playbook playbooks/deploy_ocp4.yml -t deploy_nodes -e "container_exist=no" -e "tear_down=no" -e "check_existing_cluster=no"
+```
+
+**Bootstrap the OCP4 Cluster**
+```
+ansible-playbook playbooks/deploy_ocp4.yml -t bootstrap_cluster -e "container_exist=no" -e "tear_down=no" -e "check_existing_cluster=no" -e "cluster_install_status=no" -e "bootstrap_precheck=yes"
+```
+
+**Deploy Registry**
+```
+ansible-playbook playbooks/deploy_ocp4.yml -t configure_registry -e "container_exist=no" -e "tear_down=no" -e "check_existing_cluster=no" -e "cluster_install_status=no" -e "bootstrap_precheck=yes" -e "bootstrap_complete=yes"
+```
+
+**Complete OpenShift Install**
+```
+ansible-playbook playbooks/deploy_ocp4.yml -t complete_cluster_install -e "tear_down=no" -e "check_existing_cluster=no" -e "cluster_install_status=no" -e "bootstrap_precheck=yes" -e "bootstrap_complete=yes"
+```
 
 ```
 ansible-playbook rhcos.yml -t setup

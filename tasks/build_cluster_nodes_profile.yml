@@ -8,9 +8,9 @@
     extra_storage: "{{ outer_item.extra_storage }}"
     vm_type: "{{ outer_item.vm_type }}"
     last_octet: "{{ '%02x' |format(inner_item)|int + outer_item.ip_octet }}"
-    ip_address: "{{ ocp4_nat_subnet.split('.')[:3] | join('.') }}.{{ '%02x' |format(inner_item)|int + outer_item.ip_octet }}"
+    ip_address: "{{ ocp4_subnet.split('.')[:3] | join('.') }}.{{ '%02x' |format(inner_item)|int + outer_item.ip_octet }}"
     vm_ip: "{{ bootstrap_node_ip if outer_item.name == bootstrap_node_name else ip_address }}"
-    vm_mac: "{{ mac_start }}{{ '%02x' % ocp4_nat_subnet.split('.')[1]|int }}:{{ '%02x' % ocp4_nat_subnet.split('.')[2]|int }}:{{ '%02x' % last_octet|int }}"
+    vm_mac: "{{ mac_start }}{{ '%02x' % ocp4_subnet.split('.')[1]|int }}:{{ '%02x' % ocp4_subnet.split('.')[2]|int }}:{{ '%02x' % last_octet|int }}"
   template:
     src: virt-install-coreos.j2
     dest: "{{ virtinstall_dir }}/{{ vm_name }}.sh"
@@ -32,9 +32,9 @@
     extra_storage: "{{ outer_item.extra_storage }}"
     vm_type: "{{ outer_item.vm_type }}"
     last_octet: "{{ '%02x' |format(inner_item)|int + outer_item.ip_octet }}"
-    ip_address: "{{ ocp4_nat_subnet.split('.')[:3] | join('.') }}.{{ '%02x' |format(inner_item)|int + outer_item.ip_octet }}"
+    ip_address: "{{ ocp4_subnet.split('.')[:3] | join('.') }}.{{ '%02x' |format(inner_item)|int + outer_item.ip_octet }}"
     vm_ip: "{{ bootstrap_node_ip if outer_item.name == bootstrap_node_name else ip_address }}"
-    vm_mac: "{{ mac_start }}{{ '%02x' % ocp4_nat_subnet.split('.')[1]|int }}:{{ '%02x' % ocp4_nat_subnet.split('.')[2]|int }}:{{ '%02x' % last_octet|int }}"
+    vm_mac: "{{ mac_start }}{{ '%02x' % ocp4_subnet.split('.')[1]|int }}:{{ '%02x' % ocp4_subnet.split('.')[2]|int }}:{{ '%02x' % last_octet|int }}"
   template:
     src: virt-install-fedora.j2
     dest: "{{ virtinstall_dir }}/{{ vm_name }}.sh"

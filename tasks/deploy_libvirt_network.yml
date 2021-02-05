@@ -1,42 +1,35 @@
 ---
-- name: get a list of all libvirt networks
+## There seems to be an issue where Libvirt IPtables rules are loaded
+## This ensures the rules are loaded
+- name: Restart libvirtd service
+  systemd:
+    state: restarted
+    daemon_reload: yes
+    name: libvirtd
+  tags: [ libvirt_nat ]
+
+- name: Get a list of all libvirt networks
   virt_net:
     command: list_nets
-  register: libvirt_nets
-  tags: [ deploy_nodes, libvirt_net ]
+  register: libvirt_nats
+  tags: [libvirt_nat ]
 
-- name: stop the legacy ocp42 network if it exists
-  virt_net:
-    state: inactive
-    name: "{{ item }}"
-  loop: "{{ libvirt_nets.list_nets }}"
-  when: item == old_libvirt_net
-  tags: [ deploy_nodes, libvirt_net ]
-
-- name: remove the legacy ocp42 network if it exists
-  virt_net:
-    command: undefine
-    name: "{{ item }}"
-  loop: "{{ libvirt_nets.list_nets }}"
-  when: item == old_libvirt_net
-  tags: [ deploy_nodes, libvirt_net ]
-
-- name: create {{ libvirt_network_name }} libvirt network
+- name: Create {{ libvirt_network_name }} libvirt network
   virt_net:
     name: "{{ libvirt_network_name }}"
     command: define
     xml: '{{ (lookup("template", "nat_network.xml.j2")) }}'
-  tags: [ deploy_nodes, libvirt_net ]
+  tags: [ libvirt_nat ]
 
-- name: start {{ libvirt_network_name }} libvirt network
+- name: Start {{ libvirt_network_name }} libvirt network
   virt_net:
     name: "{{ libvirt_network_name }}"
     state: active
     autostart: yes
-  tags: [ deploy_nodes, libvirt_net ]
+  tags: [libvirt_nat ]
 
-- name: autostart {{ libvirt_network_name }} libvirt network
+- name: Set {{ libvirt_network_name }} libvirt network autostart on boot
   virt_net:
     name: "{{ libvirt_network_name }}"
     autostart: yes
-  tags: [ deploy_nodes, libvirt_net ]
+  tags: [libvirt_nat ]

@@ -5,7 +5,7 @@
 set -xe
 mac_address=$(sudo virsh net-dumpxml {{ libvirt_network_name }} |awk '/host mac/ {print $0}'| awk '/{{ vm_name }}/ {print $2}'|grep -o -E '([[:xdigit:]]{1,2}:){5}[[:xdigit:]]{1,2}')
 
-project_dir=/home/admin/qubinode-installer
+project_dir={{ project_dir }}
 kernel={{ coreos_installer_kernel }}
 initrd={{ coreos_installer_initramfs }}
 kernel_file=${project_dir}/rhcos-install/${kernel}
@@ -20,7 +20,7 @@ args+='rd.neednet=1 '
 args+='coreos.inst.insecure '
 args+='coreos.inst.ignition_url={{ rhcos_ignition }} '
 args+='coreos.live.rootfs_url={{ coreos_rootfs_url }}  '
-args+='ip={{ vm_ip }}::{{ ocp4_nat_gateway }}:{{ mask }}:{{ vm_name }}.{{ cluster_name }}.{{ ocp4_cluster_domain }}:ens3:none nameserver={{ dns_server_ip }} '
+args+='ip={{ vm_ip }}::{{ ocp4_gateway_ip }}:{{ mask }}:{{ vm_name }}.{{ cluster_name }}.{{ ocp4_cluster_domain }}:ens3:none nameserver={{ dns_server_ip }} '
 {% if ((use_external_bridge == true) and ( 'bootstrap' not in vm_name )) %}
 args+='ip=ens4:dhcp '
 {% endif %}
@@ -49,7 +49,7 @@ sudo virt-install \
   {% endfor %}
     --memory {{ memory_size }} \
   --vcpus {{ cpu_size }} \
-  --os-type generic \
+  --os-variant {{ os_variant }} \
   --rng /dev/urandom \
   --network network={{ libvirt_network_name }},model=virtio,mac=${mac_address} --noreboot --noautoconsole \
   {% if ((use_external_bridge == true) and ( 'bootstrap' not in vm_name )) %}

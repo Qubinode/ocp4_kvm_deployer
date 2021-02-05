@@ -3,16 +3,18 @@
 
 - set_fact:
     ocp4_nodes: []
+  tags: [teardown_deployed_nodes]
 
 - name: set compute_node_count variable
   set_fact:
-    compute_node_count: "{{ 1 if compute_count|int == 0 else compute_count }}"
+    compute_node_count: "{{ 1 if compute_node_count|int == 0 else compute_node_count }}"
+  tags: [teardown_deployed_nodes]
 
 - name: remove OpenShift 4 bootstrap webserver
   import_role:
     name: ocp4-bootstrap-webserver
     tasks_from: main.yml
-  tags: [ webserver ]
+  tags: [ webserver, teardown_deployed_nodes ]
 
 - name: Remove load balancer container
   import_role:
@@ -28,13 +30,13 @@
     lb_ingress_https_listen: "{{ tmp_ingress_https_listen | join(',') }}"
     lb_machine_config_server: "{{ tmp_machine_config_server | join(',') }}"
     lb_machine_config_server_listen: "{{ tmp_machine_config_server_listen | join(',') }}"
-  tags: [ lb ]
+  tags: [ lb, teardown_deployed_nodes ]
 
 - name: remove the ocp4 installation directory {{ openshift_install_dir }}
   file:
     path: "{{ openshift_install_dir }}"
     state: absent
-  tags: [ lb ]
+  tags: [ teardown_deployed_nodes ]
 
 - name: include build_cluster_nodes_profile.yml
   include_tasks: build_cluster_nodes_profile.yml
@@ -42,15 +44,14 @@
   loop_control:
     loop_var: outer_item
     label: outer_item.name
-  tags: [ deploy_nodes, rhcos, node_profile, add_computes ]
-
+  tags: [ teardown_deployed_nodes ]
 
 - name: list running libvirt vms
   virt:
     command: list_vms
     state: running
   register: running_vms
-  tags: [ deploy_nodes, rhcos, bootstrap ]
+  tags: [ teardown_deployed_nodes ]
 
 - name: shutdown ocp4 nodes
   vars:
@@ -62,7 +63,7 @@
   when: vm_name in running_vms.list_vms
   loop: "{{ ocp4_nodes }}"
   delay: 10
-  tags: [ deploy_nodes, rhcos ]
+  tags: [ teardown_deployed_nodes ]
 
 - name: include wait_for_vm_shutdown.yml
   include_tasks: wait_for_vm_shutdown.yml
@@ -71,13 +72,13 @@
     loop_var: vm_name
     label: vm_name
   when: shutdown_vms.changed
-  tags: [ deploy_nodes, rhcos, rhcos_wait ]
+  tags: [ teardown_deployed_nodes ]
 
 - name: list all libvirt vms
   virt:
     command: list_vms
   register: all_vms
-  tags: [ deploy_nodes, rhcos, bootstrap ]
+  tags: [ teardown_deployed_nodes ]
 
 - name: show me the vm names
   vars:
@@ -86,7 +87,7 @@
     msg: "name: {{ vm_name }}"
   loop: "{{ ocp4_nodes }}"
   when: vm_name in all_vms.list_vms
-  tags: [ deploy_nodes, rhcos ]
+  tags: [ teardown_deployed_nodes ]
 
 - name: destroy ocp4 node
   vars:
@@ -97,51 +98,54 @@
   when: vm_name in all_vms.list_vms
   loop: "{{ ocp4_nodes }}"
   delay: 10
-  tags: [ deploy_nodes, rhcos ]
+  tags: [ teardown_deployed_nodes ]
 
-- name: import tasks configure_dns_entries.yml
+- name: import tasks idm_dns.yml
+  when: dns_server == 'idm'
   vars:
     dns_teardown: yes
-  import_tasks: configure_dns_entries.yml
-  tags: [ deploy_nodes, idm ]
+  import_tasks: idm_dns.yml
+  tags: [ teardown_dns ]
 
 - name: get a list of all libvirt networks
   virt_net:
     command: list_nets
-  register: libvirt_nets
-  tags: [ deploy_nodes, libvirt_net ]
+  register: libvirt_nats
+  tags: [ teardown_libvirtnet ]
   
 - name: stop the ocp4 nat libvirt network
   virt_net:
     state: inactive
     name: "{{ item }}"
-  loop: "{{ libvirt_nets.list_nets }}"
+  loop: "{{ libvirt_nats.list_nets }}"
   when: item == libvirt_network_name 
-  tags: [ deploy_nodes, libvirt_net ]
+  tags: [ teardown_libvirtnet ]
 
 - name: ensure {{ virtinstall_dir }} is removed
   file:
     path: "{{ virtinstall_dir }}"
     state: absent
-  tags: [ deploy_nodes, rhcos ]
+  tags: [ teardown_deployed_nodes ]
   ignore_errors: yes
 
 - name: ensure {{ openshift_install_dir }} is removed
   file:
     path: "{{ openshift_install_dir }}"
     state: absent
-  tags: [ deploy_nodes, rhcos ]
+  tags: [ teardown_deployed_nodes ]
 
 - name: remove the ocp4 nat libvirt network
   virt_net:
     command: undefine
     name: "{{ item }}"
-  loop: "{{ libvirt_nets.list_nets }}"
+  loop: "{{ libvirt_nats.list_nets }}"
   when: item == libvirt_network_name
-  tags: [ deploy_nodes, libvirt_net ]
+  tags: [ teardown_libvirtnet ]
 
+## There should be some prompt of some sort before removing this
+## Or place the qubinode kubeconfig in a different directory path
 - name: removing using kubeconfig
   file:
     path: "/home/{{ local_user_account }}/.kube/config"
     state: absent
-  tags: [ lb ]
+  tags: [ teardown_deployed_nodes ]

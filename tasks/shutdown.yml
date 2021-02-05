@@ -1,56 +1,22 @@
 ---
-- name: getting all ocp4 nodes
-  shell: oc get nodes -o wide --no-headers=true | awk '{print $1,$6,$3}'
-  register: all_ocp_nodes
-  ignore_errors: yes
-  changed_when: False
-  become: no
-  tags: shutdown
+- name: Generate a updated inventory of current cluster nodes
+  import_tasks: generate_inventory.yml
 
-- name: getting compute nodes
-  shell: oc get nodes -o wide --no-headers=true | awk '/compute/ {print $1,$6,$3}'
-  register: compute_ocp4_nodes
-  ignore_errors: yes
-  changed_when: False
-  when: all_ocp_nodes and all_ocp_nodes.rc == 0
-  become: no
-  tags: shutdown
-
-- name: getting control nodes
-  shell: oc get nodes -o wide --no-headers=true | awk '/ctrlplane/ {print $1,$6,$3}'
-  register: control_ocp4_nodes
-  ignore_errors: yes
-  when: all_ocp_nodes and all_ocp_nodes.rc == 0
-  changed_when: False
-  become: no
-  tags: shutdown
-
-- name: create/update ocp4 nodes ansible inventory
-  template:
-    src: ocp4-nodes-inventory.yml
-    dest: "{{ project_dir }}/inventory/ocp4-nodes"
-    owner: "{{ admin_user }}"
-    group: "{{ admin_user }}"
-#  loop: "{{ all_ocp_nodes.stdout_lines }}"
-  tags: shutdown
-
-
-
+- name: list all running libvirt vms
+  virt:
+    command: list_vms
+    state: running
+  register: running_vms
+  tags: generate_inventory
+  
 # eventually going to remove shutting down nodes with shutdown command
 # and just rely an the virt module to shutdown the VM as it appears
 # shutdown with the command module does not work as well as virt
 - name: try to shutdown all nodes with the shutdown command
+  when: active_vms.stdout == 'Running'
   tags: shutdown
   block:
-
-    - name: list all running libvirt vms
-      virt:
-        command: list_vms
-        state: running
-      register: running_vms
-      become: yes
-
-    - name: backup etcd on {{ control_ocp4_nodes.stdout_lines | first }}
+    - name: SHUTDOWN CLUSTER - backup etcd on {{ control_ocp4_nodes.stdout_lines | first }}
       vars:
         node: "{{ control_ocp4_nodes.stdout_lines | first }}"
         node_name: "{{ node.split()[0] }}"
@@ -64,81 +30,58 @@
       when: vm_name in running_vms.list_vms and control_ocp4_nodes
       become: yes
 
-    - name: shutdown compute nodes
+    - name: SHUTDOWN CLUSTER - Compute Nodes
       vars:
-        vm_name: "{{ item.split()[0] | lower }}"
-        vm_ipaddr: "{{ item.split()[1] | lower }}"
-        vm_hostname: "{{ vm_name.split('.')[0] | lower }}"
-      command: /usr/local/bin/qubinode-shutdown-vm -i {{ homedir }}/.ssh/id_rsa -u {{ rhcos_user }} -n {{  vm_ipaddr }}
+        vm_fqdn: "{{ item.split()[0] | lower }}"
+        vm_name: "{{ vm_fqdn.split('.')[0] | lower }}"
+      virt:
+        name: "{{ vm_name }}"
+        state: shutdown
       register: shutdown_computes
-      ignore_errors: yes
-      loop: "{{ compute_ocp4_nodes.stdout_lines }}"
-      when: vm_hostname in running_vms.list_vms
-
-    - name: wait for compute nodes to shutdown
-      vars:
-        vm_name: "{{ item.split()[0] | lower }}"
-        vm_hostname: "{{ vm_name.split('.')[0] | lower }}"
-      include_tasks: wait_for_vm_shutdown.yml
-      register: shutdown_vms
       loop: "{{ compute_ocp4_nodes.stdout_lines }}"
       loop_control:
-        label: "{{ item.split('.')[0] | lower }}"
+        label: "Shutting down node {{ vm_name }}"
+      when: vm_name in running_vms.list_vms
+
+    - name: SHUTDOWN CLUSTER - Wait for Compute Nodes shutdown
+      vars:
+        vm_fqdn: "{{ item.split()[0] | lower }}"
+        vm_name: "{{ vm_fqdn.split('.')[0] | lower }}"
+      virt:
+        command: list_vms
+        state: shutdown
+      register: shutdown_compute_vms      
+      until: vm_name in shutdown_compute_vms.list_vms
+      retries: 120
+      delay: 30
+      loop: "{{ compute_ocp4_nodes.stdout_lines }}"
+      loop_control:
+        label: "Waiting on node {{ vm_name }} to shutdown"
       when: shutdown_computes and shutdown_computes.changed
 
-    - name: shutdown control nodes
+    - name: SHUTDOWN CLUSTER - shutdown control nodes
       vars:
-        vm_name: "{{ item.split()[0] | lower }}"
-        vm_ipaddr: "{{ item.split()[1] | lower }}"
-        vm_hostname: "{{ vm_name.split('.')[0] | lower }}"
-      command: /usr/local/bin/qubinode-shutdown-vm -i {{ homedir }}/.ssh/id_rsa -u {{ rhcos_user }} -n {{ vm_ipaddr }}
+        vm_fqdn: "{{ item.split()[0] | lower }}"
+        vm_name: "{{ vm_fqdn.split('.')[0] | lower }}"
+      virt:
+        name: "{{ vm_name }}"
+        state: shutdown
       register: shutdown_control
-      ignore_errors: yes
       loop: "{{ control_ocp4_nodes.stdout_lines }}"
       loop_control:
-        label: "{{ item.split('.')[0] | lower }}"
-      when: vm_hostname in running_vms.list_vms
+        label: "Shutting down node {{ vm_name }}"
 
-    - name: wait for control nodes to shutdown
+    - name: SHUTDOWN CLUSTER - wait for control nodes to shutdown
       vars:
-        vm_name: "{{ item.split()[0] | lower }}"
-        vm_hostname: "{{ vm_name.split('.')[0] | lower }}"
-      include_tasks: wait_for_vm_shutdown.yml
-      register: shutdown_vms
+        vm_fqdn: "{{ item.split()[0] | lower }}"
+        vm_name: "{{ vm_fqdn.split('.')[0] | lower }}"
+      virt:
+        command: list_vms
+        state: shutdown
+      register: shutdown_control_vms      
+      until: vm_name in shutdown_control_vms.list_vms
+      retries: 120
+      delay: 30
       loop: "{{ control_ocp4_nodes.stdout_lines }}"
       loop_control:
-        label: "{{ item.split('.')[0] | lower }}"
-      when: shutdown_control and shutdown_control.changed
-
-- name: list all running libvirt vms
-  virt:
-    command: list_vms
-    state: running
-  register: running_vms
-  become: yes
-  tags: shutdown
-
-- name: ensure all ocp nodes are shutdown
-  vars:
-    vm_name: "{{ item.split()[0] | lower }}"
-    vm_hostname: "{{ vm_name.split('.')[0] | lower }}"
-  virt:
-    name: "{{ vm_hostname }}"
-    state: shutdown
-  register: all_nodes
-  loop: "{{ groups['nodes'] }}"
-  when: vm_hostname in running_vms.list_vms
-  become: yes
-  tags: shutdown
-
-- name: wait for control nodes to shutdown
-  vars:
-    vm_name: "{{ item.split()[0] | lower }}"
-    vm_hostname: "{{ vm_name.split('.')[0] | lower }}"
-  include_tasks: wait_for_vm_shutdown.yml
-  register: shutdown_vms
-  loop: "{{ control_ocp4_nodes.stdout_lines }}"
-  loop_control:
-    label: "{{ item.split('.')[0] | lower }}"
-  when: all_nodes and all_nodes.changed
-  tags: shutdown
+        label: "Waiting on node {{ vm_name }} to shutdown"
