@@ -33,6 +33,7 @@ args+='coreos.inst.install_dev=/dev/vda '
 args+='rd.neednet=1 '
 args+='coreos.inst.stream=stable '
 args+='coreos.inst.ignition_url={{ rhcos_ignition }} '
+args+='coreos.live.rootfs_url={{ coreos_rootfs_url }} '
 args+='ip=dhcp '
 
 {% if performance_disk %}

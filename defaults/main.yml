@@ -26,7 +26,7 @@ libvirt_network_name: qubinat
 external_bridge_network: qubinet
 
 ## Set this to true to use the libvirt bridge network
-use_external_bridge: false 
+use_external_bridge: false fv
 
 ## The ocp subnet gateway ip. This ip is also used by the load balancer
 ## to listen on for incoming connections to the cluster
