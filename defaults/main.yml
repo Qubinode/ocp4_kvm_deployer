@@ -194,7 +194,7 @@ dns_server_ip: 192.168.8.10
 
 bootstrap_webserver_ip: "{{ kvm_host_ip }}"
 ocp4_image_version: 4.7.0
-ocp4_dependencies_version: 4.6.8
+ocp4_dependencies_version: 4.7.0
 rhcos_ignition_url: "http://{{ bootstrap_webserver_ip }}:8080/pub/{{ ocp4_dependencies_version }}/ignitions"
 rhcos_ignition: "{{ rhcos_ignition_url}}/{{ vm_type }}.ign"
 coreos_rootfs: "rhcos-live-rootfs.x86_64.img"
