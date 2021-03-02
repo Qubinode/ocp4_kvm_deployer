@@ -96,3 +96,10 @@
     - /usr/local/bin/README.md
     - /usr/local/bin/__pycache__
   tags: [ setup, tools, client ]
+
+- name: Remove openshift icli
+  file:
+    path: "/tmp/{{ ocp4_installer }}"
+    state: absent
+  when: extract_ocp_installer.changed
+  tags: [ setup , tools, installer]
