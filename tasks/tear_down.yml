@@ -142,6 +142,12 @@
   when: item == libvirt_network_name
   tags: [ teardown_libvirtnet ]
 
+- name: removing oc cli
+  file:
+    path: "/usr/local/bin/oc"
+    state: absent
+  tags: [ teardown_deployed_nodes ]
+
 ## There should be some prompt of some sort before removing this
 ## Or place the qubinode kubeconfig in a different directory path
 - name: removing using kubeconfig
