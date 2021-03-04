@@ -32,7 +32,7 @@
 
     - name: Waiting for  local-storage-operator pod to be deployed
       shell: |
-        /usr/local/bin/oc get pods -n local-storage | grep Running | grep local-storage-operator |  wc -l
+        /usr/local/bin/oc get pods -n "{{ localstorage_namespace }}"| grep Running | grep local-storage-operator |  wc -l
       environment:
         KUBECONFIG: "{{ openshift_install_dir }}/auth/kubeconfig"
       register: install_status_pod
