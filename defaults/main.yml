@@ -222,12 +222,15 @@ ocp4_instances:
     memory_size: 16192
     cpu_size: 4
     extra_storage:
-      - size: 10G
-        enable: true
-        name: vdb
-      - size: 50G
-        enable: true
-        name: vdc
+    - size: "{{ compute_vdb_size }}G"
+      name: vdb
+      enable: "{{ compute_local_storage }}"
+    - size: "{{ compute_vdx_size }}G"
+      name: vdc
+      enable: "{{ compute_local_storage }}"
+    - size: "{{ compute_vdx_size }}G"
+      name: vdd
+      enable: "{{ compute_local_storage }}"
     qty: "{{ ctrlplane_count }}"
     vm_type: ctrlplane
     ip_octet: "{{ ctrlplane_ip_octet }}"
