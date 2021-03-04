@@ -58,6 +58,18 @@
   register: all_vms
   tags: [ deploy_nodes, rhcos, bootstrap, localstorage ]
 
+- name: initialize and empty list of all the ocp4 nodes
+  set_fact:
+    ocp4_master_nodes: [ '' ]
+  tags: [ deploy_nodes, rhcos, localstorage ]
+
+- name: add master nodes to ocp4 nodes list
+  vars:
+    vm_name: "{{ ctrlplane_node_name }}-{{ '%00x' |format(item) }}"
+  set_fact:
+    ocp4_master_nodes: "{{ ocp4_master_nodes + [ vm_name ] }}"
+  loop: "{{ range(0, ctrlplane_count|int)|list }}"
+
 
 - name: initialize and empty list of all the ocp4 nodes
   set_fact:
