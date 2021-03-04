@@ -332,6 +332,10 @@ localstorage_block_disk:
   - /dev/vdj
   - /dev/vdk
   - /dev/vdl
+localstorage_ctrl_fs_disk:
+  - /dev/vdb
+  - /dev/vdc
+  - /dev/vdd
 localstorage_fs_disk: 
   - /dev/vdc
   - /dev/vdd
