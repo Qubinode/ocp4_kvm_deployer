@@ -12,19 +12,6 @@ spec:
         - key: kubernetes.io/hostname
           operator: In
           values:
-{% for master in ocp4_master_nodes %}
-{% if 'master' in master %}
-            - {{ master }}.{{cluster_name }}.{{ ocp4_cluster_domain }}
-{% endif %}
-{% endfor %}
-  storageClassDevices:
-    - storageClassName: "localfs-sc"
-      volumeMode: Filesystem
-      fsType: xfs
-      devicePaths:
-      {% for fs_disk in localstorage_fs_disk %}
-        - {{ fs_disk }}
-      {% endfor %}
 {% for compute in ocp4_compute_nodes %}
 {% if 'compute' in compute %}
             - {{ compute }}.{{cluster_name }}.{{ ocp4_cluster_domain }}
