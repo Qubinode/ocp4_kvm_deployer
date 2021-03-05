@@ -348,6 +348,9 @@ localstorage_fs_disk:
   - /dev/vdk
   - /dev/vdl
 
+# Configure OpenShit Storage
+configure_openshift_storage: false
+
 # Defaults for NFS Provisioner role
 provision_nfs_server: true
 nfs_client_subnet: "{{ ocp4_subnet }}/24"

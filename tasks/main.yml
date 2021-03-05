@@ -87,6 +87,14 @@
         configure_local_storage|bool and 
         compute_node_count|int != 0
 
+
+    - name: Configure OpenShift Storage 
+      import_tasks: configure-openshift-storage.yml
+      tags: [ ocs, postinstall ]
+      when: >
+        configure_openshift_storage|bool and 
+        compute_node_count|int != 0
+
     - name: Shutdown Cluster Nodes
       when: >
         shutdown_cluster|bool
