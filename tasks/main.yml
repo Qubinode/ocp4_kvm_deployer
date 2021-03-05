@@ -59,7 +59,7 @@
       import_tasks: openshift_registry.yml
       tags: configure_registry
 
-    - name: Waiting up to 200 minutes for OpenShift install complete - Actual time is up to 76m - You can monitor the progress in another terminal by tailing {{ openshift_install_dir }}/ocp4/install-complete.log
+    - name: Waiting up to 200 minutes for OpenShift install complete - Actual time is up to 76m - You can monitor the progress in another terminal by tailing {{ openshift_install_dir }}/install-complete.log
       shell: |
         oc get csr -ojson | jq -r '.items[] | select(.status == {} ) | .metadata.name' | xargs --no-run-if-empty oc adm certificate approve
         timeout 10 openshift-install --dir "{{ openshift_install_dir }}"  wait-for     install-complete --log-level debug 2>&1 | tee -a {{ install_complete_log }}
