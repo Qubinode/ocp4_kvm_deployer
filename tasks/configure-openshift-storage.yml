@@ -40,13 +40,13 @@
       until: "'4' in install_status_pod.stsdout"
       retries: 100
       delay: 15
-  when: not namespace_exist and not local_storage_operator_exist
+  when: not namespace_exist and not ocs_storage_operator_exist
 
 - name: Unset variables
   set_fact:
     namespace_exist:
     local_storage_operator_pods_exist:
-    local_storage_operator_exist:
+    ocs_storage_operator_exist:
 
 - name: check openshift-storage
   include: configure-openshift-storage-checks.yml
