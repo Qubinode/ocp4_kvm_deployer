@@ -45,13 +45,11 @@
 - name: Unset variables
   set_fact:
     namespace_exist:
-    local_storage_operator_pods_exist:
+    ocs_storage_operator_exist:
     ocs_storage_operator_exist:
 
 - name: check openshift-storage
   include: configure-openshift-storage-checks.yml
-
-
 
 - name: Remove to the openshift-storage openshift-storage-filesystem.yaml
   command: "/usr/local/bin/oc delete -f {{ openshift_install_dir }}/openshift-storage-filesystem.yaml"
@@ -61,17 +59,17 @@
   ignore_errors: yes
   tags: [ openshift-storage ]
 
-  - name: Get OpenShift Stoage ClusterServiceVersion
-    shell: |
-      /usr/local/bin/oc  get csv  -n openshift-storage | grep {{ ocp4_openshift_stroage_version }}  | awk '{print $1}'
-    environment:
-      KUBECONFIG: "{{ openshift_install_dir }}/auth/kubeconfig"
-    register: csv_check
-    become: no
+- name: Get OpenShift Stoage ClusterServiceVersion
+  shell: |
+    /usr/local/bin/oc  get csv  -n openshift-storage | grep {{ ocp4_openshift_stroage_version }}  | awk '{print $1}'
+  environment:
+    KUBECONFIG: "{{ openshift_install_dir }}/auth/kubeconfig"
+  register: csv_check
+  become: no
 
-  - name: setting openshift-storage-operator version
-    set_fact:
-      cluster_version: "{{ csv_check.stdout }}"
+- name: setting openshift-storage-operator version
+  set_fact:
+    cluster_version: "{{ csv_check.stdout }}"
 
 
 - name: Remove to the openshift-storage Subscription
