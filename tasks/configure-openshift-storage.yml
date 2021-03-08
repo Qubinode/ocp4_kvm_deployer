@@ -46,7 +46,6 @@
   set_fact:
     namespace_exist:
     ocs_storage_operator_exist:
-    ocs_storage_operator_exist:
 
 - name: check openshift-storage
   include: configure-openshift-storage-checks.yml
