@@ -6,3 +6,15 @@
   changed_when: False
   environment:
     KUBECONFIG: "{{ openshift_install_dir }}/auth/kubeconfig"
+
+- name: set the status of the openshift-local-storage namespace
+  set_fact:
+    namespace_exist: "{{ false if 'No resources found' in openshift_storage_namespace.stderr else true }}"
+
+- name: set the status of the openshift-local-storage pods
+  set_fact:
+    openshift_storage_operator_pods_exist: "{{ true if openshift_storage_operator_pods.rc == 0 else false }}"
+
+- name: set the status of the openshift-local-storage operator
+  set_fact:
+    openshift_storage_operator_exist: "{{ true if openshift_storage_operator_status.rc == 0 else false }}"
