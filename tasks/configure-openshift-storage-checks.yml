@@ -1,0 +1,8 @@
+---
+- name: does the openshift-storage namespace exist
+  shell: /usr/local/bin/oc get all -n openshift-storage
+  register: openshift_storage_namespace
+  ignore_errors: yes
+  changed_when: False
+  environment:
+    KUBECONFIG: "{{ openshift_install_dir }}/auth/kubeconfig"
