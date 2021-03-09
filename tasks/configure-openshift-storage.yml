@@ -119,9 +119,9 @@
     KUBECONFIG: "{{ openshift_install_dir }}/auth/kubeconfig"
   when: not delete_deployment|bool
 
-- name: Waiting for  openshift-storage to be  Available
+- name: Waiting for  openshift-storage to be in Ready State
   shell: |
-    /usr/local/bin/oc get StorageCluster ocs-storagecluster -n openshift-storage| grep  Available  |  wc -l
+    /usr/local/bin/oc get StorageCluster ocs-storagecluster -n openshift-storage| grep  Ready  |  wc -l
   environment:
     KUBECONFIG: "{{ openshift_install_dir }}/auth/kubeconfig"
   register: install_status
