@@ -97,8 +97,14 @@
 
 
 - name: 
-  shell: "/usr/local/bin/oc label {{ item }} cluster.ocs.openshift.io/openshift-storage=''"
+  shell: "/usr/local/bin/oc label {{ item }}.{{ external_domain_name }} cluster.ocs.openshift.io/openshift-storage=''"
   loop: "{{ ocp4_compute_nodes }}"
+   environment:
+    KUBECONFIG: "{{ openshift_install_dir }}/auth/kubeconfig"
+  when: delete_deployment|bool
+  ignore_errors: yes
+  tags: [ openshift-storage ]
+
 
 - name: Remove to the openshift-storage Subscription
   command: "/usr/local/bin/oc delete csv {{ cluster_version }} -n openshift-storage"
