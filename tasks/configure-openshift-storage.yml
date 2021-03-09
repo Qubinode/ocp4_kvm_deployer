@@ -56,7 +56,7 @@
     KUBECONFIG: "{{ openshift_install_dir }}/auth/kubeconfig"
   when: delete_deployment|bool
   ignore_errors: yes
-  tags: [ openshift-storage ]
+  tags: [ ocs ]
 
 - name: Get OpenShift Stoage ClusterServiceVersion
   shell: |
@@ -70,6 +70,36 @@
   set_fact:
     cluster_version: "{{ csv_check.stdout }}"
 
+- name: list all libvirt vms
+  virt:
+    command: list_vms
+  changed_when: False
+  register: all_vms
+  tags: [ deploy_nodes, rhcos, bootstrap, ocs ]
+
+- name: initialize and empty list of all the ocp4 nodes
+  set_fact:
+    ocp4_master_nodes: [ '' ]
+  tags: [ deploy_nodes, rhcos, ocs ]
+
+- name: add compute nodes to ocp4 nodes list
+  vars:
+    vm_name: "{{ compute_node_name }}-{{ '%00x' |format(item) }}"
+  set_fact:
+    ocp4_compute_nodes: "{{ ocp4_compute_nodes + [ vm_name ] }}"
+  loop: "{{ range(0, compute_node_count|int)|list }}"
+
+- name: initialize and empty list of all the ocp4 nodes
+  set_fact:
+    ocp4_compute_nodes: [ '' ]
+  tags: [ deploy_nodes, rhcos, ocs ]
+
+- name: SHUTDOWN CLUSTER - Compute Nodes
+  vars:
+    vm_fqdn: "{{ item.split()[0] | lower }}"
+    vm_name: "{{ vm_fqdn.split('.')[0] | lower }}"
+  shell: "echo {{ vm_name }}"
+  loop: "{{ ocp4_compute_nodes.stdout_lines }}"
 
 - name: Remove to the openshift-storage Subscription
   command: "/usr/local/bin/oc delete csv {{ cluster_version }} -n openshift-storage"
