@@ -37,7 +37,7 @@
         KUBECONFIG: "{{ openshift_install_dir }}/auth/kubeconfig"
       register: install_status_pod
       when: not delete_deployment|bool
-      until: "'4' in install_status_pod.stsdout"
+      until: "'4' in install_status_pod.stdout"
       retries: 100
       delay: 15
   when: not namespace_exist and not openshift_storage_operator_exist
