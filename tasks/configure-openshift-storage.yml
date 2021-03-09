@@ -97,11 +97,8 @@
 
 
 - name: 
-  vars:
-    vm_fqdn: "{{ item.split()[0] | lower }}"
-    vm_name: "{{ vm_fqdn.split('.')[0] | lower }}"
   shell: "/usr/local/bin/oc label {{ item }} cluster.ocs.openshift.io/openshift-storage=''"
-  loop: "{{ ocp4_compute_nodes.stdout_lines }}"
+  loop: "{{ ocp4_compute_nodes }}"
 
 - name: Remove to the openshift-storage Subscription
   command: "/usr/local/bin/oc delete csv {{ cluster_version }} -n openshift-storage"
