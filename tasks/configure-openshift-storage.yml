@@ -124,9 +124,9 @@
     /usr/local/bin/oc get StorageCluster ocs-storagecluster -n openshift-storage| grep  Available  |  wc -l
   environment:
     KUBECONFIG: "{{ openshift_install_dir }}/auth/kubeconfig"
-  register: install_status_pods
+  register: install_status
   when: not delete_deployment|bool
-  until: "'1' in install_status_pod.stdout"
+  until: "'1' in install_status.stdout"
   retries: 100
   delay: 15
 
