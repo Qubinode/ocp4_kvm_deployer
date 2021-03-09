@@ -97,13 +97,38 @@
 
 
 - name: label worker nodes for OCS
-  shell: "/usr/local/bin/oc label {{ item }}.{{cluster_name }}.{{ ocp4_cluster_domain }} cluster.ocs.openshift.io/openshift-storage=''"
+  shell: "/usr/local/bin/oc label node {{ item }}.{{cluster_name }}.{{ ocp4_cluster_domain }} cluster.ocs.openshift.io/openshift-storage=''"
   loop: "{{ ocp4_compute_nodes }}"
   environment:
     KUBECONFIG: "{{ openshift_install_dir }}/auth/kubeconfig"
   ignore_errors: yes
   tags: [ ocs ]
 
+
+- name: Copying over openshift-storage operator template
+  template:
+    src: templates/ocs-storage.yaml.j2
+    dest:  "{{ openshift_install_dir }}/ocs-storage.yaml"
+    owner: "{{ admin_user }}"
+    group: "{{ admin_user }}"
+    mode: 0666
+
+- name: Create and Subscribe to the openshift-storage Catalog
+  command: "/usr/local/bin/oc apply -f {{ openshift_install_dir }}/ocs-storage.yaml"
+  environment:
+    KUBECONFIG: "{{ openshift_install_dir }}/auth/kubeconfig"
+  when: not delete_deployment|bool
+
+- name: Waiting for  openshift-storage to be  Available
+  shell: |
+    /usr/local/bin/oc get StorageCluster ocs-storagecluster -n openshift-storage| grep  Available  |  wc -l
+  environment:
+    KUBECONFIG: "{{ openshift_install_dir }}/auth/kubeconfig"
+  register: install_status_pods
+  when: not delete_deployment|bool
+  until: "'1' in install_status_pod.stdout"
+  retries: 100
+  delay: 15
 
 - name: Remove to the openshift-storage Subscription
   command: "/usr/local/bin/oc delete csv {{ cluster_version }} -n openshift-storage"
