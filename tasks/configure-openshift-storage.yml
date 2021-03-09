@@ -96,14 +96,13 @@
   loop: "{{ range(0, compute_node_count|int)|list }}"
 
 
-- name: 
+- name: label worker nodes for OCS
   shell: "/usr/local/bin/oc label {{ item }}.{{ external_domain_name }} cluster.ocs.openshift.io/openshift-storage=''"
   loop: "{{ ocp4_compute_nodes }}"
   environment:
     KUBECONFIG: "{{ openshift_install_dir }}/auth/kubeconfig"
-  when: delete_deployment|bool
   ignore_errors: yes
-  tags: [ openshift-storage ]
+  tags: [ ocs ]
 
 
 - name: Remove to the openshift-storage Subscription
@@ -112,7 +111,7 @@
     KUBECONFIG: "{{ openshift_install_dir }}/auth/kubeconfig"
   when: delete_deployment|bool
   ignore_errors: yes
-  tags: [ openshift-storage ]
+  tags: [ ocs ]
 
 - name: Remove to the openshift-storage Subscription
   command: "/usr/local/bin/oc delete -f {{ openshift_install_dir }}/openshift-storage-operator.yaml"
@@ -120,7 +119,7 @@
     KUBECONFIG: "{{ openshift_install_dir }}/auth/kubeconfig"
   when: delete_deployment|bool
   ignore_errors: yes
-  tags: [ openshift-storage ]
+  tags: [ ocs ]
 
 - name: Delete openshift-storage project
   command: "/usr/local/bin/oc delete project openshift-storage"
@@ -128,5 +127,5 @@
     KUBECONFIG: "{{ openshift_install_dir }}/auth/kubeconfig"
   ignore_errors: yes
   when: delete_deployment|bool
-  tags: [ openshift-storage ]
+  tags: [ ocs ]
 
