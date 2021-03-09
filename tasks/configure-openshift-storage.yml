@@ -99,7 +99,7 @@
 - name: 
   shell: "/usr/local/bin/oc label {{ item }}.{{ external_domain_name }} cluster.ocs.openshift.io/openshift-storage=''"
   loop: "{{ ocp4_compute_nodes }}"
-   environment:
+  environment:
     KUBECONFIG: "{{ openshift_install_dir }}/auth/kubeconfig"
   when: delete_deployment|bool
   ignore_errors: yes
