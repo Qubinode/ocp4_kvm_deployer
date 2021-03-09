@@ -95,11 +95,12 @@
     ocp4_compute_nodes: "{{ ocp4_compute_nodes + [ vm_name ] }}"
   loop: "{{ range(0, compute_node_count|int)|list }}"
 
-- name: Label Compute Nodes openshift-storage
+
+- name: 
   vars:
     vm_fqdn: "{{ item.split()[0] | lower }}"
     vm_name: "{{ vm_fqdn.split('.')[0] | lower }}"
-  shell: "/usr/local/bin/oc {{ vm_name }}.{{ vm_fqdn }} cluster.ocs.openshift.io/openshift-storage=''"
+  shell: "/usr/local/bin/oc label {{ item }} cluster.ocs.openshift.io/openshift-storage=''"
   loop: "{{ ocp4_compute_nodes.stdout_lines }}"
 
 - name: Remove to the openshift-storage Subscription
