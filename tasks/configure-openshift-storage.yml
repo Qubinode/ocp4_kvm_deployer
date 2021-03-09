@@ -95,11 +95,6 @@
     ocp4_compute_nodes: "{{ ocp4_compute_nodes + [ vm_name ] }}"
   loop: "{{ range(0, compute_node_count|int)|list }}"
 
-- name: initialize and empty list of all the ocp4 nodes
-  set_fact:
-    ocp4_compute_nodes: [ '' ]
-  tags: [ deploy_nodes, rhcos, ocs ]
-
 - name: Label Compute Nodes openshift-storage
   vars:
     vm_fqdn: "{{ item.split()[0] | lower }}"
