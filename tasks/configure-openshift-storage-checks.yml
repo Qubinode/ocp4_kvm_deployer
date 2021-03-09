@@ -15,6 +15,15 @@
   environment:
     KUBECONFIG: "{{ openshift_install_dir }}/auth/kubeconfig"
 
+
+- name: check if the local storage operator is available
+  shell: /usr/local/bin/oc get csvs -n openshift-storage | grep Succeeded
+  register: openshift_storage_operator_status
+  ignore_errors: yes
+  changed_when: False
+  environment:
+    KUBECONFIG: "{{ openshift_install_dir }}/auth/kubeconfig"
+
 - name: set the status of the openshift-storage namespace
   set_fact:
     namespace_exist: "{{ false if 'No resources found' in openshift_storage_namespace.stderr else true }}"
