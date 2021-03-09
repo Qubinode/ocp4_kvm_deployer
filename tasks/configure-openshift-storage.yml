@@ -94,11 +94,11 @@
     ocp4_compute_nodes: [ '' ]
   tags: [ deploy_nodes, rhcos, ocs ]
 
-- name: SHUTDOWN CLUSTER - Compute Nodes
+- name: Label Compute Nodes openshift-storage
   vars:
     vm_fqdn: "{{ item.split()[0] | lower }}"
     vm_name: "{{ vm_fqdn.split('.')[0] | lower }}"
-  shell: "echo {{ vm_name }}"
+  shell: "/usr/local/bin/oc {{ vm_name }}.{{ vm_fqdn }} cluster.ocs.openshift.io/openshift-storage=''"
   loop: "{{ ocp4_compute_nodes.stdout_lines }}"
 
 - name: Remove to the openshift-storage Subscription
