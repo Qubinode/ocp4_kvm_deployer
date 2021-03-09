@@ -1,6 +1,6 @@
 ![Ansible Lint](https://github.com/Qubinode/ocp4_kvm_deployer/workflows/Ansible%20Lint/badge.svg?branch=dev)
 
-
+ansible-playbook /home/admin/qubinode-installer/playbooks/deploy_ocp4.yml -e '{ deploy_cluster: False }' -e '{tear_down: False}' -e '{configure_openshift_storage: True}'  -e '{bootstrap_complete: True}' -t ocs -vv
 ocp4_kvm_deployer
 =================
 

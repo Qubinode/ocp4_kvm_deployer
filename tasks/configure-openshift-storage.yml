@@ -82,6 +82,12 @@
     ocp4_master_nodes: [ '' ]
   tags: [ deploy_nodes, rhcos, ocs ]
 
+- name: initialize and empty list of all the ocp4 nodes
+  set_fact:
+    ocp4_compute_nodes: [ '' ]
+  tags: [ deploy_nodes, rhcos, ocs ]
+
+
 - name: add compute nodes to ocp4 nodes list
   vars:
     vm_name: "{{ compute_node_name }}-{{ '%00x' |format(item) }}"
