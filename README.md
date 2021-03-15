@@ -344,8 +344,9 @@ ansible-playbook rhcos.yml -t webserver
 ansible-playbook rhcos.yml -t lb
 ansible-playbook rhcos.yml -t libvirt_net
 ansible-playbook rhcos.yml -t deploy_vms
-ansible-playbook rhcos.yml -t nfs --extra-vars "configure_nfs_storage=true" --extra-vars "cluster_deployed_msg=deployed
-ansible-playbook rhcos.yml -t localstorage
+ansible-playbook rhcos.yml -t nfs --extra-vars "configure_nfs_storage=true" --extra-vars "bootstrap_complete=true" 
+ansible-playbook rhcos.yml -t localstorage  --extra-vars "bootstrap_complete=true" 
+ansible-playbook rhcos.yml -t ocs --extra-vars "configure_openshift_storage=true"  --extra-vars "bootstrap_complete=true" 
 ```
 Dependancy roles:
   - openshift-4-loadbalancer

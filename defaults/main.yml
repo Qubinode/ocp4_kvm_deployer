@@ -165,6 +165,14 @@ configure_nfs_storage: yes
 
 # deploy OCS persistent storage
 configure_ocs_storage: yes
+# Set Default storage class for OCS
+# Options below 
+# ocs-storagecluster-ceph-rbd
+# ocs-storagecluster-ceph-rgw
+# ocs-storagecluster-cephfs
+# openshift-storage.noobaa.io
+set_default_ocs_storage_class: true 
+osc_storage_class_name: ocs-storagecluster-ceph-rbd
 
 ## Default user kubeconfig directory
 USER_KUBECONFIG_DIR: /home/{{ local_user_account  }}/.kube
