@@ -344,8 +344,16 @@ ansible-playbook rhcos.yml -t webserver
 ansible-playbook rhcos.yml -t lb
 ansible-playbook rhcos.yml -t libvirt_net
 ansible-playbook rhcos.yml -t deploy_vms
+
+**Configure NFS**
 ansible-playbook rhcos.yml -t nfs --extra-vars "configure_nfs_storage=true" --extra-vars "bootstrap_complete=true" 
+**Remove NFS**
+ansible-playbook playbooks/deploy_ocp4.yml  -t nfs --extra-vars "configure_nfs_storage=false" --extra-vars "bootstrap_complete=true"  --extra-vars "delete_deployment=true"
+
+**Configure Local strorage**
 ansible-playbook rhcos.yml -t localstorage  --extra-vars "bootstrap_complete=true" 
+
+**Configure OCS**
 ansible-playbook rhcos.yml -t ocs --extra-vars "configure_openshift_storage=true"  --extra-vars "bootstrap_complete=true" 
 ```
 Dependancy roles:
