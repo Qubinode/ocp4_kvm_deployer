@@ -171,7 +171,7 @@ configure_ocs_storage: yes
 # ocs-storagecluster-ceph-rgw
 # ocs-storagecluster-cephfs
 # openshift-storage.noobaa.io
-set_default_ocs_storage_class: true 
+set_default_ocs_storage_class: 'true' 
 osc_storage_class_name: ocs-storagecluster-ceph-rbd
 
 ## Default user kubeconfig directory
