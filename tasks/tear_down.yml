@@ -8,7 +8,7 @@
 - name: set compute_node_count variable
   set_fact:
     compute_node_count: "{{ 1 if compute_node_count|int == 0 else compute_node_count }}"
-  tags: [teardown_deployed_nodes]
+  tags: [teardown_deployed_nodes, rebuild_cluster]
 
 - name: remove OpenShift 4 bootstrap webserver
   import_role:
@@ -36,7 +36,7 @@
   file:
     path: "{{ openshift_install_dir }}"
     state: absent
-  tags: [ teardown_deployed_nodes ]
+  tags: [ teardown_deployed_nodes, rebuild_cluster ]
 
 - name: include build_cluster_nodes_profile.yml
   include_tasks: build_cluster_nodes_profile.yml
@@ -44,14 +44,14 @@
   loop_control:
     loop_var: outer_item
     label: outer_item.name
-  tags: [ teardown_deployed_nodes ]
+  tags: [ teardown_deployed_nodes, rebuild_cluster ]
 
 - name: list running libvirt vms
   virt:
     command: list_vms
     state: running
   register: running_vms
-  tags: [ teardown_deployed_nodes ]
+  tags: [ teardown_deployed_nodes, rebuild_cluster]
 
 - name: shutdown ocp4 nodes
   vars:
@@ -63,7 +63,7 @@
   when: vm_name in running_vms.list_vms
   loop: "{{ ocp4_nodes }}"
   delay: 10
-  tags: [ teardown_deployed_nodes ]
+  tags: [ teardown_deployed_nodes, rebuild_cluster ]
 
 - name: include wait_for_vm_shutdown.yml
   include_tasks: wait_for_vm_shutdown.yml
@@ -72,13 +72,13 @@
     loop_var: vm_name
     label: vm_name
   when: shutdown_vms.changed
-  tags: [ teardown_deployed_nodes ]
+  tags: [ teardown_deployed_nodes, rebuild_cluster ]
 
 - name: list all libvirt vms
   virt:
     command: list_vms
   register: all_vms
-  tags: [ teardown_deployed_nodes ]
+  tags: [ teardown_deployed_nodes, rebuild_cluster ]
 
 - name: show me the vm names
   vars:
@@ -87,7 +87,7 @@
     msg: "name: {{ vm_name }}"
   loop: "{{ ocp4_nodes }}"
   when: vm_name in all_vms.list_vms
-  tags: [ teardown_deployed_nodes ]
+  tags: [ teardown_deployed_nodes, rebuild_cluster]
 
 - name: destroy ocp4 node
   vars:
@@ -98,14 +98,14 @@
   when: vm_name in all_vms.list_vms
   loop: "{{ ocp4_nodes }}"
   delay: 10
-  tags: [ teardown_deployed_nodes ]
+  tags: [ teardown_deployed_nodes, rebuild_cluster ]
 
 - name: import tasks idm_dns.yml
   when: dns_server == 'idm'
   vars:
     dns_teardown: yes
   import_tasks: idm_dns.yml
-  tags: [ teardown_dns ]
+  tags: [ teardown_dns, rebuild_cluster ]
 
 - name: get a list of all libvirt networks
   virt_net:
@@ -125,14 +125,14 @@
   file:
     path: "{{ virtinstall_dir }}"
     state: absent
-  tags: [ teardown_deployed_nodes ]
+  tags: [ teardown_deployed_nodes, rebuild_cluster ]
   ignore_errors: yes
 
 - name: ensure {{ openshift_install_dir }} is removed
   file:
     path: "{{ openshift_install_dir }}"
     state: absent
-  tags: [ teardown_deployed_nodes ]
+  tags: [ teardown_deployed_nodes, rebuild_cluster ]
 
 - name: remove the ocp4 nat libvirt network
   virt_net:
@@ -154,4 +154,4 @@
   file:
     path: "/home/{{ local_user_account }}/.kube/config"
     state: absent
-  tags: [ teardown_deployed_nodes ]
+  tags: [ teardown_deployed_nodes, rebuild_cluster]
