@@ -45,8 +45,8 @@ then
     printf "%s\n\n" ""
     printf "%s\n" "    ${COLOR_RED}It appears the cluster did not deploy successfully${COLOR_RESET}"
     printf "%s\n" "    Only counted ${COLOR_BLUE}$TOTAL_OPERATORS${COLOR_RESET} cluster operators"
-    print  "%s\n" "    Perhaps delete the cluster ${COLOR_GREEN} ./qubinode-installer -p $product -d${COLOR_RESET}"
-    print  "%s\n" "    and redeploy with ${COLOR_GREEN} ./qubinode-installer -p $product${COLOR_RESET}"
+    printf  "%s\n" "    Perhaps delete the cluster ${COLOR_GREEN} ./qubinode-installer -p $product -d${COLOR_RESET}"
+    printf  "%s\n" "    and redeploy with ${COLOR_GREEN} ./qubinode-installer -p $product${COLOR_RESET}"
     exit 1
 fi
 
