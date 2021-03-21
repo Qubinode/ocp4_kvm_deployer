@@ -19,8 +19,11 @@ else
     install_dir=ocp4
 fi
 
+## Qubinode installer dir
+PROJECT_DIR="{{ project_dir }}"
+
 ## the kubeadmin password created by the installer
-KUBEADMIN_PASS=$(cat {{ project_dir }}/${install_dir}/auth/kubeadmin-password)
+KUBEADMIN_PASS=$(cat "${PROJECT_DIR}/${install_dir}/auth/kubeadmin-password)
 
 ## Declare colors
 COLOR_RED=`tput setaf 1`
@@ -29,6 +32,7 @@ COLOR_BLUE=`tput setaf 4`
 COLOR_CYAN=`tput setaf 8`
 COLOR_RESET=`tput sgr0`
 
+{% raw %}
 ## Declare array to store all operators
 declare -a OPERATORS
 OPERATORS=( $(/usr/local/bin/oc get clusteroperators --no-headers=true | awk '{print $1}') )
@@ -113,9 +117,10 @@ else
     printf "%s\n\n" "    Run ${COLOR_GREEN}oc get co${COLOR_RESET} to see all cluster operators"
     printf "%s\n\n" "    Run ${COLOR_GREEN}oc get routes -n openshift-console${COLOR_RESET} to get the console url"
     printf "%s\n\n" "    Run ${COLOR_GREEN}oc get nodes -o wide --no-headers=true${COLOR_RESET} to see all cluster nodes"
-    printf "%s\n" "    The installer generated kubeadmin password is here {{ project_dir }}/${install_dir}/auth/kubeadmin-password"
+    printf "%s\n" "    The installer generated kubeadmin password is here ${PROJECT_DIR}/${install_dir}/auth/kubeadmin-password"
     printf "%s\n" ""
 
 fi
 
+{% endraw %}
 exit 0
