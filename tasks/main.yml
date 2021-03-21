@@ -9,7 +9,7 @@
     owner: "{{ local_user_account }}"
     mode: u=rwx,g=rx,o=rx
   become: yes
-  tags: [ complete_install, check_cluster_status, status_script, bootstrap ]
+  tags: [ complete_install, check_cluster_status, status_script, bootstrap, rebuild_cluster]
 
 - name: Tear down the OpenShift Cluster
   import_tasks: tear_down.yml
