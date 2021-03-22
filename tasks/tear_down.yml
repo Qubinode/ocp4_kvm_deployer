@@ -3,7 +3,7 @@
 
 - set_fact:
     ocp4_nodes: []
-  tags: [teardown_deployed_nodes]
+  tags: [teardown_deployed_nodes, rebuild_cluster]
 
 - name: set compute_node_count variable
   set_fact:
