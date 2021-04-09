@@ -104,6 +104,8 @@ ocp4_release_url: "https://mirror.openshift.com/pub/openshift-v4/clients/ocp/lat
 openshift_install_folder: ocp4
 ocp4_client: "openshift-client-linux.tar.gz"
 ocp4_installer: "openshift-install-linux.tar.gz"
+ocp_install_cmd: /usr/local/bin/openshift-install
+ocp_client_cmd: /usr/local/bin/oc
 tools_missing: false
 
 webserver_directory: /opt/qubinode_webserver
