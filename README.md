@@ -326,18 +326,23 @@ ansible-playbook playbooks/deploy_ocp4.yml -t complete_cluster_install -e "tear_
 ```
 
 ```
-ansible-playbook rhcos.yml -t setup
-ansible-playbook rhcos.yml -t tools
-ansible-playbook rhcos.yml -t podman
-ansible-playbook rhcos.yml -t podman --skip-tags pkg
-ansible-playbook rhcos.yml -t ignitions
-ansible-playbook rhcos.yml -t lb
-ansible-playbook rhcos.yml -t webserver
-ansible-playbook rhcos.yml -t download
-ansible-playbook rhcos.yml -t libvirt_net
-ansible-playbook rhcos.yml -t node_profile
-ansible-playbook rhcos.yml -t idm
-ansible-playbook rhcos.yml -t rhcos
+export PLAYBOOK_NAME=playbooks/deploy_ocp4.yml #PLAYBOOK_NAME=rhcos.yml
+
+ansible-playbook $PLAYBOOK_NAME  -t setup
+ansible-playbook $PLAYBOOK_NAME  -t tools
+ansible-playbook $PLAYBOOK_NAME  -t podman
+ansible-playbook $PLAYBOOK_NAME  -t podman --skip-tags pkg
+ansible-playbook $PLAYBOOK_NAME -t ignitions --extra-vars "download_ocp_tools=true"
+# ansible-playbook  $PLAYBOOK_NAME  -t lb
+ansible-playbook  $PLAYBOOK_NAME  -t webserver
+ansible-playbook $PLAYBOOK_NAME -t download
+#ansible-playbook $PLAYBOOK_NAME -t libvirt_net
+ansible-playbook $PLAYBOOK_NAME -t node_profile
+ansible-playbook $PLAYBOOK_NAME -t idm
+ansible-playbook $PLAYBOOK_NAME -t deploy_nodesvim 
+```
+
+
 
 ansible-playbook rhcos.yml -t webserver
 ansible-playbook rhcos.yml -t lb

@@ -3,7 +3,13 @@
 # Still in development preview
 ##
 set -xe
+
+{% if use_external_bridge == true %}
+mac_address=$(date +%s | md5sum | head -c 6 | sed -e 's/\([0-9A-Fa-f]\{2\}\)/\1:/g' -e 's/\(.*\):$/\1/' | sed -e 's/^/52:54:00:/')
+{% else %}
 mac_address=$(sudo virsh net-dumpxml {{ libvirt_network_name }} |awk '/host mac/ {print $0}'| awk '/{{ vm_name }}/ {print $2}'|grep -o -E '([[:xdigit:]]{1,2}:){5}[[:xdigit:]]{1,2}')
+{% endif %}
+
 
 project_dir={{ project_dir }}
 kernel={{ coreos_installer_kernel }}
@@ -20,9 +26,10 @@ args+='rd.neednet=1 '
 args+='coreos.inst.insecure '
 args+='coreos.inst.ignition_url={{ rhcos_ignition }} '
 args+='coreos.live.rootfs_url={{ coreos_rootfs_url }}  '
+{% if use_external_bridge == true %}
 args+='ip={{ vm_ip }}::{{ ocp4_gateway_ip }}:{{ mask }}:{{ vm_name }}.{{ cluster_name }}.{{ ocp4_cluster_domain }}:ens3:none nameserver={{ dns_server_ip }} '
-{% if ((use_external_bridge == true) and ( 'bootstrap' not in vm_name )) %}
-args+='ip=ens4:dhcp '
+{% else %}
+args+='ip={{ vm_ip }}::{{ ocp4_gateway_ip }}:{{ mask }}:{{ vm_name }}.{{ cluster_name }}.{{ ocp4_cluster_domain }}:ens3:none nameserver={{ dns_server_ip }} '
 {% endif %}
 
 {% if performance_disk %}
@@ -51,8 +58,9 @@ sudo virt-install \
   --vcpus {{ cpu_size }} \
   --os-variant {{ os_variant }} \
   --rng /dev/urandom \
+  {% if use_external_bridge == true %}
+  --network network={{ external_bridge_network }},model=virtio,mac=${mac_address} --noreboot --noautoconsole \
+  {% else %}
   --network network={{ libvirt_network_name }},model=virtio,mac=${mac_address} --noreboot --noautoconsole \
-  {% if ((use_external_bridge == true) and ( 'bootstrap' not in vm_name )) %}
-  --network network={{ external_bridge_network }},model=virtio --noreboot --noautoconsole \
   {% endif %}
   --install kernel=${kernel_file},initrd=${initrd_file},kernel_args_overwrite=yes,kernel_args="${args}"

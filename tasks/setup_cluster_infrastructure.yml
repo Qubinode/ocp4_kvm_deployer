@@ -107,7 +107,7 @@
   virt:
     command: list_vms
   register: all_vms
-  tags: [ deploy_nodes, rhcos, bootstrap, add_workers ]
+  tags: [ deploy_nodes, rhcos, bootstrap, add_workers, node_profile ]
 
 - name: INFRASTRUCTURE SETUP - Run virt-install to create all RHCOS cluster nodes
   vars:
