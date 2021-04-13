@@ -44,7 +44,21 @@
     tmp_ingress_https_listen: "['{{ listen_address }}:443', '{{ ocp4_gateway_ip }}:443' ]"
     tmp_machine_config_server: "[ '{{ bootstrap_ip }}:22623' ]"
     tmp_machine_config_server_listen: "['{{ listen_address }}:22623', '{{ ocp4_gateway_ip }}:22623']"
-  tags: [ preqs, setup, deploy_no, bootstrap, idm, containers]
+  tags: [ preqs, setup, deploy_no, bootstrap, idm, containers, lb]
+  when: not use_external_bridge
+
+- name: Setting Ingress information and machine configuration for bootstrap nodes and other machines on external networks
+  set_fact:
+    tmp_api: "[ '{{ bootstrap_ip }}:6443' ]"
+    tmp_api_listen: "[ '{{ listen_address }}:6443' ]"
+    tmp_ingress_http: "[]"
+    tmp_ingress_http_listen: "['{{ listen_address }}:80']"
+    tmp_ingress_https: "[]"
+    tmp_ingress_https_listen: "['{{ listen_address }}:443' ]"
+    tmp_machine_config_server: "[ '{{ bootstrap_ip }}:22623' ]"
+    tmp_machine_config_server_listen: "['{{ listen_address }}:22623' ]"
+  tags: [ preqs, setup, deploy_no, bootstrap, idm, containers, lb]
+  when: use_external_bridge
 
 - name: Point all ingress traffic to ctrlplane nodes when compute count is zero
   set_fact:
@@ -58,7 +72,16 @@
     tmp_api: "{{ tmp_api }}  + [ '{{ ocp4_gateway_ip }}:6443' ]"
     tmp_api_listen: "{{ tmp_api_listen }}  + [ '{{ ocp4_gateway_ip }}:6443' ]"
   ignore_errors: false
-  tags: [ preqs, setup, bootstrap, idm, containers]
+  tags: [ preqs, setup, bootstrap, idm, containers, lb]
+  when: not use_external_bridge
+
+- name: Setting Ingress information and machine configuration for internal API Server for external networks
+  set_fact:
+    tmp_api: "{{ tmp_api }}   ]"
+    tmp_api_listen: "{{ tmp_api_listen }} ]"
+  ignore_errors: false
+  tags: [ preqs, setup, bootstrap, idm, containers, lb]
+  when: use_external_bridge
 
 - name: Setting Ingress information and machine configuration for ctrlplane nodes
   set_fact:
