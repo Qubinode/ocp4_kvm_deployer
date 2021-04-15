@@ -77,8 +77,8 @@
 
 - name: Setting Ingress information and machine configuration for internal API Server for external networks
   set_fact:
-    tmp_api: "{{ tmp_api }}   ]"
-    tmp_api_listen: "{{ tmp_api_listen }} ]"
+    tmp_api: "{{ tmp_api }}"
+    tmp_api_listen: "{{ tmp_api_listen }}"
   ignore_errors: false
   tags: [ preqs, setup, bootstrap, idm, containers, lb]
   when: use_external_bridge
