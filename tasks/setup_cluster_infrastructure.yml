@@ -41,6 +41,7 @@
 - name: INFRASTRUCTURE SETUP - Libvirt NAT network
   import_tasks: deploy_libvirt_network.yml
   tags: [libvirt_nat]
+  when: not use_external_bridge
 
 - name: INFRASTRUCTURE SETUP - Configure firewall
   import_tasks: firewall_setup.yml
