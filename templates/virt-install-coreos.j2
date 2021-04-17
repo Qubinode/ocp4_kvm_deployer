@@ -1,77 +1,77 @@
-#!/bin/bash
-##
-# Still in development preview
-##
-set -xe
+  #!/bin/bash
+  ##
+  # Still in development preview
+  ##
+  set -xe
 
-{% if use_external_bridge == true %}
-mac_address=$(date +%s | md5sum | head -c 6 | sed -e 's/\([0-9A-Fa-f]\{2\}\)/\1:/g' -e 's/\(.*\):$/\1/' | sed -e 's/^/52:54:00:/')
-{% else %}
-mac_address=$(sudo virsh net-dumpxml {{ libvirt_network_name }} |awk '/host mac/ {print $0}'| awk '/{{ vm_name }}/ {print $2}'|grep -o -E '([[:xdigit:]]{1,2}:){5}[[:xdigit:]]{1,2}')
-{% endif %}
-
-
-project_dir={{ project_dir }}
-kernel={{ coreos_installer_kernel }}
-initrd={{ coreos_installer_initramfs }}
-kernel_file=${project_dir}/rhcos-install/${kernel}
-initrd_file=${project_dir}/rhcos-install/${initrd}
+  {% if use_external_bridge == true %}
+  mac_address=$(date +%s | md5sum | head -c 6 | sed -e 's/\([0-9A-Fa-f]\{2\}\)/\1:/g' -e 's/\(.*\):$/\1/' | sed -e 's/^/52:54:00:/')
+  {% else %}
+  mac_address=$(sudo virsh net-dumpxml {{ libvirt_network_name }} |awk '/host mac/ {print $0}'| awk '/{{ vm_name }}/ {print $2}'|grep -o -E '([[:xdigit:]]{1,2}:){5}[[:xdigit:]]{1,2}')
+  {% endif %}
 
 
-args='nomodeset '
-args+='coreos.inst=yes '
-args+='console=tty0 console=ttyS0 '
-args+='coreos.inst.install_dev=/dev/vda '
-args+='rd.neednet=1 '
-args+='coreos.inst.insecure '
-args+='coreos.inst.ignition_url={{ rhcos_ignition }} '
-args+='coreos.live.rootfs_url={{ coreos_rootfs_url }}  '
-{% if use_external_bridge == true %}
-args+='ip={{ vm_ip }}::{{ ocp4_gateway_ip }}:{{ mask }}:{{ vm_name }}.{{ cluster_name }}.{{ ocp4_cluster_domain }}:ens3:none nameserver={{ dns_server_ip }} '
-{% else %}
-args+='ip={{ vm_ip }}::{{ ocp4_gateway_ip }}:{{ mask }}:{{ vm_name }}.{{ cluster_name }}.{{ ocp4_cluster_domain }}:ens3:none nameserver={{ dns_server_ip }} '
-{% endif %}
+  project_dir={{ project_dir }}
+  kernel={{ coreos_installer_kernel }}
+  initrd={{ coreos_installer_initramfs }}
+  kernel_file=${project_dir}/rhcos-install/${kernel}
+  initrd_file=${project_dir}/rhcos-install/${initrd}
 
-{% if performance_disk %}
-qemu_mode=falloc
-{% else %}
-qemu_mode=metadata
-{% endif %}
 
-# {{ vm_type }} Node
-sudo qemu-img create -f qcow2 -o preallocation=$qemu_mode {{ kvm_host_libvirt_dir }}/{{ vm_name }}-vda.qcow2 {{ hd_size }}
+  args='nomodeset '
+  args+='coreos.inst=yes '
+  args+='console=tty0 console=ttyS0 '
+  args+='coreos.inst.install_dev=/dev/vda '
+  args+='rd.neednet=1 '
+  args+='coreos.inst.insecure '
+  args+='coreos.inst.ignition_url={{ rhcos_ignition }} '
+  args+='coreos.live.rootfs_url={{ coreos_rootfs_url }}  '
+  {% if use_external_bridge == true %}
+  args+='ip={{ vm_ip }}::{{ ocp4_gateway_ip }}:{{ mask }}:{{ vm_name }}.{{ cluster_name }}.{{ ocp4_cluster_domain }}:ens3:none nameserver={{ dns_server_ip }} '
+  {% else %}
+  args+='ip={{ vm_ip }}::{{ ocp4_gateway_ip }}:{{ mask }}:{{ vm_name }}.{{ cluster_name }}.{{ ocp4_cluster_domain }}:ens3:none nameserver={{ dns_server_ip }} '
+  {% endif %}
 
-{%- if configure_openshift_storage == false %}
-{% for item in extra_storage %}
-{%- if item.enable %}
-sudo qemu-img create -f qcow2 -o preallocation=$qemu_mode {{ kvm_host_libvirt_dir }}/{{ vm_name }}-{{ item.name }}.qcow2 {{ item.size }}
+  {% if performance_disk %}
+  qemu_mode=falloc
+  {% else %}
+  qemu_mode=metadata
+  {% endif %}
 
-{% endif %}
-{% endfor %}
-{% elif configure_openshift_storage == true %}
-sudo qemu-img create -f qcow2 -o preallocation=$qemu_mode {{ kvm_host_libvirt_dir }}/{{ vm_name }}-ocsstorage.qcow2 {{ compute_ocs_size }}
+  # {{ vm_type }} Node
+  sudo qemu-img create -f qcow2 -o preallocation=$qemu_mode {{ kvm_host_libvirt_dir }}/{{ vm_name }}-vda.qcow2 {{ hd_size }}
 
-{% endif %}
-
-sudo virt-install \
-  --name {{ vm_name }} \
-  --disk {{ kvm_host_libvirt_dir }}/{{ vm_name }}-vda.qcow2,bus=virtio,format=qcow2 \
-  {%- if configure_openshift_storage == false  %}
+  {%- if configure_openshift_storage == false %}
   {% for item in extra_storage %}
   {%- if item.enable %}
-  --disk {{ kvm_host_libvirt_dir }}/{{ vm_name }}-{{ item.name }}.qcow2,bus=virtio,format=qcow2 \
+    sudo qemu-img create -f qcow2 -o preallocation=$qemu_mode {{ kvm_host_libvirt_dir }}/{{ vm_name }}-{{ item.name }}.qcow2 {{ item.size }}
+
   {% endif %}
   {% endfor %}
   {% elif configure_openshift_storage == true %}
-  --disk {{ kvm_host_libvirt_dir }}/{{ vm_name }}-ocsstorage.qcow2,bus=virtio,format=qcow2 \
+    && sudo qemu-img create -f qcow2 -o preallocation=$qemu_mode {{ kvm_host_libvirt_dir }}/{{ vm_name }}-ocsstorage.qcow2 {{ compute_ocs_size }}G
+
   {% endif %}
-  --memory {{ memory_size }} \
-  --vcpus {{ cpu_size }} \
-  --os-variant {{ os_variant }} \
-  --rng /dev/urandom \
-  {% if use_external_bridge == true %}
-  --network network={{ external_bridge_network }},model=virtio,mac=${mac_address} --noreboot --noautoconsole \
-  {% else %}
-  --network network={{ libvirt_network_name }},model=virtio,mac=${mac_address} --noreboot --noautoconsole \
-  {% endif %}
-  --install kernel=${kernel_file},initrd=${initrd_file},kernel_args_overwrite=yes,kernel_args="${args}"
+
+  sudo virt-install \
+    --name {{ vm_name }} \
+    --disk {{ kvm_host_libvirt_dir }}/{{ vm_name }}-vda.qcow2,bus=virtio,format=qcow2 \
+    {%- if configure_openshift_storage == false  %}
+    {% for item in extra_storage %}
+    {%- if item.enable %}
+    --disk {{ kvm_host_libvirt_dir }}/{{ vm_name }}-{{ item.name }}.qcow2,bus=virtio,format=qcow2 \
+    {% endif %}
+    {% endfor %}
+    {% elif configure_openshift_storage == true %}
+    --disk {{ kvm_host_libvirt_dir }}/{{ vm_name }}-ocsstorage.qcow2,bus=virtio,format=qcow2 \
+    {% endif %}
+    --memory {{ memory_size }} \
+    --vcpus {{ cpu_size }} \
+    --os-variant {{ os_variant }} \
+    --rng /dev/urandom \
+    {% if use_external_bridge == true %}
+    --network network={{ external_bridge_network }},model=virtio,mac=${mac_address} --noreboot --noautoconsole \
+    {% else %}
+    --network network={{ libvirt_network_name }},model=virtio,mac=${mac_address} --noreboot --noautoconsole \
+    {% endif %}
+    --install kernel=${kernel_file},initrd=${initrd_file},kernel_args_overwrite=yes,kernel_args="${args}"
