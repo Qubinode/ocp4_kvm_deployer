@@ -40,21 +40,29 @@ qemu_mode=metadata
 
 # {{ vm_type }} Node
 sudo qemu-img create -f qcow2 -o preallocation=$qemu_mode {{ kvm_host_libvirt_dir }}/{{ vm_name }}-vda.qcow2 {{ hd_size }}
+{%- if configure_openshift_storage == "no" %}
 {% for item in extra_storage %}
 {%- if item.enable %}
 sudo qemu-img create -f qcow2 -o preallocation=$qemu_mode {{ kvm_host_libvirt_dir }}/{{ vm_name }}-{{ item.name }}.qcow2 {{ item.size }}
 {% endif %}
 {% endfor %}
+{% elif configure_openshift_storage == "yes" %}
+sudo qemu-img create -f qcow2 -o preallocation=$qemu_mode {{ kvm_host_libvirt_dir }}/{{ vm_name }}-ocsstorage.qcow2 {{ compute_ocs_size }}
+{% endif %}
 
 sudo virt-install \
   --name {{ vm_name }} \
   --disk {{ kvm_host_libvirt_dir }}/{{ vm_name }}-vda.qcow2,bus=virtio,format=qcow2 \
+  {%- if configure_openshift_storage == "no" %}
   {% for item in extra_storage %}
   {%- if item.enable %}
-    --disk {{ kvm_host_libvirt_dir }}/{{ vm_name }}-{{ item.name }}.qcow2,bus=virtio,format=qcow2 \
+  --disk {{ kvm_host_libvirt_dir }}/{{ vm_name }}-{{ item.name }}.qcow2,bus=virtio,format=qcow2 \
   {% endif %}
   {% endfor %}
-    --memory {{ memory_size }} \
+  {% elif configure_openshift_storage == "yes" %}
+  --disk {{ kvm_host_libvirt_dir }}/{{ vm_name }}-ocsstorage.qcow2,bus=virtio,format=qcow2 \
+  {% endif %}
+  --memory {{ memory_size }} \
   --vcpus {{ cpu_size }} \
   --os-variant {{ os_variant }} \
   --rng /dev/urandom \
