@@ -21,9 +21,9 @@ spec:
     - storageClassName: "localblock-sc"
       volumeMode: Block
       devicePaths:
-      {% if configure_openshift_storage == "yes" %}
+      {% if configure_openshift_storage == true %}
         - /dev/sdb
-      {% elif configure_openshift_storage == "no" %}
+      {% elif configure_openshift_storage == false %}
       {% for fs_disk in localstorage_block_disk %}
         - {{ fs_disk }}
       {% endfor %}
