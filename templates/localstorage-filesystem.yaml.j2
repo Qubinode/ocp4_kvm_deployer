@@ -23,7 +23,7 @@ spec:
       fsType: xfs
       devicePaths:
       {% if configure_openshift_storage == true %}
-        - /dev/sdb
+        - {{ ocs_drive_mount }}
       {% elif configure_openshift_storage == false %}
       {% for fs_disk in localstorage_fs_disk %}
         - {{ fs_disk }}

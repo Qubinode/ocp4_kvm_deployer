@@ -346,6 +346,23 @@ ansible-playbook $PLAYBOOK_NAME -t deploy_nodes
 WIP
 ```
 
+**add worker external worker**
+* update worker count
+```
+compute_count: 3
+```
+
+* remove lb 
+```
+export PLAYBOOK_NAME=playbooks/deploy_ocp4.yml #PLAYBOOK_NAME=rhcos.yml
+ansible-playbook $PLAYBOOK_NAME -t lb --extra-vars "tear_down=true"
+```
+* Add lb
+```
+ansible-playbook $PLAYBOOK_NAME -t idm,containers,lb --extra-vars "tear_down=false"
+```
+
+* boot new node
 
 
 **Configure NFS**

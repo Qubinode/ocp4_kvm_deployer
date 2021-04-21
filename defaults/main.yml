@@ -361,6 +361,7 @@ localstorage_fs_disk:
 
 # Configure OpenShit Storage
 configure_openshift_storage: false
+ocs_drive_mount: /dev/vdb
 
 # Defaults for NFS Provisioner role
 provision_nfs_server: true
