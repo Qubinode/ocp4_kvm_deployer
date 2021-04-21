@@ -75,3 +75,4 @@
     --network network={{ libvirt_network_name }},model=virtio,mac=${mac_address} --noreboot --noautoconsole \
     {% endif %}
     --install kernel=${kernel_file},initrd=${initrd_file},kernel_args_overwrite=yes,kernel_args="${args}"
+
