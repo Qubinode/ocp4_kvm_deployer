@@ -155,3 +155,14 @@
     path: "/home/{{ local_user_account }}/.kube/config"
     state: absent
   tags: [ teardown_deployed_nodes, rebuild_cluster]
+
+- name: remove {{ webserver_directory }}
+  file:
+    path: "{{ webserver_directory }}"
+    state: absent
+
+- name: remove {{ dest_ignitions_web_directory }}
+  file:
+    path: "{{ dest_ignitions_web_directory }}"
+    state: absent
+  tags: [ teardown_deployed_nodes, rebuild_cluster]
