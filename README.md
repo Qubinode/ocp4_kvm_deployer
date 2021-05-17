@@ -405,6 +405,7 @@ curl -OL http://192.168.1.10:8080/pub/4.7/images/rhcos-live-initramfs.x86_64.img
 ```
 
 Example PXE config
+*Double check idm server for ips*
 ```
         MENU BEGIN CoreOS
         MENU TITLE CoreOS
