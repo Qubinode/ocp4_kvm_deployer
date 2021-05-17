@@ -369,6 +369,7 @@ Dependancy roles:
 
 
 **add worker external worker**
+*Requirement: Openshift must be deployed on external network*
 * update worker count
 ```
 vim playbooks/vars/ocp4.yml
