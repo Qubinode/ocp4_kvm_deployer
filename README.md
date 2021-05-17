@@ -345,26 +345,6 @@ ansible-playbook $PLAYBOOK_NAME -t deploy_nodes
 ```
 WIP
 ```
-
-**add worker external worker**
-* update worker count
-```
-compute_count: 3
-```
-
-* remove lb 
-```
-export PLAYBOOK_NAME=playbooks/deploy_ocp4.yml #PLAYBOOK_NAME=rhcos.yml
-ansible-playbook $PLAYBOOK_NAME -t lb --extra-vars "tear_down=true"
-```
-* Add lb
-```
-ansible-playbook $PLAYBOOK_NAME -t idm,containers,lb --extra-vars "tear_down=false"
-```
-
-* boot new node
-
-
 **Configure NFS**
 ```
 ansible-playbook rhcos.yml -t nfs --extra-vars "configure_nfs_storage=true" --extra-vars "bootstrap_complete=true" 
@@ -385,6 +365,74 @@ ansible-playbook rhcos.yml -t ocs --extra-vars "configure_openshift_storage=true
 Dependancy roles:
   - openshift-4-loadbalancer
   - nfs-provisioner-role
+
+
+
+**add worker external worker**
+* update worker count
+```
+vim playbooks/vars/ocp4.yml
+compute_count: 6
+```
+
+* remove lb 
+```
+export PLAYBOOK_NAME=playbooks/deploy_ocp4.yml #PLAYBOOK_NAME=rhcos.yml
+ansible-playbook $PLAYBOOK_NAME -t lb --extra-vars "tear_down=true"
+```
+* Add lb
+```
+ansible-playbook $PLAYBOOK_NAME -t idm,containers,lb --extra-vars "tear_down=false"
+```
+
+Example PXE boot Menu
+
+*If you are using a sepreate pxe server* 
+*Add the kernel and initramfs files to webserver*
+```
+# on qubinode box
+cp rhcos-install/rhcos-live-* /opt/qubinode_webserver/4.7/images/
+sudo chmod 775 -R /opt/qubinode_webserver/4.7/images/
+```
+
+Download  kernel and initramfs to pxe server
+```
+mkdir -p /mnt/data/netboot/boot/amd64/coreos/4.7.7/
+cd /mnt/data/netboot/boot/amd64/coreos/4.7.7/
+
+curl  -OL http://192.168.1.10:8080/pub/4.7/images/rhcos-live-kernel-x86_64
+curl -OL http://192.168.1.10:8080/pub/4.7/images/rhcos-live-initramfs.x86_64.img
+```
+
+Example PXE config
+```
+        MENU BEGIN CoreOS
+        MENU TITLE CoreOS
+            LABEL compute3
+                MENU LABEL ^Computess 3 Install
+                KERNEL ::boot/amd64/coreos/4.7.7/rhcos-live-kernel-x86_64
+                INITRD ::boot/amd64/coreos/4.7.7/rhcos-live-initramfs.x86_64.img
+                APPEND coreos.live.rootfs_url=http://192.168.1.10:8080/pub/4.7/images/rhcos-4.7.7-x86_64-live-rootfs.x86_64.img coreos.inst.install_dev=/dev/sda coreos.inst.ignition_url=http://192.168.1.10:8080/pub/4.7/ignitions/worker.ign ip=192.168.1.88::192.168.1.1:255.255.255.0:qbn-ocp4-compute-3.qub593.cloud.qubinodeexample.com:ens192:none nameserver=192.168.1.150 
+
+            LABEL compute4
+                MENU LABEL ^Compute 4 Install
+                KERNEL ::boot/amd64/coreos/4.7.7/rhcos-live-kernel-x86_64
+                INITRD ::boot/amd64/coreos/4.7.7/rhcos-live-initramfs.x86_64.img
+                APPEND coreos.live.rootfs_url=http://192.168.1.10:8080/pub/4.7/images/rhcos-4.7.7-x86_64-live-rootfs.x86_64.img coreos.inst.install_dev=/dev/sda coreos.inst.ignition_url=http://192.168.1.10:8080/pub/4.7/ignitions/worker.ign ip=192.168.1.89::192.168.1.1:255.255.255.0:qbn-ocp4-compute-4 .qub593.cloud.qubinodeexample.com:ens192:none nameserver=192.168.1.150 
+            
+            LABEL compute5
+                MENU LABEL ^Compute 5 Install
+                KERNEL ::boot/amd64/coreos/4.7.7/rhcos-live-kernel-x86_64
+                INITRD ::boot/amd64/coreos/4.7.7/rhcos-live-initramfs.x86_64.img
+                APPEND coreos.live.rootfs_url=http://192.168.1.10:8080/pub/4.7/images/rhcos-4.7.7-x86_64-live-rootfs.x86_64.img coreos.inst.install_dev=/dev/sda coreos.inst.ignition_url=http://192.168.1.10:8080/pub/4.7/ignitions/worker.ign ip=192.168.1.89::192.168.1.1:255.255.255.0:qbn-ocp4-compute-5 .qub593.cloud.qubinodeexample.com:ens192:none nameserver=192.168.1.150 
+            MENU END
+
+```
+
+
+* boot new node using the pxe server
+
+
 
 To-Do List / Known Limitations
 ------------------------------
