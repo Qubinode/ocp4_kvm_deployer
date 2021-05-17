@@ -367,8 +367,7 @@ Dependancy roles:
   - nfs-provisioner-role
 
 
-
-**add worker external worker**
+### add worker external worker  
 *Requirement: Openshift must be deployed on external network*
 * update worker count
 ```
