@@ -432,6 +432,10 @@ Example PXE config
 
 * boot new node using the pxe server
 * approve csr and wait for node to configure
+```
+watch -n 10 oc get csr
+oc get csr -ojson | jq -r '.items[] | select(.status == {} ) | .metadata.name' | xargs oc adm certificate approve
+```
 
 
 To-Do List / Known Limitations
