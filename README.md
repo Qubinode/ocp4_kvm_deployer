@@ -432,7 +432,7 @@ Example PXE config
 
 
 * boot new node using the pxe server
-
+* approve csr and wait for node to configure
 
 
 To-Do List / Known Limitations
