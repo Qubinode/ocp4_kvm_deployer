@@ -6,15 +6,15 @@
   block:
     - name: Get OpenShift storage operator version
       shell: |
-        {{ oc_descr_pkgsmanifest_cmd }} | grep Name: | grep -v "Display\|storage\|Red Hat" | grep {{ ocp4_openshift_stroage_version }}  | awk '{print $2}'
+        {{ oc_descr_pkgsmanifest_ocs }} | grep Name: | grep -v "Display\|storage\|Red Hat" | grep {{ ocp4_openshift_stroage_version }}  | awk '{print $2}'
       environment:
         KUBECONFIG: "{{ openshift_install_dir }}/auth/kubeconfig"
-      register: operator_version_check
+      register: storage_operator_version_check
       become: no
 
     - name: setting openshift-storage-operator version
       set_fact:
-        operator_version: "{{ operator_version_check.stdout }}"
+        operator_storage_version: "{{ storage_operator_version_check.stdout }}"
 
     - name: Copying over openshift-storage operator template
       template:
