@@ -21,12 +21,12 @@ spec:
     - storageClassName: "localblock-sc"
       volumeMode: Block
       devicePaths:
-      {% if configure_openshift_storage == true %}
+{% if configure_openshift_storage == true %}
         - {{ ocs_drive_mount }}
-      {% elif configure_openshift_storage == false %}
-      {% for fs_disk in localstorage_block_disk %}
+{% elif configure_openshift_storage == false %}
+{% for fs_disk in localstorage_block_disk %}
         - {{ fs_disk }}
-      {% endfor %}
-      {% endif %}
+{% endfor %}
+{% endif %}
 
 
