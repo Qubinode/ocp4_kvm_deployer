@@ -181,16 +181,22 @@
     KUBECONFIG: "{{ openshift_install_dir }}/auth/kubeconfig"
   when: not delete_deployment|bool
 
-
-- name: Remove to the openshift-storage Subscription
-  command: "/usr/local/bin/oc delete csv {{ cluster_version }} -n openshift-storage"
+- name: Change ManagementState Image Registry Operator configuration from Removed to Managed.
+  command: "/usr/local/bin/oc patch configs.imageregistry.operator.openshift.io cluster --type merge --patch '{\"spec\":{\"managementState\": \"Managed\"}}'"
   environment:
     KUBECONFIG: "{{ openshift_install_dir }}/auth/kubeconfig"
-  when: delete_deployment|bool
-  ignore_errors: yes
-  tags: [ ocs ]
+  when: not delete_deployment|bool
 
-- name: Remove stoage pvc entry from configs.imageregistry.operator.openshift.io
+
+- name: Change ManagementState Image Registry Operator configuration from Managed to Removed.
+  command: "/usr/local/bin/oc patch configs.imageregistry.operator.openshift.io cluster --type merge --patch '{\"spec\":{\"managementState\": \"Removed\"}}'"
+  register: storage_class_result
+  environment:
+   KUBECONFIG: "{{ openshift_install_dir }}/auth/kubeconfig"
+  ignore_errors: yes
+  when: delete_deployment|bool
+
+- name: Remove storage pvc entry from configs.imageregistry.operator.openshift.io
   command: "/usr/local/bin/oc patch configs.imageregistry.operator.openshift.io cluster --type json  -p '[{ \"op\": \"remove\", \"path\": \"/spec/storage/pvc\" }]'"
   environment:
     KUBECONFIG: "{{ openshift_install_dir }}/auth/kubeconfig"
@@ -204,6 +210,14 @@
   when: delete_deployment|bool
   tags: [ ocs ]
 
+- name: Remove to the openshift-storage Subscription
+  command: "/usr/local/bin/oc delete csv {{ cluster_version }} -n openshift-storage"
+  environment:
+    KUBECONFIG: "{{ openshift_install_dir }}/auth/kubeconfig"
+  when: delete_deployment|bool
+  ignore_errors: yes
+  tags: [ ocs ]
+  
 - name: Remove to the openshift-storage Subscription
   command: "/usr/local/bin/oc delete -f {{ openshift_install_dir }}/openshift-storage-operator.yaml"
   environment:
