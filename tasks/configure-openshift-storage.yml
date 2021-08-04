@@ -16,6 +16,18 @@
       set_fact:
         operator_storage_version: "{{ storage_operator_version_check.stdout }}"
 
+    - name: Get OpenShift storage operator version check
+      shell: |
+        {{ oc_descr_pkgsmanifest_ocs }}  | grep Version: | grep {{ ocp4_openshift_stroage_version }}  | awk '{print $2}'
+      environment:
+        KUBECONFIG: "{{ openshift_install_dir }}/auth/kubeconfig"
+      register: starting_csv_check
+      become: no
+
+    - name: setting openshift-storage-operator version
+      set_fact:
+        starting_csv: "{{ starting_csv_check.stdout }}"
+
     - name: Copying over openshift-storage operator template
       template:
         src: templates/openshift-storage-operator.yaml.j2
@@ -68,7 +80,7 @@
 
 - name: setting openshift-storage-operator version
   set_fact:
-    cluster_version: "{{ csv_check.stdout }}"
+    storage_version: "{{ csv_check.stdout }}"
 
 - name: list all libvirt vms
   virt:

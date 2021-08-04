@@ -22,10 +22,10 @@ metadata:
   name: ocs-subscription
   namespace: openshift-storage
 spec:
-  channel: stable-4.7
+  channel: "{{ operator_storage_version }}"
   config:
     resources: {}
   name: ocs-operator
   source: redhat-operators
   sourceNamespace: openshift-marketplace
-  startingCSV: ocs-operator.v4.7.0
+  startingCSV: "ocs-operator.v{{ starting_csv }}"
