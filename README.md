@@ -362,6 +362,11 @@ ansible-playbook rhcos.yml -t localstorage  --extra-vars "bootstrap_complete=tru
 ```
 ansible-playbook rhcos.yml -t ocs --extra-vars "configure_openshift_storage=true"  --extra-vars "bootstrap_complete=true" 
 ```
+**Remove OCS**
+```
+ ansible-playbook $PLAYBOOK_NAME   -t ocs --extra-vars "configure_openshift_storage=true"  --extra-vars "bootstrap_complete=true" --extra-vars "delete_deployment=true" 
+ ```
+
 Dependancy roles:
   - openshift-4-loadbalancer
   - nfs-provisioner-role
