@@ -158,6 +158,7 @@
   register: set_default_storage_class_result
   environment:
     KUBECONFIG: "{{ openshift_install_dir }}/auth/kubeconfig"
+  ignore_errors: yes
   when: not delete_deployment|bool
 
 - name: Copying over ocs-registry-pvc template
