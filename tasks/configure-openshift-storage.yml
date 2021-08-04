@@ -204,7 +204,7 @@
   when: delete_deployment|bool
   
 - name: Remove ocs-registry-pvc
-  command: "/usr/local/bin/oc apply -f {{ openshift_install_dir }}/ocs-registry-pvc.yaml"
+  command: "/usr/local/bin/oc delete -f {{ openshift_install_dir }}/ocs-registry-pvc.yaml"
   environment:
     KUBECONFIG: "{{ openshift_install_dir }}/auth/kubeconfig"
   when: delete_deployment|bool
@@ -217,7 +217,7 @@
   when: delete_deployment|bool
   ignore_errors: yes
   tags: [ ocs ]
-  
+
 - name: Remove to the openshift-storage Subscription
   command: "/usr/local/bin/oc delete -f {{ openshift_install_dir }}/openshift-storage-operator.yaml"
   environment:
