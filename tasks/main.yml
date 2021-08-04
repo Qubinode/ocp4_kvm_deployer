@@ -77,6 +77,7 @@
 
     - name: Setup OpenShift Registry with NFS storage provisioner
       import_tasks: openshift_registry.yml
+      when: configure_openshift_storage|not bool
       tags: configure_registry
 
     - name: Configure LocalStorage Class

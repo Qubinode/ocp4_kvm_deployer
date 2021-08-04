@@ -150,13 +150,46 @@
     KUBECONFIG: "{{ openshift_install_dir }}/auth/kubeconfig"
   when: not delete_deployment|bool
 
-
 - name: Remove to the openshift-storage Subscription
   command: "/usr/local/bin/oc delete csv {{ cluster_version }} -n openshift-storage"
   environment:
     KUBECONFIG: "{{ openshift_install_dir }}/auth/kubeconfig"
   when: delete_deployment|bool
   ignore_errors: yes
+  tags: [ ocs ]
+
+  - name: Copying over ocs-registry-pvc template
+    template:
+      src: templates/ocs-registry-pvc.yaml.j2
+      dest:  "{{ openshift_install_dir }}/ocs-registry-pvc.yaml"
+      owner: "{{ admin_user }}"
+      group: "{{ admin_user }}"
+      mode: 0666
+
+  - name: Create ocs-registry-pvc
+    command: "/usr/local/bin/oc apply -f {{ openshift_install_dir }}/ocs-registry-pvc.yaml"
+    environment:
+      KUBECONFIG: "{{ openshift_install_dir }}/auth/kubeconfig"
+    when: not delete_deployment|bool
+  
+  - name: Configuring registry storage
+    command: "/usr/local/bin/oc patch configs.imageregistry.operator.openshift.io cluster --type merge --patch '{\"spec\":{\"storage\": {\"pvc\": {\"claim\": \"ocs4registry\"}}}}'"
+    environment:
+      KUBECONFIG: "{{ openshift_install_dir }}/auth/kubeconfig"
+    when: not delete_deployment|bool
+
+- name: Remove stoage pvc entry from configs.imageregistry.operator.openshift.io
+  command: "/usr/local/bin/oc patch configs.imageregistry.operator.openshift.io cluster --type json  -p '[{ \"op\": \"remove\", \"path\": \"/spec/storage/pvc\" }]'"
+  environment:
+    KUBECONFIG: "{{ openshift_install_dir }}/auth/kubeconfig"
+  ignore_errors: yes
+  when: delete_deployment|bool
+  
+- name: Remove ocs-registry-pvc
+  command: "/usr/local/bin/oc apply -f {{ openshift_install_dir }}/ocs-registry-pvc.yaml"
+  environment:
+    KUBECONFIG: "{{ openshift_install_dir }}/auth/kubeconfig"
+  when: delete_deployment|bool
   tags: [ ocs ]
 
 - name: Remove to the openshift-storage Subscription
