@@ -111,6 +111,7 @@
   tags: [ deploy_nodes, rhcos, bootstrap, add_workers, node_profile ]
 
 - name: INFRASTRUCTURE SETUP - Run virt-install to create all RHCOS cluster nodes
+  when: vm_name not in all_vms.list_vms
   vars:
     vm_name: "{{ item }}"
   shell: "{{ virtinstall_dir }}/{{ vm_name }}.sh"
