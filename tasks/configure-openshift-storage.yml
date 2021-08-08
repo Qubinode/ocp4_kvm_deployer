@@ -6,15 +6,27 @@
   block:
     - name: Get OpenShift storage operator version
       shell: |
-        {{ oc_descr_pkgsmanifest_cmd }} | grep Name: | grep -v "Display\|storage\|Red Hat" | grep {{ ocp4_openshift_stroage_version }}  | awk '{print $2}'
+        {{ oc_descr_pkgsmanifest_ocs }} | grep Name: | grep -v "Display\|storage\|Red Hat" | grep {{ ocp4_openshift_stroage_version }}  | awk '{print $2}'
       environment:
         KUBECONFIG: "{{ openshift_install_dir }}/auth/kubeconfig"
-      register: operator_version_check
+      register: storage_operator_version_check
       become: no
 
     - name: setting openshift-storage-operator version
       set_fact:
-        operator_version: "{{ operator_version_check.stdout }}"
+        operator_storage_version: "{{ storage_operator_version_check.stdout }}"
+
+    - name: Get OpenShift storage operator version check
+      shell: |
+        {{ oc_descr_pkgsmanifest_ocs }}  | grep Version: | grep {{ ocp4_openshift_stroage_version }}  | awk '{print $2}'
+      environment:
+        KUBECONFIG: "{{ openshift_install_dir }}/auth/kubeconfig"
+      register: starting_csv_check
+      become: no
+
+    - name: setting openshift-storage-operator version
+      set_fact:
+        starting_csv: "{{ starting_csv_check.stdout }}"
 
     - name: Copying over openshift-storage operator template
       template:
@@ -68,7 +80,7 @@
 
 - name: setting openshift-storage-operator version
   set_fact:
-    cluster_version: "{{ csv_check.stdout }}"
+    storage_version: "{{ csv_check.stdout }}"
 
 - name: list all libvirt vms
   virt:
@@ -104,6 +116,17 @@
   ignore_errors: yes
   tags: [ ocs ]
 
+- name: Get OpenShift storage operator version check
+  shell: |
+    {{ oc_descr_pkgsmanifest_ocs }}  | grep Version: | grep {{ ocp4_openshift_stroage_version }}  | awk '{print $2}'
+  environment:
+    KUBECONFIG: "{{ openshift_install_dir }}/auth/kubeconfig"
+  register: starting_csv_check
+  become: no
+
+- name: setting openshift-storage-operator version
+  set_fact:
+    starting_csv: "{{ starting_csv_check.stdout }}"
 
 - name: Copying over openshift-storage operator template
   template:
@@ -130,14 +153,62 @@
   retries: 100
   delay: 15
 
-
 - name: Set  Openshift Storage class as default
   command: "/usr/local/bin/oc annotate storageclass {{ osc_storage_class_name }} storageclass.kubernetes.io/is-default-class='{{ set_default_ocs_storage_class }}'"
   register: set_default_storage_class_result
   environment:
     KUBECONFIG: "{{ openshift_install_dir }}/auth/kubeconfig"
+  ignore_errors: yes
   when: not delete_deployment|bool
 
+- name: Copying over ocs-registry-pvc template
+  template:
+    src: templates/ocs-registry-pvc.yaml.j2
+    dest:  "{{ openshift_install_dir }}/ocs-registry-pvc.yaml"
+    owner: "{{ admin_user }}"
+    group: "{{ admin_user }}"
+    mode: 0666
+
+- name: Create ocs-registry-pvc
+  command: "/usr/local/bin/oc apply -f {{ openshift_install_dir }}/ocs-registry-pvc.yaml"
+  environment:
+    KUBECONFIG: "{{ openshift_install_dir }}/auth/kubeconfig"
+  when: not delete_deployment|bool
+
+- name: Configuring registry storage
+  command: "/usr/local/bin/oc patch configs.imageregistry.operator.openshift.io cluster --type merge --patch '{\"spec\":{\"storage\": {\"pvc\": {\"claim\": \"ocs4registry\"}}}}'"
+  environment:
+    KUBECONFIG: "{{ openshift_install_dir }}/auth/kubeconfig"
+  when: not delete_deployment|bool
+
+- name: Change ManagementState Image Registry Operator configuration from Removed to Managed.
+  command: "/usr/local/bin/oc patch configs.imageregistry.operator.openshift.io cluster --type merge --patch '{\"spec\":{\"managementState\": \"Managed\"}}'"
+  environment:
+    KUBECONFIG: "{{ openshift_install_dir }}/auth/kubeconfig"
+  when: not delete_deployment|bool
+
+
+- name: Change ManagementState Image Registry Operator configuration from Managed to Removed.
+  command: "/usr/local/bin/oc patch configs.imageregistry.operator.openshift.io cluster --type merge --patch '{\"spec\":{\"managementState\": \"Removed\"}}'"
+  register: storage_class_result
+  environment:
+   KUBECONFIG: "{{ openshift_install_dir }}/auth/kubeconfig"
+  ignore_errors: yes
+  when: delete_deployment|bool
+
+- name: Remove storage pvc entry from configs.imageregistry.operator.openshift.io
+  command: "/usr/local/bin/oc patch configs.imageregistry.operator.openshift.io cluster --type json  -p '[{ \"op\": \"remove\", \"path\": \"/spec/storage/pvc\" }]'"
+  environment:
+    KUBECONFIG: "{{ openshift_install_dir }}/auth/kubeconfig"
+  ignore_errors: yes
+  when: delete_deployment|bool
+  
+- name: Remove ocs-registry-pvc
+  command: "/usr/local/bin/oc delete -f {{ openshift_install_dir }}/ocs-registry-pvc.yaml"
+  environment:
+    KUBECONFIG: "{{ openshift_install_dir }}/auth/kubeconfig"
+  when: delete_deployment|bool
+  tags: [ ocs ]
 
 - name: Remove to the openshift-storage Subscription
   command: "/usr/local/bin/oc delete csv {{ cluster_version }} -n openshift-storage"

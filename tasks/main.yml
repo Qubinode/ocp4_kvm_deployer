@@ -75,9 +75,10 @@
             - smoketest-verify
       tags: [verify-cluster, complete_install]   
 
-    #- name: Setup OpenShift Registry with NFS storage provisioner
-    #  import_tasks: openshift_registry.yml
-    #  tags: configure_registry
+    - name: Setup OpenShift Registry with NFS storage provisioner
+      import_tasks: openshift_registry.yml
+      when: not configure_openshift_storage| bool
+      tags: configure_registry
 
     - name: Configure LocalStorage Class
       import_tasks: configure-local-storage.yml
