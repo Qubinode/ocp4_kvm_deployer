@@ -227,6 +227,8 @@ libivrt_network_domain: compute.local
 pull_secret_request: https://cloud.redhat.com/openshift/install/metal/user-provisioned
 compute_local_storage: no
 
+## Interface all nodes will have
+node_primary_nic: enp1s0
 ocp4_instances:
   - name: ctrlplane
     hd_size: 120G
