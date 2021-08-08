@@ -108,7 +108,6 @@ ocp_install_cmd: /usr/local/bin/openshift-install
 ocp_client_cmd: /usr/local/bin/oc
 tools_missing: false
 
-webserver_directory: /opt/qubinode_webserver
 
 # OpenShift Dependencies
 #coreos_installer_kernel: "rhcos-{{ major_version }}-x86_64-live-kernel-x86_64"
@@ -215,7 +214,8 @@ rhcos_ignition_url: "http://{{ bootstrap_webserver_ip }}:8080/pub/{{ ocp4_depend
 rhcos_ignition: "{{ rhcos_ignition_url}}/{{ vm_type }}.ign"
 coreos_rootfs: "rhcos-live-rootfs.x86_64.img"
 rhcos_qcow_image: "rhcos-qemu.x86_64.qcow2.gz"
-
+webserver_directory: /opt/qubinode_webserver
+webserver_images: "{{ webserver_directory }}/{{ ocp4_dependencies_version }}/images"
 
 ## hostname for RHCOS cluster nodes
 hostname_prefix: "{{ instance_prefix }}-ocp4"
