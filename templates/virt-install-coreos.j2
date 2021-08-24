@@ -25,7 +25,6 @@
   args+='coreos.inst.insecure '
   args+='coreos.inst.ignition_url={{ rhcos_ignition }} '
   args+='coreos.live.rootfs_url={{ coreos_rootfs_url }}  '
-  args+="ifname={{ node_primary_nic }}:${mac_address} "
   {% if use_external_bridge == true %}
   args+='ip={{ vm_ip }}::{{ ocp4_gateway_ip }}:{{ mask }}:{{ vm_name }}.{{ cluster_name }}.{{ ocp4_cluster_domain }}:{{ node_primary_nic }}:none nameserver={{ dns_server_ip }} '
   {% else %}
