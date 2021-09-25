@@ -1,0 +1,66 @@
+apiVersion: ocs.openshift.io/v1
+kind: StorageCluster
+metadata:
+  annotations:
+    cluster.ocs.openshift.io/local-devices: 'true'
+    uninstall.ocs.openshift.io/cleanup-policy: delete
+    uninstall.ocs.openshift.io/mode: graceful
+  name: ocs-storagecluster
+  namespace: openshift-storage
+  finalizers:
+    - storagecluster.ocs.openshift.io
+spec:
+  storageDeviceSets:
+    - config: {}
+      count: {{ compute_count }}
+      dataPVCTemplate:
+        metadata: {}
+        spec:
+          accessModes:
+            - ReadWriteOnce
+          resources:
+            requests:
+              storage: '1'
+          storageClassName: localblock-sc
+          volumeMode: Block
+        status: {}
+      name: ocs-deviceset-localblock-sc
+      placement: {}
+      preparePlacement: {}
+      replica: 1
+      resources:
+        limits:
+          cpu: '2'
+          memory: 5Gi
+        requests:
+          cpu: '1'
+          memory: 5Gi
+  encryption:
+    kms: {}
+  monDataDirHostPath: /var/lib/rook
+  resources:
+    mds:
+      limits:
+        cpu: '3'
+        memory: 8Gi
+      requests:
+        cpu: '1'
+        memory: 8Gi
+    rgw:
+      limits:
+        cpu: '2'
+        memory: 4Gi
+      requests:
+        cpu: '1'
+        memory: 4Gi
+  managedResources:
+    cephBlockPools: {}
+    cephConfig: {}
+    cephDashboard: {}
+    cephFilesystems: {}
+    cephObjectStoreUsers: {}
+    cephObjectStores: {}
+  arbiter: {}
+  nodeTopologies: {}
+  externalStorage: {}
+  flexibleScaling: true
