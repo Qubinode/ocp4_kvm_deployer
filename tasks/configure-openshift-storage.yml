@@ -128,6 +128,18 @@
   set_fact:
     starting_csv: "{{ starting_csv_check.stdout }}"
 
+- name: Get OpenShift storage containerImage check
+  shell: |
+    {{ oc_descr_pkgmanifest_ocs }} -oyaml | grep containerImage | grep "{{ ocp4_ystream_release }}" | awk '{print $2}' | tr ":" " " | awk '{print $2}'
+  environment:
+    KUBECONFIG: "{{ openshift_install_dir }}/auth/kubeconfig"
+  register: containerImage_check
+  become: no
+
+- name: setting containerImage version
+  set_fact:
+    containerImage: "{{ containerImage_check.stdout }}"
+
 - name: Copying over openshift-storage operator template
   template:
     src: templates/ocs-storage.yaml.j2
@@ -135,12 +147,30 @@
     owner: "{{ admin_user }}"
     group: "{{ admin_user }}"
     mode: 0666
+  when:     
+    - "containerImage  != '4.8.0'"
+
+- name: Create and Subscribe to the openshift-storage Catalog
+  command: "/usr/local/bin/oc apply -f {{ openshift_install_dir }}/ocs-storage.yaml"
+  environment:
+    KUBECONFIG: "{{ openshift_install_dir }}/auth/kubeconfig"
+  when: "not delete_deployment|bool and containerImage != '4.8.0'"
+
+- name: Copying over openshift-storage operator template
+  template:
+    src: templates/ocs-storage-int.yaml.j2
+    dest:  "{{ openshift_install_dir }}/ocs-storage.yaml"
+    owner: "{{ admin_user }}"
+    group: "{{ admin_user }}"
+    mode: 0666
+  when: "not delete_deployment|bool and containerImage == '4.8.0'"
 
 - name: Create and Subscribe to the openshift-storage Catalog
   command: "/usr/local/bin/oc apply -f {{ openshift_install_dir }}/ocs-storage.yaml"
   environment:
     KUBECONFIG: "{{ openshift_install_dir }}/auth/kubeconfig"
   when: not delete_deployment|bool
+  when: "not delete_deployment|bool and  containerImage == '4.8.0'"
 
 - name: Waiting for  openshift-storage to be in Ready State
   shell: |
@@ -207,6 +237,7 @@
   command: "/usr/local/bin/oc delete -f {{ openshift_install_dir }}/ocs-registry-pvc.yaml"
   environment:
     KUBECONFIG: "{{ openshift_install_dir }}/auth/kubeconfig"
+  ignore_errors: yes
   when: delete_deployment|bool
   tags: [ ocs ]
 
