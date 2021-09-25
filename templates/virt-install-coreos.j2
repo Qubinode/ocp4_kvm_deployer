@@ -10,7 +10,6 @@
   mac_address=$(sudo virsh net-dumpxml {{ libvirt_network_name }} |awk '/host mac/ {print $0}'| awk '/{{ vm_name }}/ {print $2}'|grep -o -E '([[:xdigit:]]{1,2}:){5}[[:xdigit:]]{1,2}')
   {% endif %}
 
-
   project_dir={{ project_dir }}
   kernel={{ coreos_installer_kernel }}
   initrd={{ coreos_installer_initramfs }}
@@ -26,10 +25,11 @@
   args+='coreos.inst.insecure '
   args+='coreos.inst.ignition_url={{ rhcos_ignition }} '
   args+='coreos.live.rootfs_url={{ coreos_rootfs_url }}  '
+  args+="ifname={{ node_primary_nic }}:${mac_address} "
   {% if use_external_bridge == true %}
-  args+='ip={{ vm_ip }}::{{ ocp4_gateway_ip }}:{{ mask }}:{{ vm_name }}.{{ cluster_name }}.{{ ocp4_cluster_domain }}:ens3:none nameserver={{ dns_server_ip }} '
+  args+='ip={{ vm_ip }}::{{ ocp4_gateway_ip }}:{{ mask }}:{{ vm_name }}.{{ cluster_name }}.{{ ocp4_cluster_domain }}:{{ node_primary_nic }}:none nameserver={{ dns_server_ip }} '
   {% else %}
-  args+='ip={{ vm_ip }}::{{ ocp4_gateway_ip }}:{{ mask }}:{{ vm_name }}.{{ cluster_name }}.{{ ocp4_cluster_domain }}:ens3:none nameserver={{ dns_server_ip }} '
+  args+='ip={{ vm_ip }}::{{ ocp4_gateway_ip }}:{{ mask }}:{{ vm_name }}.{{ cluster_name }}.{{ ocp4_cluster_domain }}:{{ node_primary_nic }}:none nameserver={{ dns_server_ip }} '
   {% endif %}
 
   {% if performance_disk %}

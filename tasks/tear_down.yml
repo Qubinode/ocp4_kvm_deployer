@@ -92,9 +92,7 @@
 - name: destroy ocp4 node
   vars:
     vm_name: "{{ item }}"
-  virt:
-    name: "{{ vm_name }}"
-    command: undefine
+  command: virsh undefine --remove-all-storage {{ vm_name }}
   when: vm_name in all_vms.list_vms
   loop: "{{ ocp4_nodes }}"
   delay: 10
