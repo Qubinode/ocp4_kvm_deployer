@@ -142,35 +142,17 @@
 
 - name: Copying over openshift-storage operator template
   template:
-    src: templates/ocs-storage.yaml.j2
-    dest:  "{{ openshift_install_dir }}/ocs-storage.yaml"
-    owner: "{{ admin_user }}"
-    group: "{{ admin_user }}"
-    mode: 0666
-  when:     
-    - "containerImage  != '4.8.0'"
-
-- name: Create and Subscribe to the openshift-storage Catalog
-  command: "/usr/local/bin/oc apply -f {{ openshift_install_dir }}/ocs-storage.yaml"
-  environment:
-    KUBECONFIG: "{{ openshift_install_dir }}/auth/kubeconfig"
-  when: "not delete_deployment|bool and containerImage != '4.8.0'"
-
-- name: Copying over openshift-storage operator template
-  template:
     src: templates/ocs-storage-int.yaml.j2
     dest:  "{{ openshift_install_dir }}/ocs-storage.yaml"
     owner: "{{ admin_user }}"
     group: "{{ admin_user }}"
     mode: 0666
-  when: "not delete_deployment|bool and containerImage == '4.8.0'"
 
 - name: Create and Subscribe to the openshift-storage Catalog
   command: "/usr/local/bin/oc apply -f {{ openshift_install_dir }}/ocs-storage.yaml"
   environment:
     KUBECONFIG: "{{ openshift_install_dir }}/auth/kubeconfig"
   when: not delete_deployment|bool
-  when: "not delete_deployment|bool and  containerImage == '4.8.0'"
 
 - name: Waiting for  openshift-storage to be in Ready State
   shell: |
