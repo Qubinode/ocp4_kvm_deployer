@@ -1,6 +1,6 @@
 ---
-- name: does the local-storage namespace exist
-  shell: /usr/local/bin/oc get all -n local-storage
+- name: does the openshift-local-storage namespace exist
+  shell: /usr/local/bin/oc get all -n "{{ localstorage_namespace }}"
   register: local_storage_namespace
   ignore_errors: yes
   changed_when: False
@@ -8,7 +8,7 @@
     KUBECONFIG: "{{ openshift_install_dir }}/auth/kubeconfig"
 
 - name: check for the local storage operator pods
-  shell: /usr/local/bin/oc -n local-storage get pods|grep Running
+  shell: /usr/local/bin/oc -n "{{ localstorage_namespace }}" get pods|grep Running
   register: local_storage_operator_pods
   ignore_errors: yes
   changed_when: False
@@ -16,7 +16,7 @@
     KUBECONFIG: "{{ openshift_install_dir }}/auth/kubeconfig"
 
 - name: check if the local storage operator is available
-  shell: /usr/local/bin/oc get csvs -n local-storage| grep Succeeded
+  shell: /usr/local/bin/oc get csvs -n "{{ localstorage_namespace }}" | grep Succeeded
   register: local_storage_operator_status
   ignore_errors: yes
   changed_when: False
@@ -47,15 +47,15 @@
   environment:
     KUBECONFIG: "{{ openshift_install_dir }}/auth/kubeconfig"
 
-- name: set the status of the local-storage namespace
+- name: set the status of the openshift-local-storage namespace
   set_fact:
     namespace_exist: "{{ false if 'No resources found' in local_storage_namespace.stderr else true }}"
 
-- name: set the status of the local-storage pods
+- name: set the status of the openshift-local-storage pods
   set_fact:
     local_storage_operator_pods_exist: "{{ true if local_storage_operator_pods.rc == 0 else false }}"
 
-- name: set the status of the local-storage operator
+- name: set the status of the openshift-local-storage operator
   set_fact:
     local_storage_operator_exist: "{{ true if local_storage_operator_status.rc == 0 else false }}"
 

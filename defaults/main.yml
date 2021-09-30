@@ -91,16 +91,23 @@ pull_secret: /home/{{ admin_user }}/qubinode-installer/pull-secret.txt
 
 # OCP release info
 ocp4_okd4: ocp4
-ocp4_release: 4.7.0
+ocp4_ystream_release: 4.8
+ocp4_release: 4.8.3
+ocp4_image: 4.8.3
+ocp4_image_version: "{{ ocp4_image }}"
+ocp4_dependencies_version: "{{ ocp4_ystream_release }}"
+ocp4_openshift_stroage_version: "{{ ocp4_ystream_release }}"
+ocp4_client_version: 4.8.3
 ocp4_release_dir: "{{ ocp4_release }}"
 ocp4_release_url: "https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest"
 
 openshift_install_folder: ocp4
 ocp4_client: "openshift-client-linux.tar.gz"
 ocp4_installer: "openshift-install-linux.tar.gz"
+ocp_install_cmd: /usr/local/bin/openshift-install
+ocp_client_cmd: /usr/local/bin/oc
 tools_missing: false
 
-webserver_directory: /opt/qubinode_webserver
 
 # OpenShift Dependencies
 #coreos_installer_kernel: "rhcos-{{ major_version }}-x86_64-live-kernel-x86_64"
@@ -159,6 +166,14 @@ configure_nfs_storage: yes
 
 # deploy OCS persistent storage
 configure_ocs_storage: yes
+# Set Default storage class for OCS
+# Options below 
+# ocs-storagecluster-ceph-rbd
+# ocs-storagecluster-ceph-rgw
+# ocs-storagecluster-cephfs
+# openshift-storage.noobaa.io
+set_default_ocs_storage_class: 'true' 
+osc_storage_class_name: ocs-storagecluster-ceph-rbd
 
 ## Default user kubeconfig directory
 USER_KUBECONFIG_DIR: /home/{{ local_user_account  }}/.kube
@@ -193,13 +208,14 @@ dns_domain: lab.example
 dns_server_ip: 192.168.8.10
 
 bootstrap_webserver_ip: "{{ kvm_host_ip }}"
-ocp4_image_version: 4.7.0
-ocp4_dependencies_version: 4.7.0
+#ocp4_image_version: 4.7.0
+#ocp4_dependencies_version: 4.7.0
 rhcos_ignition_url: "http://{{ bootstrap_webserver_ip }}:8080/pub/{{ ocp4_dependencies_version }}/ignitions"
 rhcos_ignition: "{{ rhcos_ignition_url}}/{{ vm_type }}.ign"
 coreos_rootfs: "rhcos-live-rootfs.x86_64.img"
 rhcos_qcow_image: "rhcos-qemu.x86_64.qcow2.gz"
-
+webserver_directory: /opt/qubinode_webserver
+webserver_images: "{{ webserver_directory }}/{{ ocp4_dependencies_version }}/images"
 
 ## hostname for RHCOS cluster nodes
 hostname_prefix: "{{ instance_prefix }}-ocp4"
@@ -211,18 +227,23 @@ libivrt_network_domain: compute.local
 pull_secret_request: https://cloud.redhat.com/openshift/install/metal/user-provisioned
 compute_local_storage: no
 
+## Interface all nodes will have
+node_primary_nic: enp1s0
 ocp4_instances:
   - name: ctrlplane
     hd_size: 120G
     memory_size: 16192
     cpu_size: 4
     extra_storage:
-      - size: 10G
-        enable: true
-        name: vdb
-      - size: 50G
-        enable: true
-        name: vdc
+    - size: "{{ compute_vdb_size }}G"
+      name: vdb
+      enable: "{{ compute_local_storage }}"
+    - size: "{{ compute_vdx_size }}G"
+      name: vdc
+      enable: "{{ compute_local_storage }}"
+    - size: "{{ compute_vdx_size }}G"
+      name: vdd
+      enable: "{{ compute_local_storage }}"
     qty: "{{ ctrlplane_count }}"
     vm_type: ctrlplane
     ip_octet: "{{ ctrlplane_ip_octet }}"
@@ -309,7 +330,8 @@ rhcos_user: core
 cluster_install_status: no
 
 # localstorage
-localstorage_version: '4.6'
+localstorage_namespace: openshift-local-storage
+localstorage_version: "{{ ocp4_ystream_release }}"
 localstorage_filesystem: true
 localstorage_block: false
 localstorage_block_disk: 
@@ -323,6 +345,10 @@ localstorage_block_disk:
   - /dev/vdj
   - /dev/vdk
   - /dev/vdl
+localstorage_ctrl_fs_disk:
+  - /dev/vdb
+  - /dev/vdc
+  - /dev/vdd
 localstorage_fs_disk: 
   - /dev/vdc
   - /dev/vdd
@@ -334,6 +360,10 @@ localstorage_fs_disk:
   - /dev/vdj
   - /dev/vdk
   - /dev/vdl
+
+# Configure OpenShit Storage
+configure_openshift_storage: false
+ocs_drive_mount: /dev/vdb
 
 # Defaults for NFS Provisioner role
 provision_nfs_server: true

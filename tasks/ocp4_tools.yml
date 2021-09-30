@@ -1,97 +1,97 @@
 ---
-- name: check if /usr/local/bin/oc exists
-  stat:
-    path: /usr/local/bin/oc
-  register: oc_client_cmd
-  tags: [ setup, tools, client, ignitions ]
+- name: Set openshift client tools vars
+  set_fact:
+    ocp_install_cmd: /usr/local/bin/openshift-install
+    ocp_client_cmd: /usr/local/bin/oc
+    oc_version_match: no
+    download_ocp_tools: no
 
-- name: check if /usr/local/bin/openshift-install exists
+- name: Check if {{ ocp_install_cmd }} exists
   stat:
-    path: /usr/local/bin/openshift-install
+    path: "{{ ocp_install_cmd }}"
   register: openshift_install_cmd
   tags: [ setup, tools, client, ignitions ]
 
-- name: check for the version of oc client
-  command: /usr/local/bin/oc version | grep "{{ ocp4_release }}"
-  register: oc_client_version
-  changed_when: false
+- name: Ensure the current {{ ocp_install_cmd }} version is {{ ocp4_client_version }}
+  when: openshift_install_cmd.stat.exists
   tags: [ setup, tools, client, ignitions ]
-  ignore_errors: yes
+  block:
+    - name: Get the current version of {{ ocp_install_cmd }}
+      shell: "{{ ocp_install_cmd }} version | awk '/install/ {print $2}'"
+      register: ocp_install_cmd_version
+      changed_when: false
+      ignore_errors: yes
+  
+    - name: Declare the current version of openshift-install
+      vars:
+        requested_version: "{{ ocp4_client_version }}"
+        current_oc_version: "{{ ocp_install_cmd_version.stdout }}"
+      set_fact:
+        oc_version_match: yes
+      when: current_oc_version == requested_version
+      
+- name: check if {{ ocp_client_cmd }} exists
+  stat:
+    path: "{{ ocp_client_cmd }}"
+  register: oc_client_cmd
+  tags: [ setup, tools, client, ignitions ]
 
-- name: Set tools are missing variable
-  vars:
-    current_version: "Client Version: {{ ocp4_release }}"
+- name: Enable downloading the oc and openshift-install cmds
   set_fact:
-    tools_missing: true
-  tags: [ setup, tools, client, ignitions ]
-  when: not oc_client_cmd.stat.exists or not oc_client_cmd.stat.exists
+    download_ocp_tools: yes
+  when: >
+    not oc_version_match|bool or
+    not openshift_install_cmd.stat.exists
 
-- name: Check if OpenShift version match
-  vars:
-    current_version: "Client Version: {{ ocp4_release }}"
-    current_oc_version: "{{ oc_client_version.stdout }}|bool"
-    declared_oc_version: "{{ current_version }}|bool"
-  set_fact:
-    oc_version_match: "{{ true if current_oc_version|bool is version(declared_oc_version|bool, '>=') else false }}"
-  tags: [ setup, tools, client, ignitions ]
-  when:  oc_client_cmd.stat.exists and oc_client_cmd.stat.exists
-
-- name: Check if the oc client tool version is matches {{ ocp4_release }}
-  set_fact:
-    download_tools: "{{ true if tools_missing or not oc_version_match else false }}"
-  tags: [ setup, tools, client, ignitions ]
-
-- name: Download OpenShift 4 client
-  get_url:
-    url: "{{ ocp4_release_url }}/{{ ocp4_client }}"
-    dest: "/tmp/{{ ocp4_client }}"
-  register: dl_ocp4_client
-  when: download_tools
+- name: Install the ocp4 oc command version {{ ocp4_client_version }}
   tags: [ setup, tools, client ]
+  when: not oc_client_cmd.stat.exists or download_ocp_tools|bool
+  block:
+    - name: Download the ocp4 oc command
+      get_url:
+        url: "{{ ocp4_release_url }}/{{ ocp4_client }}"
+        dest: "/tmp/{{ ocp4_client }}"
+      register: dl_ocp4_client
+      
+    - name: Extract ocp client to "{{ ocp_client_cmd }}"
+      unarchive:
+        src: "/tmp/{{ ocp4_client }}"
+        dest: /usr/local/bin
+      register: extract_ocp_client
 
-- name: Download OpenShift 4 installer
-  get_url:
-    url: "{{ ocp4_release_url }}/{{ ocp4_installer }}"
-    dest: "/tmp/{{ ocp4_installer }}"
-  register: dl_ocp4_installer
-  when: download_tools
+    - name: Remove openshift client tar file
+      file:
+        path: "/tmp/{{ ocp4_client }}"
+        state: absent
+      when: extract_ocp_client.changed
+
+- name: Install the ocp4 openshift-installer version {{ ocp4_client_version }}
   tags: [ setup, tools, installer, ignitions ]
+  when: download_ocp_tools|bool
+  block:
+    - name: Downloading the ocp4 openshift-install command
+      get_url:
+        url: "{{ ocp4_release_url }}/{{ ocp4_installer }}"
+        dest: "/tmp/{{ ocp4_installer }}"
+      register: dl_ocp4_installer
 
-- name: Extract ocp client into /usr/local/bin/oc
-  unarchive:
-    src: "/tmp/{{ ocp4_client }}"
-    dest: /usr/local/bin
-  register: extract_ocp_client
-  when: download_tools
-  tags: [ setup, tools, client ]
-
-- name: Extract openshift-install into /usr/local/bin/
-  unarchive:
-    src:  "/tmp/{{ ocp4_installer }}"
-    dest:  /usr/local/bin
-  register: extract_ocp_installer
-  when: download_tools
-  tags: [ setup, tools, installer, ignitions ]
-
-- name: Remove openshift client tar file
-  file:
-    path: "/tmp/{{ ocp4_client }}"
-    state: absent
-  when: extract_ocp_client.changed
-  tags: [ setup, tools, client ]
-
-- name: Remove openshift installer tar file
-  file:
-    path: "/tmp/{{ ocp4_installer }}"
-    state: absent
-  when: extract_ocp_installer.changed
-  tags: [ setup , tools, installer]
+    - name: Extract openshift-install into /usr/local/bin/
+      unarchive:
+        src:  "/tmp/{{ ocp4_installer }}"
+        dest:  /usr/local/bin
+      register: extract_ocp_installer
+    
+    - name: Remove openshift installer tar file
+      file:
+        path: "/tmp/{{ ocp4_installer }}"
+        state: absent
+      when: extract_ocp_installer.changed
 
 - name: Clean openshift tools install
+  when: not oc_client_cmd.stat.exists or download_ocp_tools|bool
   file:
     path: "{{ item }}"
     state: absent
-  when: extract_ocp_client.changed
   loop:
     - /usr/local/bin/README.md
     - /usr/local/bin/__pycache__

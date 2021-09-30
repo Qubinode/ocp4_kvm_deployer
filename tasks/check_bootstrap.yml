@@ -5,12 +5,12 @@
   register: bootstrap_complete
   changed_when: false
   ignore_errors: yes
-  tags: [ bootstrap, postinstall, check_cluster_status, complete_install ]
+  tags: [ bootstrap, postinstall, check_cluster_status, complete_install, bootstrap_check ]
 
 - name: BOOTSTRAPING THE CLUSTER - Define bootstrap status as true or false
   set_fact:
     bootstrap_complete: "{{ true if bootstrap_complete.stderr is defined and bootstrap_complete.stderr.find(bs_complete_s) != -1 else false }}"
-  tags: [bootstrap, postinstall, check_cluster_status, complete_install ]
+  tags: [bootstrap, postinstall, check_cluster_status, complete_install, bootstrap_check ]
 
 - name: BOOTSTRAPING THE CLUSTER - Fail if cannot verify cluster bootstrap
   fail:

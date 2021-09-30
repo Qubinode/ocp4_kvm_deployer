@@ -23,3 +23,12 @@ platform:
   none: {}
 pullSecret: '{{ lookup('file', pull_secret) }}'
 sshKey: {{ ssh_ocp4_public_key }}
+{% if additional_trust_bundle is defined and additional_trust_bundle|length %}
+additionalTrustBundle: |
+{{ lookup('file', additional_trust_bundle) }}
+{% endif %}
+{% if image_content_sources is defined and image_content_sources|length %}
+imageContentSources:
+{{ lookup('file', image_content_sources) }}
+{% endif %}
+

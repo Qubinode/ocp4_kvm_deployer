@@ -1,6 +1,5 @@
 ![Ansible Lint](https://github.com/Qubinode/ocp4_kvm_deployer/workflows/Ansible%20Lint/badge.svg?branch=dev)
 
-
 ocp4_kvm_deployer
 =================
 
@@ -326,30 +325,124 @@ ansible-playbook playbooks/deploy_ocp4.yml -t configure_registry -e "container_e
 ansible-playbook playbooks/deploy_ocp4.yml -t complete_cluster_install -e "tear_down=no" -e "check_existing_cluster=no" -e "cluster_install_status=no" -e "bootstrap_precheck=yes" -e "bootstrap_complete=yes"
 ```
 
+**Deploy nodes on External network**
 ```
-ansible-playbook rhcos.yml -t setup
-ansible-playbook rhcos.yml -t tools
-ansible-playbook rhcos.yml -t podman
-ansible-playbook rhcos.yml -t podman --skip-tags pkg
-ansible-playbook rhcos.yml -t ignitions
-ansible-playbook rhcos.yml -t lb
-ansible-playbook rhcos.yml -t webserver
-ansible-playbook rhcos.yml -t download
-ansible-playbook rhcos.yml -t libvirt_net
-ansible-playbook rhcos.yml -t node_profile
-ansible-playbook rhcos.yml -t idm
-ansible-playbook rhcos.yml -t rhcos
+export PLAYBOOK_NAME=playbooks/deploy_ocp4.yml #PLAYBOOK_NAME=rhcos.yml
 
-ansible-playbook rhcos.yml -t webserver
-ansible-playbook rhcos.yml -t lb
-ansible-playbook rhcos.yml -t libvirt_net
-ansible-playbook rhcos.yml -t deploy_vms
-ansible-playbook rhcos.yml -t nfs --extra-vars "configure_nfs_storage=true" --extra-vars "cluster_deployed_msg=deployed
-ansible-playbook rhcos.yml -t localstorage
+ansible-playbook $PLAYBOOK_NAME  -t setup
+ansible-playbook $PLAYBOOK_NAME  -t tools
+ansible-playbook $PLAYBOOK_NAME  -t podman
+ansible-playbook $PLAYBOOK_NAME  -t podman --skip-tags pkg
+ansible-playbook $PLAYBOOK_NAME -t ignitions --extra-vars "download_ocp_tools=true"
+ansible-playbook $PLAYBOOK_NAME -t idm,containers,lb --extra-vars "tear_down=false"
+ansible-playbook  $PLAYBOOK_NAME  -t webserver
+ansible-playbook $PLAYBOOK_NAME -t download
+#ansible-playbook $PLAYBOOK_NAME -t libvirt_net
+ansible-playbook $PLAYBOOK_NAME -t deploy_nodes 
 ```
+
+**Deploy nodes on Internal libvirt network**
+```
+WIP
+```
+**Configure NFS**
+```
+ansible-playbook rhcos.yml -t nfs --extra-vars "configure_nfs_storage=true" --extra-vars "bootstrap_complete=true" 
+```
+**Remove NFS**
+```
+ansible-playbook playbooks/deploy_ocp4.yml  -t nfs --extra-vars "configure_nfs_storage=false" --extra-vars "bootstrap_complete=true"  --extra-vars "delete_deployment=true"
+```
+
+**Configure Local strorage**
+```
+ansible-playbook rhcos.yml -t localstorage  --extra-vars "bootstrap_complete=true" 
+```
+**Configure OCS**
+```
+ansible-playbook rhcos.yml -t ocs --extra-vars "configure_openshift_storage=true"  --extra-vars "bootstrap_complete=true" 
+```
+**Remove OCS**
+```
+ ansible-playbook $PLAYBOOK_NAME   -t ocs --extra-vars "configure_openshift_storage=true"  --extra-vars "bootstrap_complete=true" --extra-vars "delete_deployment=true" 
+ ```
+
 Dependancy roles:
   - openshift-4-loadbalancer
   - nfs-provisioner-role
+
+
+### add worker external worker  
+*Requirement: Openshift must be deployed on external network*
+* update worker count
+```
+vim playbooks/vars/ocp4.yml
+compute_count: 6
+```
+
+* remove lb 
+```
+export PLAYBOOK_NAME=playbooks/deploy_ocp4.yml #PLAYBOOK_NAME=rhcos.yml
+ansible-playbook $PLAYBOOK_NAME -t lb --extra-vars "tear_down=true"
+```
+* Add lb
+```
+ansible-playbook $PLAYBOOK_NAME -t idm,containers,lb --extra-vars "tear_down=false"
+```
+
+Example PXE boot Menu
+
+*If you are using a sepreate pxe server* 
+*Add the kernel and initramfs files to webserver*
+```
+# on qubinode box
+cp rhcos-install/rhcos-live-* /opt/qubinode_webserver/4.7/images/
+sudo chmod 775 -R /opt/qubinode_webserver/4.7/images/
+```
+
+Download  kernel and initramfs to pxe server
+```
+mkdir -p /mnt/data/netboot/boot/amd64/coreos/4.7.7/
+cd /mnt/data/netboot/boot/amd64/coreos/4.7.7/
+
+curl  -OL http://192.168.1.10:8080/pub/4.7/images/rhcos-live-kernel-x86_64
+curl -OL http://192.168.1.10:8080/pub/4.7/images/rhcos-live-initramfs.x86_64.img
+```
+
+Example PXE config
+*Double check idm server for ips*
+```
+        MENU BEGIN CoreOS
+        MENU TITLE CoreOS
+            LABEL compute3
+                MENU LABEL ^Computess 3 Install
+                KERNEL ::boot/amd64/coreos/4.7.7/rhcos-live-kernel-x86_64
+                INITRD ::boot/amd64/coreos/4.7.7/rhcos-live-initramfs.x86_64.img
+                APPEND coreos.live.rootfs_url=http://192.168.1.10:8080/pub/4.7/images/rhcos-4.7.7-x86_64-live-rootfs.x86_64.img coreos.inst.install_dev=/dev/sda coreos.inst.ignition_url=http://192.168.1.10:8080/pub/4.7/ignitions/worker.ign ip=192.168.1.88::192.168.1.1:255.255.255.0:qbn-ocp4-compute-3.qub593.cloud.qubinodeexample.com:ens192:none nameserver=192.168.1.150 
+
+            LABEL compute4
+                MENU LABEL ^Compute 4 Install
+                KERNEL ::boot/amd64/coreos/4.7.7/rhcos-live-kernel-x86_64
+                INITRD ::boot/amd64/coreos/4.7.7/rhcos-live-initramfs.x86_64.img
+                APPEND coreos.live.rootfs_url=http://192.168.1.10:8080/pub/4.7/images/rhcos-4.7.7-x86_64-live-rootfs.x86_64.img coreos.inst.install_dev=/dev/sda coreos.inst.ignition_url=http://192.168.1.10:8080/pub/4.7/ignitions/worker.ign ip=192.168.1.89::192.168.1.1:255.255.255.0:qbn-ocp4-compute-4 .qub593.cloud.qubinodeexample.com:ens192:none nameserver=192.168.1.150 
+            
+            LABEL compute5
+                MENU LABEL ^Compute 5 Install
+                KERNEL ::boot/amd64/coreos/4.7.7/rhcos-live-kernel-x86_64
+                INITRD ::boot/amd64/coreos/4.7.7/rhcos-live-initramfs.x86_64.img
+                APPEND coreos.live.rootfs_url=http://192.168.1.10:8080/pub/4.7/images/rhcos-4.7.7-x86_64-live-rootfs.x86_64.img coreos.inst.install_dev=/dev/sda coreos.inst.ignition_url=http://192.168.1.10:8080/pub/4.7/ignitions/worker.ign ip=192.168.1.89::192.168.1.1:255.255.255.0:qbn-ocp4-compute-5 .qub593.cloud.qubinodeexample.com:ens192:none nameserver=192.168.1.150 
+            MENU END
+
+```
+
+
+* boot new node using the pxe server
+* approve csr and wait for node to configure
+```
+watch -n 10 oc get csr
+oc get csr -ojson | jq -r '.items[] | select(.status == {} ) | .metadata.name' | xargs oc adm certificate approve
+```
+
 
 To-Do List / Known Limitations
 ------------------------------

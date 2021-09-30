@@ -1,6 +1,16 @@
 ---
 # tasks file for ocp4_kvm_deployer
 
+- name: Deploy /usr/local/bin/qubinode-ocp4-status
+  template:
+    src: templates/qubinode-ocp4-status.j2
+    dest: /usr/local/bin/qubinode-ocp4-status
+    group: "{{ local_user_account }}"
+    owner: "{{ local_user_account }}"
+    mode: u=rwx,g=rx,o=rx
+  become: yes
+  tags: [ complete_install, check_cluster_status, status_script, bootstrap, rebuild_cluster]
+
 - name: Tear down the OpenShift Cluster
   import_tasks: tear_down.yml
   when: tear_down|bool
@@ -44,22 +54,7 @@
     not tear_down|bool
   tags: complete_cluster_install
   block:
-    - name: Deploy /usr/local/bin/qubinode-ocp4-status
-      when: not tear_down|bool 
-      template:
-        src: templates/qubinode-ocp4-status.j2
-        dest: /usr/local/bin/qubinode-ocp4-status
-        group: "{{ local_user_account }}"
-        owner: "{{ local_user_account }}"
-        mode: u=rwx,g=rx,o=rx
-      become: yes
-      tags: [ complete_install, check_cluster_status, status_script, bootstrap ]
-
-    - name: Setup OpenShift Registry with NFS storage provisioner
-      import_tasks: openshift_registry.yml
-      tags: configure_registry
-
-    - name: Waiting up to 200 minutes for OpenShift install complete - Actual time is up to 76m - You can monitor the progress in another terminal by tailing {{ openshift_install_dir }}/ocp4/install-complete.log
+    - name: Waiting up to 200 minutes for OpenShift install complete - Actual time is up to 76m - You can monitor the progress in another terminal by tailing {{ openshift_install_dir }}/install-complete.log
       shell: |
         oc get csr -ojson | jq -r '.items[] | select(.status == {} ) | .metadata.name' | xargs --no-run-if-empty oc adm certificate approve
         timeout 10 openshift-install --dir "{{ openshift_install_dir }}"  wait-for     install-complete --log-level debug 2>&1 | tee -a {{ install_complete_log }}
@@ -80,11 +75,23 @@
             - smoketest-verify
       tags: [verify-cluster, complete_install]   
 
+    - name: Setup OpenShift Registry with NFS storage provisioner
+      import_tasks: openshift_registry.yml
+      when: not configure_openshift_storage| bool
+      tags: configure_registry
+
     - name: Configure LocalStorage Class
       import_tasks: configure-local-storage.yml
       tags: [ localstorage, postinstall ]
       when: >
         configure_local_storage|bool and 
+        compute_node_count|int != 0
+
+    - name: Configure OpenShift Storage 
+      import_tasks: configure-openshift-storage.yml
+      tags: [ ocs, postinstall ]
+      when: >
+        configure_openshift_storage|bool and 
         compute_node_count|int != 0
 
     - name: Shutdown Cluster Nodes

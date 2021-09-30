@@ -2,12 +2,7 @@
 - name: fail when idm server ip address isn't provided
   fail: msg="Bailing out. this play requires 'idm_server_ipaddr'  your idm server ip"
   when: idm_server_ipaddr |length == 0
-  tags: [idm, compute_dns, ctrlplane_dns, bootstrap_dns, api_dns, etcd_dns, wildcard_dns]
-
-# NOTE: this may not be needed, uncomment if role fails
-#- name: check DNS entries
-#  include_tasks: check_dns_entries.yml
-#  tags: [idm, compute_dns, ctrlplane_dns]
+  tags: [idm, compute_dns, ctrlplane_dns, bootstrap_dns, api_dns, etcd_dns, wildcard_dns, rebuild_cluster]
 
 - name: Define empty list vars for records and reverse_records
   set_fact:
@@ -26,14 +21,14 @@
     state: "{{ idm_fwd_zone_state }}"
     zone_name: "{{ idm_dns_forward_zone }}"
     validate_certs: no
-  tags: [idm, dns, bootstrap_dns, api_dns, ctrlplane_dns, compute_dns, wildcard_dns, routes, fwd_zone]
+  tags: [idm, dns, bootstrap_dns, api_dns, ctrlplane_dns, compute_dns, wildcard_dns, routes, fwd_zone, rebuild_cluster]
 
 - name: Create the IdM reverse dns zone {{ idm_dns_reverse_zone }}
   ipa_dnszone:
     state: "{{ idm_ptr_zone_state }}"
     zone_name: "{{ idm_dns_reverse_zone }}"
     validate_certs: no
-  tags: [idm, dns, bootstrap_dns, api_dns, ctrlplane_dns, compute_dns, wildcard_dns, routes, ptr_zone]
+  tags: [idm, dns, bootstrap_dns, api_dns, ctrlplane_dns, compute_dns, wildcard_dns, routes, ptr_zone, rebuild_cluster]
 
 - name: Build zone records list
   when: not dns_teardown|bool
@@ -45,7 +40,7 @@
         ptr: "{{ bootstrap_ptr }}"
       set_fact:
         idm_a_records: "{{ idm_a_records + [ {'hostname': name, 'ipaddr': ip, 'ptr_record': ptr}     ] }}"
-      tags: [idm, dns, bootstrap_dns]
+      tags: [idm, dns, bootstrap_dns, rebuild_cluster]
     
     - name: Add the bootstrap node to the IdM dns reverse forward zone records list
       vars:
@@ -54,7 +49,7 @@
         ptr: "{{ bootstrap_ptr }}"
       set_fact:
         idm_ptr_records: "{{ idm_ptr_records + [ {'hostname': name, 'ipaddr': ip, 'ptr_record':     ptr} ] }}"
-      tags: [idm, dns, bootstrap_dns]
+      tags: [idm, dns, bootstrap_dns, rebuild_cluster]
     
     - name: Add the api-int ip to the IdM dns forward zone records list
       vars:
@@ -63,7 +58,7 @@
         ptr: "{{ api_int_ptr }}"
       set_fact:
         idm_a_records: "{{ idm_a_records + [ {'hostname': name, 'ipaddr': ip, 'ptr_record': ptr}     ] }}"
-      tags: [idm, dns, api_dns]
+      tags: [idm, dns, api_dns, rebuild_cluster]
     
     - name: Add the api ip to the IdM dns forward zone records list
       vars:
@@ -72,7 +67,7 @@
         ptr: "{{ api_ip_ptr | default(api_ip_ptr) }}"
       set_fact:
         idm_a_records: "{{ idm_a_records + [ {'hostname': name, 'ipaddr': ip, 'ptr_record': ptr}     ] }}"
-      tags: [idm, dns, api_dns]
+      tags: [idm, dns, api_dns, rebuild_cluster]
     
     - name: Add the control plane nodes A records to the IdM dns forward zone records list
       vars:
@@ -83,7 +78,7 @@
       set_fact:
         idm_a_records: "{{ idm_a_records + [ {'hostname': name, 'ipaddr': ip, 'ptr_record': ptr}     ] }}"
       with_sequence: start=0 end="{{ ctrlplane_count|int - 1 }}" stride=1
-      tags: [idm, dns, ctrlplane_dns]
+      tags: [idm, dns, ctrlplane_dns, rebuild_cluster]
     
     - name: Add the control plane nodes PTR records to the IdM dns reverse zone records list
       vars:
@@ -93,7 +88,7 @@
       set_fact:
         idm_ptr_records: "{{ idm_ptr_records + [ {'hostname': name, 'ipaddr': ip, 'ptr_record':     ptr} ] }}"
       with_sequence: start=0 end="{{ ctrlplane_count|int - 1 }}" stride=1
-      tags: [idm, dns, ctrlplane_dns]
+      tags: [idm, dns, ctrlplane_dns, rebuild_cluster]
     
 - name: Generate worker nodes A and PTR records
   when: compute_node_count|int != 0 and not dns_teardown|bool
@@ -106,7 +101,7 @@
       set_fact:
         idm_a_records: "{{ idm_a_records + [ {'hostname': name, 'ipaddr': ip, 'ptr_record': ptr} ] }}"
       with_sequence: start=0 end="{{ compute_node_count|int - 1 }}" stride=1
-      tags: [idm, dns, compute_dns]
+      tags: [idm, dns, compute_dns, rebuild_cluster]
     
     - name: Add worker nodes PTR records to the IdM reverse zone records list
       vars:
@@ -116,7 +111,7 @@
       set_fact:
         idm_ptr_records: "{{ idm_ptr_records + [ {'hostname': name, 'ipaddr': ip, 'ptr_record': ptr} ] }}"
       with_sequence: start=0 end="{{ compute_node_count|int - 1 }}" stride=1
-      tags: [idm, dns, compute_dns]
+      tags: [idm, dns, compute_dns, rebuild_cluster]
 
 - name: Ensure all defined A records are {{ idm_record_state }}
   ipa_dnsrecord:
@@ -130,7 +125,7 @@
   loop_control:
     label: "{{ item.hostname }}.{{ cluster_name }}"
   when: not dns_teardown|bool
-  tags: [idm, dns, bootstrap_dns, api_dns, ctrlplane_dns, compute_dns]
+  tags: [idm, dns, bootstrap_dns, api_dns, ctrlplane_dns, compute_dns, rebuild_cluster]
 
 - name: Ensure all defined PTR records are {{ idm_record_state }}
   ipa_dnsrecord:
@@ -145,7 +140,7 @@
   loop_control:
     label: "PTR octet {{ item.ptr_record }}"
   when: not dns_teardown|bool
-  tags: [idm, dns, bootstrap_dns, ctrlplane_dns, compute_dns]
+  tags: [idm, dns, bootstrap_dns, ctrlplane_dns, compute_dns, rebuild_cluster]
 
 - name: Generate IdM Session Cookie
   vars:
@@ -162,7 +157,7 @@
   register: ipa_session
   run_once: true
   when: not dns_teardown|bool
-  tags: [idm, dns, wildcard_dns, routes]
+  tags: [idm, dns, wildcard_dns, routes, rebuild_cluster]
 
 - name: Create IdM dns apps wildcard for applicaitons routes A record
   uri:
@@ -183,4 +178,7 @@
         a_extra_create_reverse: false
     body_format: json
   when: not dns_teardown|bool
-  tags: [idm, dns, wildcard_dns, routes]
+  tags: [idm, dns, wildcard_dns, routes, rebuild_cluster]
+
+
+

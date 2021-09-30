@@ -1,14 +1,4 @@
 ---
-- name: Deploy /usr/local/bin/qubinode-ocp4-status
-  template:
-    src: templates/qubinode-ocp4-status.j2
-    dest: /usr/local/bin/qubinode-ocp4-status
-    group: "{{ local_user_account }}"
-    owner: "{{ local_user_account }}"
-    mode: u=rwx,g=rx,o=rx
-  become: yes
-  tags: [ complete_install, check_cluster_status, status_script, bootstrap ]
-
 - name: BOOTSTRAPING THE CLUSTER - Waiting on cluster {{ cluster_name }} bootstrap to complete
   shell: |
     openshift-install --dir "{{ openshift_install_dir }}"  wait-for bootstrap-complete --log-level debug 2>&1 | tee "{{ bootstrap_log }}" &
