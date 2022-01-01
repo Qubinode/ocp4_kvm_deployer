@@ -4,7 +4,7 @@ compute:
 - name: worker
   hyperthreading: Enabled
   platform: {}
-  replicas: {{ compute_node_count }}
+  replicas: 0
 controlPlane:
   name: master
   hyperthreading: Enabled
@@ -21,6 +21,7 @@ networking:
   type: OVNKubernetes
 platform:
   none: {}
+fips: "{{ cluster_fips_aware }}
 pullSecret: '{{ lookup('file', pull_secret) }}'
 sshKey: {{ ssh_ocp4_public_key }}
 {% if additional_trust_bundle is defined and additional_trust_bundle|length %}
@@ -31,4 +32,3 @@ additionalTrustBundle: |
 imageContentSources:
 {{ lookup('file', image_content_sources) }}
 {% endif %}
-
