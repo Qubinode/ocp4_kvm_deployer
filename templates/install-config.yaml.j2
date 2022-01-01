@@ -21,7 +21,7 @@ networking:
   type: OVNKubernetes
 platform:
   none: {}
-fips: "{{ cluster_fips_aware }}
+fips: {{ cluster_fips_aware }}
 pullSecret: '{{ lookup('file', pull_secret) }}'
 sshKey: {{ ssh_ocp4_public_key }}
 {% if additional_trust_bundle is defined and additional_trust_bundle|length %}
