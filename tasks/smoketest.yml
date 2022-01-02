@@ -1,11 +1,11 @@
 ---
 - name: Get the cluster API url
-  command: oc whoami --show-server
+  command: "{{ ocp_client_cmd }} whoami --show-server"
   register: api_url
   tags: [ smoketest, smoketest-verify, smoketest-app]
 
 - name: Get the webconsole url
-  command: oc whoami --show-console
+  command: "{{ ocp_client_cmd }}" whoami --show-console
   register: routeconsole
   tags: [ smoketest, smoketest-verify, smoketest-app ]
 
@@ -40,7 +40,7 @@
       delay: 60
 
     - name: Cluster-info
-      command: oc cluster-info
+      command: "{{ ocp_client_cmd }}" cluster-info
       register: clusterinfor
       changed_when: false
 
@@ -49,20 +49,20 @@
   block:
 
     - name: Create project
-      command: oc new-project postflightcheck
+      command: "{{ ocp_client_cmd }}" new-project postflightcheck
       register: newproject
 
     - name: New-app
-      command: oc new-app cakephp-mysql-persistent -n postflightcheck
+      command: "{{ ocp_client_cmd }}" new-app cakephp-mysql-persistent -n postflightcheck
       register: newapp
 
     - name: Wait for mysql
-      command: timeout 600 oc rollout status dc/mysql -w -n postflightcheck
+      command: timeout 600 "{{ ocp_client_cmd }}" rollout status dc/mysql -w -n postflightcheck
       register: mysqlw
       changed_when: false
 
     - name: Wait for php
-      command: timeout 600 oc rollout status dc/cakephp-mysql-persistent -w -n postflightcheck
+      command: timeout 600 "{{ ocp_client_cmd }}" rollout status dc/cakephp-mysql-persistent -w -n postflightcheck
       register: phpw
       changed_when: false
       retries: 2
@@ -71,7 +71,7 @@
 
     - name: Get route
       command: >-
-        oc get route
+        "{{ ocp_client_cmd }}" get route
         -l template=cakephp-mysql-persistent
         --no-headers
         -o json
@@ -92,12 +92,12 @@
 
   always:
     - name: Delete project
-      command: oc delete project postflightcheck
+      command: "{{ ocp_client_cmd }}" delete project postflightcheck
       become: no
       ignore_errors: yes
 
     - name: Switch back to default project
-      command: oc project default
+      command: "{{ ocp_client_cmd }}" project default
       become: no
       ignore_errors: yes
 
@@ -141,8 +141,6 @@
 #       - "newproject: {{ newproject.rc }}"
 #  tags: verify-cluster
 #
-
-
 
 
 #- name: Ensure web console is known
