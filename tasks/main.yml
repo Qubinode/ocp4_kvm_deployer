@@ -68,12 +68,13 @@
       changed_when: False
  
     - name: Run a smoketest to verify cluster status
+      when: smoketest_cluster|bool
       include_tasks:
         file: smoketest.yml
         apply:
           tags:
             - smoketest-verify
-      tags: [verify-cluster, complete_install]   
+      tags: [smoketest, smoketest-app, smoketest-verify, verify-cluster]   
 
     - name: Setup OpenShift Registry with NFS storage provisioner
       import_tasks: openshift_registry.yml
