@@ -74,6 +74,8 @@
         apply:
           tags:
             - smoketest-verify
+            - smoketest
+            - smoketest-app
       tags: [smoketest, smoketest-app, smoketest-verify, verify-cluster]   
 
     - name: Setup OpenShift Registry with NFS storage provisioner
