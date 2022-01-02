@@ -21,21 +21,6 @@
    when: deploy_ocp4_configs|bool
    tags: [ ignitions, deploy_nodes ]
 
- - name: Generate the Kubernetes manifests for the cluster
-   command: "/usr/local/bin/openshift-install --dir={{ openshift_install_dir }} create manifests"
-   args:
-     creates: "{{ openshift_install_dir }}/manifests/cluster-scheduler-02-config.yml"
-   when: deploy_ocp4_configs|bool
-   tags: [ ignitions, deploy_nodes, manifests ]
-
- - name: Mark mastersSchedulable when compute_count is 0
-   when: compute_count > 1
-   lineinfile:
-     path: "{{ openshift_install_dir }}/manifests/cluster-scheduler-02-config.yml"
-     regexp: '  mastersSchedulable'
-     line: "  mastersSchedulable: false"
-   tags: [ ignitions, deploy_nodes, manifests ]
-
  - name: Create ignition files
    command: "/usr/local/bin/openshift-install --dir={{ openshift_install_dir }} create ignition-configs"
    args:
