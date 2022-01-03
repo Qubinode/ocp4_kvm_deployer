@@ -1,6 +1,6 @@
 ---
 - name: does the openshift-local-storage namespace exist
-  shell: /usr/local/bin/oc get all -n "{{ localstorage_namespace }}"
+  command: "{{ ocp_client_cmd }} get all -n {{ localstorage_namespace }}"
   register: local_storage_namespace
   ignore_errors: yes
   changed_when: False
@@ -8,7 +8,7 @@
     KUBECONFIG: "{{ ocp_cluster_admin_kubeconfig }}"
 
 - name: check for the local storage operator pods
-  shell: /usr/local/bin/oc -n "{{ localstorage_namespace }}" get pods|grep Running
+  shell: "{{ ocp_client_cmd }} -n {{ localstorage_namespace }} get pods|grep Running"
   register: local_storage_operator_pods
   ignore_errors: yes
   changed_when: False
@@ -16,7 +16,7 @@
     KUBECONFIG: "{{ ocp_cluster_admin_kubeconfig }}"
 
 - name: check if the local storage operator is available
-  shell: /usr/local/bin/oc get csvs -n "{{ localstorage_namespace }}" | grep Succeeded
+  shell: "{{ ocp_client_cmd }} get csvs -n {{ localstorage_namespace }} | grep Succeeded"
   register: local_storage_operator_status
   ignore_errors: yes
   changed_when: False
@@ -24,7 +24,7 @@
     KUBECONFIG: "{{ ocp_cluster_admin_kubeconfig }}"
 
 - name: check if the local volume filesystem is available
-  shell: /usr/local/bin/oc get pv | grep {{ compute_vdb_size }}Gi
+  shell: "{{ ocp_client_cmd }} get pv | grep {{ compute_vdb_size }}Gi"
   register: localvol_filesystem
   ignore_errors: yes
   changed_when: False
@@ -32,7 +32,7 @@
     KUBECONFIG: "{{ ocp_cluster_admin_kubeconfig }}"
 
 - name: check if the local volume filesystem storage class is available
-  shell: /usr/local/bin/oc get sc localfs-sc
+  command: "{{ ocp_client_cmd }} get sc localfs-sc"
   register: localvol_filesystem_sc
   ignore_errors: yes
   changed_when: False
@@ -40,7 +40,7 @@
     KUBECONFIG: "{{ ocp_cluster_admin_kubeconfig }}"
 
 - name: check if the local volume block storage class is available
-  shell: /usr/local/bin/oc get sc localblock-sc
+  command: "{{ ocp_client_cmd }} get sc localblock-sc"
   register: localvol_block_sc
   ignore_errors: yes
   changed_when: False

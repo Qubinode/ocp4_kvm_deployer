@@ -1,6 +1,6 @@
 ---
 - name: does the openshift-storage namespace exist
-  shell: /usr/local/bin/oc get all -n openshift-storage
+  shell: "{{ ocp_client_cmd }} get all -n openshift-storage"
   register: openshift_storage_namespace
   ignore_errors: yes
   changed_when: False
@@ -8,7 +8,7 @@
     KUBECONFIG: "{{ ocp_cluster_admin_kubeconfig }}"
 
 - name: check for the local storage operator pods
-  shell: /usr/local/bin/oc -n openshift-storage get pods|grep Running
+  shell: "{{ ocp_client_cmd }} -n openshift-storage get pods|grep Running"
   register: openshift_storage_operator_pods
   ignore_errors: yes
   changed_when: False
@@ -17,7 +17,7 @@
 
 
 - name: check if the local storage operator is available
-  shell: /usr/local/bin/oc get csvs -n openshift-storage | grep Succeeded
+  shell: "{{ ocp_client_cmd }} get csvs -n openshift-storage | grep Succeeded"
   register: openshift_storage_operator_status
   ignore_errors: yes
   changed_when: False

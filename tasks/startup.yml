@@ -44,7 +44,7 @@
 
 - name: wait for ctrlplane nodes to be available
   shell: >
-    /usr/local/bin/oc get nodes -o wide --no-headers=true | grep ctrlplane| grep Ready|wc -l
+    "{{ ocp_client_cmd }} get nodes -o wide --no-headers=true | grep ctrlplane| grep Ready|wc -l"
   ignore_errors: yes
   become: no
   register: ctrlplane_nodes_count
@@ -75,7 +75,7 @@
 
 - name: wait for compute nodes to be available
   shell: >
-    /usr/local/bin/oc get nodes -o wide --no-headers=true | grep compute| grep -v NotReady |grep Ready|wc -l
+    "{{ ocp_client_cmd }} get nodes -o wide --no-headers=true | grep compute| grep -v NotReady |grep Ready|wc -l"
   ignore_errors: yes
   become: no
   register: compute_nodes_count
@@ -101,7 +101,7 @@
   vars:
     vm_name: "{{ compute_node_name }}-{{ '%00x' |format(item) }}.{{ cluster_name }}.{{ ocp4_cluster_domain }}"
   shell: >
-    /usr/local/bin/oc adm uncordon "{{ vm_name }}"
+    "{{ ocp_client_cmd }} adm uncordon {{ vm_name }}"
   register: schedule_state
   ignore_errors: yes
   loop: "{{ range(0, compute_node_count|int)|list }}"

@@ -25,14 +25,14 @@
         mode: 0666
 
     - name: Create and Subscribe to the local-storage Catalog
-      command: "/usr/local/bin/oc apply -f {{ openshift_install_dir }}/localstorage-operator.yaml"
+      command: "{{ ocp_client_cmd }} apply -f {{ openshift_install_dir }}/localstorage-operator.yaml"
       environment:
         KUBECONFIG: "{{ ocp_cluster_admin_kubeconfig }}"
       when: not delete_deployment|bool
 
     - name: Waiting for  local-storage-operator pod to be deployed
       shell: |
-        /usr/local/bin/oc get pods -n "{{ localstorage_namespace }}"| grep Running | grep local-storage-operator |  wc -l
+        "{{ ocp_client_cmd }} get pods -n {{ localstorage_namespace }}| grep Running | grep local-storage-operator |  wc -l"
       environment:
         KUBECONFIG: "{{ ocp_cluster_admin_kubeconfig }}"
       register: install_status_pod
@@ -96,7 +96,7 @@
             mode: 0666
 
         - name: Provision the localstroage custom resource type filesystem
-          command: "/usr/local/bin/oc create -f {{ openshift_install_dir }}/localstorage-filesystem.yaml"
+          command: "{{ ocp_client_cmd }} create -f {{ openshift_install_dir }}/localstorage-filesystem.yaml"
           environment:
             KUBECONFIG: "{{ ocp_cluster_admin_kubeconfig }}"
           when: not delete_deployment|bool and localvol_filesystem_sc.rc != 0
@@ -113,14 +113,14 @@
             mode: 0666
 
         - name: Provision the localstorage custom resource block storage
-          command: "/usr/local/bin/oc create -f {{ openshift_install_dir }}/localstorage-block.yaml"
+          command: "{{ ocp_client_cmd }} create -f {{ openshift_install_dir }}/localstorage-block.yaml"
           environment:
             KUBECONFIG: "{{ ocp_cluster_admin_kubeconfig }}"
           when: not delete_deployment|bool  and localvol_block_sc.rc != 0
       when: localstorage_block|bool
 
     - name: Remove to the local-storage localstorage-filesystem.yaml
-      command: "/usr/local/bin/oc delete -f {{ openshift_install_dir }}/localstorage-filesystem.yaml"
+      command: "{{ ocp_client_cmd }} delete -f {{ openshift_install_dir }}/localstorage-filesystem.yaml"
       environment:
         KUBECONFIG: "{{ ocp_cluster_admin_kubeconfig }}"
       when: delete_deployment|bool
@@ -128,7 +128,7 @@
       tags: [ localstorage ]
 
     - name: Remove to the local-storage localstorage-block.yaml
-      command: "/usr/local/bin/oc delete -f {{ openshift_install_dir }}/localstorage-block.yaml"
+      command: "{{ ocp_client_cmd }} delete -f {{ openshift_install_dir }}/localstorage-block.yaml"
       environment:
         KUBECONFIG: "{{ ocp_cluster_admin_kubeconfig }}"
       ignore_errors: yes
@@ -136,7 +136,7 @@
       tags: [ localstorage ]
 
     - name: Remove to the local-storage Subscription
-      command: "/usr/local/bin/oc delete -f {{ openshift_install_dir }}/localstorage-operator.yaml"
+      command: "{{ ocp_client_cmd }} delete -f {{ openshift_install_dir }}/localstorage-operator.yaml"
       environment:
         KUBECONFIG: "{{ ocp_cluster_admin_kubeconfig }}"
       when: delete_deployment|bool
@@ -144,7 +144,7 @@
       tags: [ localstorage ]
 
     - name: Delete localstroage project
-      command: "/usr/local/bin/oc delete project local-storage"
+      command: "{{ ocp_client_cmd }} delete project local-storage"
       environment:
         KUBECONFIG: "{{ ocp_cluster_admin_kubeconfig }}"
       ignore_errors: yes

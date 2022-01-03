@@ -1,8 +1,6 @@
 ---
 - name: Set openshift client tools vars
   set_fact:
-    ocp_install_cmd: /usr/local/bin/openshift-install
-    ocp_client_cmd: /usr/local/bin/oc
     oc_version_match: no
     download_ocp_tools: no
 

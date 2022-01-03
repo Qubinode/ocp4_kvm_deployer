@@ -37,14 +37,14 @@
         mode: 0666
 
     - name: Create and Subscribe to the openshift-storage Catalog
-      command: "/usr/local/bin/oc apply -f {{ openshift_install_dir }}/openshift-storage-operator.yaml"
+      command: "{{ ocp_client_cmd }} apply -f {{ openshift_install_dir }}/openshift-storage-operator.yaml"
       environment:
         KUBECONFIG: "{{ ocp_cluster_admin_kubeconfig }}"
       when: not delete_deployment|bool
 
     - name: Waiting for  openshift-storage-operator pod to be deployed
       shell: |
-        /usr/local/bin/oc get pods -n openshift-storage | grep Running  |  wc -l
+        "{{ ocp_client_cmd }} get pods -n openshift-storage | grep Running  |  wc -l"
       environment:
         KUBECONFIG: "{{ ocp_cluster_admin_kubeconfig }}"
       register: install_status_pod
@@ -63,19 +63,20 @@
   include: configure-openshift-storage-checks.yml
 
 - name: Remove to the openshift-storage openshift-storage-filesystem.yaml
-  command: "/usr/local/bin/oc delete -f {{ openshift_install_dir }}/openshift-storage-filesystem.yaml"
+  command: "{{ ocp_client_cmd }} delete -f {{ openshift_install_dir }}/openshift-storage-filesystem.yaml"
   environment:
     KUBECONFIG: "{{ ocp_cluster_admin_kubeconfig }}"
   when: delete_deployment|bool
-  ignore_errors: yes
+  failed_when: false
   tags: [ ocs ]
 
 - name: Get OpenShift Stoage ClusterServiceVersion
   shell: |
-    /usr/local/bin/oc  get csv  -n openshift-storage | grep {{ ocp4_openshift_stroage_version }}  | awk '{print $1}'
+    "set -o pipefail && {{ ocp_client_cmd }}  get csv  -n openshift-storage | grep {{ ocp4_openshift_stroage_version }}  | awk '{print $1}'"
   environment:
     KUBECONFIG: "{{ ocp_cluster_admin_kubeconfig }}"
   register: csv_check
+  changed_when: false
   become: no
 
 - name: setting openshift-storage-operator version
@@ -99,7 +100,6 @@
     ocp4_compute_nodes: [ '' ]
   tags: [ deploy_nodes, rhcos, ocs ]
 
-
 - name: add compute nodes to ocp4 nodes list
   vars:
     vm_name: "{{ compute_node_name }}-{{ '%00x' |format(item) }}"
@@ -107,13 +107,12 @@
     ocp4_compute_nodes: "{{ ocp4_compute_nodes + [ vm_name ] }}"
   loop: "{{ range(0, compute_node_count|int)|list }}"
 
-
 - name: label worker nodes for OCS
-  shell: "/usr/local/bin/oc label node {{ item }}.{{cluster_name }}.{{ ocp4_cluster_domain }} cluster.ocs.openshift.io/openshift-storage=''"
+  shell: "{{ ocp_client_cmd }} label node {{ item }}.{{cluster_name }}.{{ ocp4_cluster_domain }} cluster.ocs.openshift.io/openshift-storage=''"
   loop: "{{ ocp4_compute_nodes }}"
   environment:
     KUBECONFIG: "{{ ocp_cluster_admin_kubeconfig }}"
-  ignore_errors: yes
+  failed_when: false
   tags: [ ocs ]
 
 - name: Get OpenShift storage operator version check
@@ -149,14 +148,14 @@
     mode: 0666
 
 - name: Create and Subscribe to the openshift-storage Catalog
-  command: "/usr/local/bin/oc apply -f {{ openshift_install_dir }}/ocs-storage.yaml"
+  command: "{{ ocp_client_cmd }} apply -f {{ openshift_install_dir }}/ocs-storage.yaml"
   environment:
     KUBECONFIG: "{{ ocp_cluster_admin_kubeconfig }}"
   when: not delete_deployment|bool
 
 - name: Waiting for  openshift-storage to be in Ready State
   shell: |
-    /usr/local/bin/oc get StorageCluster ocs-storagecluster -n openshift-storage| grep  Ready  |  wc -l
+    "set -o pipefail && {{ ocp_client_cmd }} get StorageCluster ocs-storagecluster -n openshift-storage| grep  Ready  |  wc -l"
   environment:
     KUBECONFIG: "{{ ocp_cluster_admin_kubeconfig }}"
   register: install_status
@@ -166,7 +165,7 @@
   delay: 15
 
 - name: Set  Openshift Storage class as default
-  command: "/usr/local/bin/oc annotate storageclass {{ osc_storage_class_name }} storageclass.kubernetes.io/is-default-class='{{ set_default_ocs_storage_class }}'"
+  command: "{{ ocp_client_cmd }} annotate storageclass {{ osc_storage_class_name }} storageclass.kubernetes.io/is-default-class='{{ set_default_ocs_storage_class }}'"
   register: set_default_storage_class_result
   environment:
     KUBECONFIG: "{{ ocp_cluster_admin_kubeconfig }}"
@@ -182,68 +181,67 @@
     mode: 0666
 
 - name: Create ocs-registry-pvc
-  command: "/usr/local/bin/oc apply -f {{ openshift_install_dir }}/ocs-registry-pvc.yaml"
+  command: "{{ ocp_client_cmd }} apply -f {{ openshift_install_dir }}/ocs-registry-pvc.yaml"
   environment:
     KUBECONFIG: "{{ ocp_cluster_admin_kubeconfig }}"
   when: not delete_deployment|bool
 
 - name: Configuring registry storage
-  command: "/usr/local/bin/oc patch configs.imageregistry.operator.openshift.io cluster --type merge --patch '{\"spec\":{\"storage\": {\"pvc\": {\"claim\": \"ocs4registry\"}}}}'"
+  command: "{{ ocp_client_cmd }} patch configs.imageregistry.operator.openshift.io cluster --type merge --patch '{\"spec\":{\"storage\": {\"pvc\": {\"claim\": \"ocs4registry\"}}}}'"
   environment:
     KUBECONFIG: "{{ ocp_cluster_admin_kubeconfig }}"
   when: not delete_deployment|bool
 
 - name: Change ManagementState Image Registry Operator configuration from Removed to Managed.
-  command: "/usr/local/bin/oc patch configs.imageregistry.operator.openshift.io cluster --type merge --patch '{\"spec\":{\"managementState\": \"Managed\"}}'"
+  command: "{{ ocp_client_cmd }} patch configs.imageregistry.operator.openshift.io cluster --type merge --patch '{\"spec\":{\"managementState\": \"Managed\"}}'"
   environment:
     KUBECONFIG: "{{ ocp_cluster_admin_kubeconfig }}"
   when: not delete_deployment|bool
 
-
 - name: Change ManagementState Image Registry Operator configuration from Managed to Removed.
-  command: "/usr/local/bin/oc patch configs.imageregistry.operator.openshift.io cluster --type merge --patch '{\"spec\":{\"managementState\": \"Removed\"}}'"
+  command: "{{ ocp_client_cmd }} patch configs.imageregistry.operator.openshift.io cluster --type merge --patch '{\"spec\":{\"managementState\": \"Removed\"}}'"
   register: storage_class_result
   environment:
    KUBECONFIG: "{{ ocp_cluster_admin_kubeconfig }}"
-  ignore_errors: yes
+  failed_when: false
   when: delete_deployment|bool
 
 - name: Remove storage pvc entry from configs.imageregistry.operator.openshift.io
-  command: "/usr/local/bin/oc patch configs.imageregistry.operator.openshift.io cluster --type json  -p '[{ \"op\": \"remove\", \"path\": \"/spec/storage/pvc\" }]'"
+  command: "{{ ocp_client_cmd }} patch configs.imageregistry.operator.openshift.io cluster --type json  -p '[{ \"op\": \"remove\", \"path\": \"/spec/storage/pvc\" }]'"
   environment:
     KUBECONFIG: "{{ ocp_cluster_admin_kubeconfig }}"
-  ignore_errors: yes
+  failed_when: false
   when: delete_deployment|bool
   
 - name: Remove ocs-registry-pvc
-  command: "/usr/local/bin/oc delete -f {{ openshift_install_dir }}/ocs-registry-pvc.yaml"
+  command: "{{ ocp_client_cmd }} delete -f {{ openshift_install_dir }}/ocs-registry-pvc.yaml"
   environment:
     KUBECONFIG: "{{ ocp_cluster_admin_kubeconfig }}"
-  ignore_errors: yes
+  failed_when: false
   when: delete_deployment|bool
   tags: [ ocs ]
 
 - name: Remove to the openshift-storage Subscription
-  command: "/usr/local/bin/oc delete csv {{ cluster_version }} -n openshift-storage"
+  command: "{{ ocp_client_cmd }} delete csv {{ cluster_version }} -n openshift-storage"
   environment:
     KUBECONFIG: "{{ ocp_cluster_admin_kubeconfig }}"
   when: delete_deployment|bool
-  ignore_errors: yes
+  failed_when: false
   tags: [ ocs ]
 
 - name: Remove to the openshift-storage Subscription
-  command: "/usr/local/bin/oc delete -f {{ openshift_install_dir }}/openshift-storage-operator.yaml"
+  command: "{{ ocp_client_cmd }} delete -f {{ openshift_install_dir }}/openshift-storage-operator.yaml"
   environment:
     KUBECONFIG: "{{ ocp_cluster_admin_kubeconfig }}"
   when: delete_deployment|bool
-  ignore_errors: yes
+  failed_when: false
   tags: [ ocs ]
 
 - name: Delete openshift-storage project
-  command: "/usr/local/bin/oc delete project openshift-storage"
+  command: "{{ ocp_client_cmd }} delete project openshift-storage"
   environment:
     KUBECONFIG: "{{ ocp_cluster_admin_kubeconfig }}"
-  ignore_errors: yes
+  failed_when: false
   when: delete_deployment|bool
   tags: [ ocs ]
 

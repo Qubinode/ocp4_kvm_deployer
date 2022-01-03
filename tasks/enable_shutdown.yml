@@ -14,7 +14,7 @@
   tags: [ postinstall, enable_shutdown ]
 
 - name: get all operators
-  shell: /usr/local/bin/oc get clusteroperators --no-headers=true | awk '{print $1}'
+  shell: "{{ ocp_client_cmd }} get clusteroperators --no-headers=true | awk '{print $1}'"
   register: all_operators
   changed_when: False
   environment:
@@ -23,7 +23,7 @@
 
 - name: check if daemonset kubelet-bootstrap-cred-manager was deployed
   shell: |
-    /usr/local/bin/oc get daemonset --namespace openshift-machine-config-operator| grep kubelet-bootstrap-cred-manager
+    "{{ ocp_client_cmd }} get daemonset --namespace openshift-machine-config-operator| grep kubelet-bootstrap-cred-manager"
   register: bootstrap_cred_manager
   changed_when: False
   ignore_errors: yes
@@ -41,7 +41,7 @@
   block:
    - name: apply daemonset openshift-machine-config-operator
      shell: |
-       /usr/local/bin/oc apply -f {{ openshift_install_dir }}/kubelet-bootstrap-cred-manager-ds.yaml
+       "{{ ocp_client_cmd }} apply -f {{ openshift_install_dir }}/kubelet-bootstrap-cred-manager-ds.yaml"
      register: applied_daemonset
      until: applied_daemonset.rc !=0
      retries: 25
@@ -55,7 +55,7 @@
 
    - name: Get csr-signer-signer and csr-signer from the openshift-kube-controller-manager-operator namespace
      shell: |
-       /usr/local/bin/oc get secrets/csr-signer-signer secrets/csr-signer -n openshift-kube-controller-manager-operator
+      "{{ ocp_client_cmd }} get secrets/csr-signer-signer secrets/csr-signer -n openshift-kube-controller-manager-operator"
      register: get_secrets
      changed_when: False
      ignore_errors: yes
@@ -63,7 +63,7 @@
 
    - name: Delete the secrets csr-signer-signer and csr-signer from the openshift-kube-controller-manager-operator namespace
      shell: |
-       /usr/local/bin/oc delete secrets/csr-signer-signer secrets/csr-signer -n openshift-kube-controller-manager-operator
+      "{{ ocp_client_cmd }} delete secrets/csr-signer-signer secrets/csr-signer -n openshift-kube-controller-manager-operator"
      register: csr_deleted
      changed_when: False
      ignore_errors: yes
@@ -83,7 +83,7 @@
 
    - name: wait until operator status is false
      shell: |
-      /usr/local/bin/oc get clusteroperator "{{ item }}" -o=jsonpath='{range .status.conditions[*]}{.type}{" "}{.status}{" "}{.message}{"\n"}{end}'|awk '/Progressing/ {print $2}'
+      "{{ ocp_client_cmd }} get clusteroperator "{{ item }}" -o=jsonpath='{range .status.conditions[*]}{.type}{" "}{.status}{" "}{.message}{"\n"}{end}'|awk '/Progressing/ {print $2}'"
      register: operator_status
      loop: "{{ all_operators.stdout_lines }}"
      retries: 20
