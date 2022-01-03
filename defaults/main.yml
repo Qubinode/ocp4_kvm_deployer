@@ -392,5 +392,3 @@ nodes_types:
   - master
   - worker
   - bootstrap
-
-ocp_install_cmd: /usr/local/bin/openshift-install
