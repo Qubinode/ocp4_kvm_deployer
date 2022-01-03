@@ -6,6 +6,13 @@
   when: deploy_ocp4_configs|bool
   tags: [ ignitions, deploy_nodes, manifests ]
   
+- name: Ensure the openshfit installation directory owned by the admin user 
+  file:
+    path: "{{ openshift_install_dir }}"
+    owner: {{ openshift_install_dir }}
+    group: {{ openshift_install_dir }}
+  tags: [ ignitions, deploy_nodes, manifests ]
+      
 - name: Mark mastersSchedulable when compute_count is 0
   when: compute_count > 1
   lineinfile:
