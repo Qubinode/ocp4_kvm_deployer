@@ -1,11 +1,15 @@
 ---
 - name: Get the cluster API url
+  become: no
   command: "{{ ocp_client_cmd }} whoami --show-server"
   register: api_url
+  environment:
+    KUBECONFIG: "{{ ocp_cluster_admin_kubeconfig }}"
   tags: [ smoketest, smoketest-verify, smoketest-app]
 
 - name: Get the webconsole url
-  command: "{{ ocp_client_cmd }}" whoami --show-console
+  become: no
+  command: "{{ ocp_client_cmd }} whoami --show-console"
   register: routeconsole
   tags: [ smoketest, smoketest-verify, smoketest-app ]
 
@@ -14,7 +18,8 @@
     webconsole: "{{ routeconsole.stdout }}"
   tags: [ smoketest, smoketest-verify, smoketest-app ]
 
-- name: verify dns and cluster
+- name: Cluster API and DNS verification
+  become: no
   tags: [ smoketest, smoketest-verify ]
   block:
     - name: Check DNS webconsole
@@ -40,124 +45,109 @@
       delay: 60
 
     - name: Cluster-info
-      command: "{{ ocp_client_cmd }}" cluster-info
+      command: "{{ ocp_client_cmd }} cluster-info"
       register: clusterinfor
       changed_when: false
+  always:
+    - name: Define cluster API and DNS results
+      set_fact:
+        webconsole_status: "{{ 'OK' if checkdnswebconsole is defined and checkdnswebconsole.rc == 0 else 'FAIL' }}"
+        api_dns_status: "{{ 'OK' if checkdnsapi is defined and checkdnsapi.rc == 0 else 'FAIL' }}"
+        webconsole_response_status: "{{ 'OK' if testwebconsole is defined and testwebconsole is succeeded else 'FAIL' }}"
+        cluster_info: "{{ 'OK' if clusterinfor is defined and clusterinfor.rc == 0 else 'FAIL' }}"
+  rescue:
+    - name: Cluster API and DNS verification Error Report
+      debug:
+        msg: 'Verifying the DNS for API and the cluster status failed'
 
-- name: test deploying a PHP LAMP Stack
+
+- name: Test deploying a PHP stack
+  become: no
   tags: [ smoketest, smoketest-app ]
   block:
-
-    - name: Create project
-      command: "{{ ocp_client_cmd }}" new-project postflightcheck
+    - name: Create project smoketest for cakephp-mysql application
+      command: "{{ ocp_client_cmd }} new-project smoketest"
       register: newproject
 
-    - name: New-app
-      command: "{{ ocp_client_cmd }}" new-app cakephp-mysql-persistent -n postflightcheck
+    - name: Deploy cakephp-mysql-persistent application
+      command: "{{ ocp_client_cmd }} new-app cakephp-mysql-persistent -n smoketest"
       register: newapp
 
-    - name: Wait for mysql
-      command: timeout 600 "{{ ocp_client_cmd }}" rollout status dc/mysql -w -n postflightcheck
+    - name: Rollout the MYSQL deployment config
+      command: "{{ ocp_client_cmd }} rollout status dc/mysql -w -n smoketest"
       register: mysqlw
       changed_when: false
+      retries: 15
+      delay: 5
+      until: mysqlw is succeeded
 
-    - name: Wait for php
-      command: timeout 600 "{{ ocp_client_cmd }}" rollout status dc/cakephp-mysql-persistent -w -n postflightcheck
+    - name: Rollout the cakephp-mysql-persistent application
+      when: mysqlw.rc == 0
+      command: "{{ ocp_client_cmd }} rollout status dc/cakephp-mysql-persistent -w -n smoketest"
       register: phpw
       changed_when: false
-      retries: 2
-      delay: 60
+      retries: 15
+      delay: 5
       until: phpw is succeeded
 
-    - name: Get route
+    - name: Get the route for cakephp-mysql application
+      when: phpw is defined and phpw.rc == 0
       command: >-
-        "{{ ocp_client_cmd }}" get route
+        "{{ ocp_client_cmd }} get route"
         -l template=cakephp-mysql-persistent
         --no-headers
         -o json
-        -n postflightcheck
+        -n smoketest
       register: getroute
       changed_when: false
-      retries: 10
+      retries: 15
       delay: 5
       until: getroute is succeeded
 
     - name: Test that route is reachable
+      when: getroute is defined and getroute.rc == 0
       uri:
         url: "http://{{ getroute.stdout|from_json|json_query('items[0].spec.host') }}"
       register: testroute
       retries: 15
       delay: 5
       until: testroute is succeeded
-
+  rescue:
+    - name: Deploying PHP app error results
+      debug:
+        msg: 'Fail to validate deploying the php'
   always:
-    - name: Delete project
-      command: "{{ ocp_client_cmd }}" delete project postflightcheck
+    - name: Delete the cakephp-mysql application project
+      command: "{{ ocp_client_cmd }} delete project smoketest"
       become: no
       ignore_errors: yes
 
     - name: Switch back to default project
-      command: "{{ ocp_client_cmd }}" project default
+      command: "{{ ocp_client_cmd }} project default"
       become: no
       ignore_errors: yes
+
+    - name: Define cluster API and DNS results
+      set_fact:
+        newproject_status: "{{ 'OK' if newproject is defined and newproject.rc == 0 else 'FAIL' }}"
+        php_app_status: " {{ 'OK' if phpw is defined and phpw.rc == 0 and mysqlw.rc == 0 else 'FAIL' }}"
+        php_app_route: "{{ 'OK' if testroute  is defined and testroute is succeeded else 'FAIL' }}"      
 
 - name: Report on smoketest results
   tags: [ smoketest, smoketest-app, smoketest-verify ]
   block:
     - name: SMOKE TEST RESULTS
       debug:
-        msg: "{{ item }}"
-      loop:
-        - "user.info: "
-        - "user.info: Post Flight Check"
-        - "user.info: DNS Web Console ............... {{ 'OK' if checkdnswebconsole is defined and checkdnswebconsole.rc == 0 else 'FAIL' }}"
-        - "user.info: DNS API ....................... {{ 'OK' if checkdnsapi is defined and checkdnsapi.rc == 0 else 'FAIL' }}"
-        - "user.info: Web console ................... {{ 'OK' if testwebconsole is defined and testwebconsole is succeeded else 'FAIL' }}"
-        - "user.info: API ........................... {{ 'OK' if clusterinfor is defined and clusterinfor.rc == 0 else 'FAIL' }}"
-        - "user.info: Create Project with PV ........ {{ 'OK' if newproject is defined and newproject.rc == 0 else 'FAIL' }}"
-        - "user.info: App deployed .................. {{ 'OK' if phpw is defined and phpw.rc == 0 and mysqlw.rc == 0 else 'FAIL' }}"
-        - "user.info: Route ......................... {{ 'OK' if testroute  is defined and testroute is succeeded else 'FAIL' }}"
+        msg:
+          - "DNS Web Console ................ {{ webconsole_status }}"
+          - "DNS API ........................ {{ api_dns_status }}"
+          - "Web console .................... {{ webconsole_response_status }}"
+          - "API ............................ {{ cluster_info }}"
+          - "Create Project with PV ......... {{ newproject_status }}"
+          - "App deployed ................... {{ php_app_status }}"
+          - "Route .......................... {{ php_app_route }}"
 
   rescue:
     - name: Smoke test failed
       debug:
         msg: 'Aborting smoke test as a result of a failure when deploying the php lamp stack'
-
-
-#- name: set cluster deployed message
-#  set_fact:
-#    cluster_deployed_msg: "{{ 'deployed' if checkdnsapi.rc == 0 and testwebconsole.status == 200 and clusterinfor.rc == 0 and newproject.rc == 0 else 'notdeployed' }}"
-#  tags: [ smoketest, smoketest-app, smoketest-verify, verify-cluster ]
-#
-#- name: cluster deployment complete
-#  debug:
-#     msg:
-#       - "*****************************"
-#       - " Cluster deployment complete "
-#       - "*****************************"
-#       - "checkdnsapi: {{ checkdnsapi.rc }}"
-#       - "testwebconsole: {{ testwebconsole.status }}"
-#       - "clusterinfor: {{ clusterinfor.rc }}"
-#       - "newproject: {{ newproject.rc }}"
-#  tags: verify-cluster
-#
-
-
-#- name: Ensure web console is known
-#  tags: [ smoketest, smoketest-verify ]
-#  block:
-#    - name: Get console route
-#      command: oc get route -n openshift-console console -o json
-#      register: routeconsole
-#      retries: 10
-#      delay: 30
-#      until: routeconsole is succeeded
-#      ignore_errors: true
-#      tags: [ smoketest, smoketest-verify ]
-#
-#    - name: Set webconsole address
-#      set_fact:
-#        webconsole: "http://{{ routeconsole.stdout | from_json | json_query('spec.host') }}"
-#      when: routeconsole is succeeded
-#      tags: [ smoketest, smoketest-verify ]
-#  become: no

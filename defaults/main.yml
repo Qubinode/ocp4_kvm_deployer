@@ -89,6 +89,11 @@ admin_user: admin
 project_dir:  /home/{{ admin_user }}/qubinode-installer/
 pull_secret: /home/{{ admin_user }}/qubinode-installer/pull-secret.txt
 
+# This should be updated if you delete the kubeadmin user
+# You will need to setup a kubeconfig for the cluster admin
+# user.
+ocp_cluster_admin_kubeconfig: "{{ openshift_install_dir }}/auth/kubeconfig"
+
 # OCP release info
 ocp4_okd4: ocp4
 ocp4_ystream_release: 4.8

@@ -5,7 +5,7 @@
   ignore_errors: yes
   changed_when: False
   environment:
-    KUBECONFIG: "{{ openshift_install_dir }}/auth/kubeconfig"
+    KUBECONFIG: "{{ ocp_cluster_admin_kubeconfig }}"
 
 - name: check for the local storage operator pods
   shell: /usr/local/bin/oc -n "{{ localstorage_namespace }}" get pods|grep Running
@@ -13,7 +13,7 @@
   ignore_errors: yes
   changed_when: False
   environment:
-    KUBECONFIG: "{{ openshift_install_dir }}/auth/kubeconfig"
+    KUBECONFIG: "{{ ocp_cluster_admin_kubeconfig }}"
 
 - name: check if the local storage operator is available
   shell: /usr/local/bin/oc get csvs -n "{{ localstorage_namespace }}" | grep Succeeded
@@ -21,7 +21,7 @@
   ignore_errors: yes
   changed_when: False
   environment:
-    KUBECONFIG: "{{ openshift_install_dir }}/auth/kubeconfig"
+    KUBECONFIG: "{{ ocp_cluster_admin_kubeconfig }}"
 
 - name: check if the local volume filesystem is available
   shell: /usr/local/bin/oc get pv | grep {{ compute_vdb_size }}Gi
@@ -29,7 +29,7 @@
   ignore_errors: yes
   changed_when: False
   environment:
-    KUBECONFIG: "{{ openshift_install_dir }}/auth/kubeconfig"
+    KUBECONFIG: "{{ ocp_cluster_admin_kubeconfig }}"
 
 - name: check if the local volume filesystem storage class is available
   shell: /usr/local/bin/oc get sc localfs-sc
@@ -37,7 +37,7 @@
   ignore_errors: yes
   changed_when: False
   environment:
-    KUBECONFIG: "{{ openshift_install_dir }}/auth/kubeconfig"
+    KUBECONFIG: "{{ ocp_cluster_admin_kubeconfig }}"
 
 - name: check if the local volume block storage class is available
   shell: /usr/local/bin/oc get sc localblock-sc
@@ -45,7 +45,7 @@
   ignore_errors: yes
   changed_when: False
   environment:
-    KUBECONFIG: "{{ openshift_install_dir }}/auth/kubeconfig"
+    KUBECONFIG: "{{ ocp_cluster_admin_kubeconfig }}"
 
 - name: set the status of the openshift-local-storage namespace
   set_fact:

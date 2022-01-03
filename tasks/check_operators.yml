@@ -11,7 +11,7 @@
       register: _operator_status
       changed_when: False
       environment:
-        KUBECONFIG: "{{ openshift_install_dir }}/auth/kubeconfig"
+        KUBECONFIG: "{{ ocp_cluster_admin_kubeconfig }}"
       become: no
   rescue:
     - debug:

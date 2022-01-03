@@ -5,7 +5,7 @@
   ignore_errors: yes
   changed_when: False
   environment:
-    KUBECONFIG: "{{ openshift_install_dir }}/auth/kubeconfig"
+    KUBECONFIG: "{{ ocp_cluster_admin_kubeconfig }}"
 
 - name: check for the local storage operator pods
   shell: /usr/local/bin/oc -n openshift-storage get pods|grep Running
@@ -13,7 +13,7 @@
   ignore_errors: yes
   changed_when: False
   environment:
-    KUBECONFIG: "{{ openshift_install_dir }}/auth/kubeconfig"
+    KUBECONFIG: "{{ ocp_cluster_admin_kubeconfig }}"
 
 
 - name: check if the local storage operator is available
@@ -22,7 +22,7 @@
   ignore_errors: yes
   changed_when: False
   environment:
-    KUBECONFIG: "{{ openshift_install_dir }}/auth/kubeconfig"
+    KUBECONFIG: "{{ ocp_cluster_admin_kubeconfig }}"
 
 - name: set the status of the openshift-storage namespace
   set_fact:

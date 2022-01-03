@@ -63,7 +63,7 @@
       retries: 200
       delay: 60
       environment:
-        KUBECONFIG: "{{ openshift_install_dir }}/auth/kubeconfig"
+        KUBECONFIG: "{{ ocp_cluster_admin_kubeconfig }}"
       become: no
       changed_when: False
  

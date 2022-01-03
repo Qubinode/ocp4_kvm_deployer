@@ -5,7 +5,7 @@
   register: registry_health_status
   ignore_errors: yes
   environment:
-    KUBECONFIG: "{{ openshift_install_dir }}/auth/kubeconfig"
+    KUBECONFIG: "{{ ocp_cluster_admin_kubeconfig }}"
   become: no
   tags: [ postinstall, nfs ]
 
@@ -15,7 +15,7 @@
   register: image_registry_health_status
   ignore_errors: yes
   environment:
-    KUBECONFIG: "{{ openshift_install_dir }}/auth/kubeconfig"
+    KUBECONFIG: "{{ ocp_cluster_admin_kubeconfig }}"
   become: no
   tags: [ postinstall, nfs ]
 

@@ -34,7 +34,7 @@
     set -o pipefail
     oc get clusteroperators --no-headers=true | awk '{print $1}'
   environment:
-    KUBECONFIG: "{{ openshift_install_dir }}/auth/kubeconfig"
+    KUBECONFIG: "{{ ocp_cluster_admin_kubeconfig }}"
   register: all_cluster_operators
   become: no
   changed_when: False
