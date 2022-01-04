@@ -23,6 +23,7 @@ fi
 
 ## Qubinode installer dir
 PROJECT_DIR="{{ project_dir }}"
+ocp_client_cmd="{{ ocp_client_cmd }}"
 
 ## the kubeadmin password created by the installer
 KUBEADMIN_PASS=$(cat "${PROJECT_DIR}/${install_dir}/auth/kubeadmin-password")
@@ -37,7 +38,7 @@ COLOR_RESET=`tput sgr0`
 {% raw %}
 ## Declare array to store all operators
 declare -a OPERATORS
-OPERATORS=( $({{ ocp_client_cmd }} get clusteroperators --no-headers=true | awk '{print $1}') )
+OPERATORS=( $("${ocp_client_cmd}" get clusteroperators --no-headers=true | awk '{print $1}') )
 TOTAL_OPERATORS="${#OPERATORS[@]}"
 
 if [ "$TOTAL_OPERATORS" -le 20 ]
@@ -60,7 +61,7 @@ do
     while true
     do
         ((COUNT++))
-	    OP_STATUS=$({{ ocp_client_cmd }} get clusteroperator $operator -o=jsonpath='{range .status.conditions[*]}{.type}{" "}{.status}{" "}{.message}{"\n"}{end}'|awk '/Available/ {print $2}')
+	    OP_STATUS=$("${ocp_client_cmd}" get clusteroperator $operator -o=jsonpath='{range .status.conditions[*]}{.type}{" "}{.status}{" "}{.message}{"\n"}{end}'|awk '/Available/ {print $2}')
 	    TMP_STATUS=$(echo $OP_STATUS | grep -o True)
 
         ## Set Operator status base on oc get clusteroperator result
@@ -95,7 +96,7 @@ do
             printf "%s\n" "    ${COLOR_RED}Timeout waiting on cluster operator${COLOR_RESET} ${COLOR_BLUE}$operator${COLOR_RESET} ${COLOR_RED}status to change from${COLOR_RESET} ${COLOR_CYAN}$OP_STATUS${COLOR_RESET} ${COLOR_RED}to${COLOR_RESET} ${COLOR_GREEN}${EXPECTED_STATE}${COLOR_RESET}"
             printf "%s\n" "    The operator ${COLOR_BLUE}**$operator**${COLOR_RESET} status is:"
 	        OP_CONDITION=$(mktemp)
-	        {{ ocp_client_cmd }} get clusteroperator $operator -o=jsonpath='{range .status.conditions[*]}{.type}{" "}{.status}{" "}{.message}{"\n"}{end}' > $OP_CONDITION
+	        "${ocp_client_cmd}" get clusteroperator $operator -o=jsonpath='{range .status.conditions[*]}{.type}{" "}{.status}{" "}{.message}{"\n"}{end}' > $OP_CONDITION
     
 	        while read -r line
 	        do 
@@ -115,7 +116,7 @@ then
     OCP_CONSOLE=$(oc get routes -n openshift-console -ojson | jq -r '.items[0].spec.host')
     printf "%s\n\n" ""
     printf "%s\n" "    ${COLOR_GREEN}The OpenShift Cluster is Up${COLOR_RESET}"
-    {{ ocp_client_cmd }} get nodes -o wide --no-headers=true| awk 'BEGIN{printf("    %-3s%-50s%-16s%-8s%-7s\n","#","FQDN","External IP","ROLE","STATUS")}{printf("    %-3s%-50s%-16s%-8s%-7s\n",NR,$1,$6,$3,$2)}'
+    "${ocp_client_cmd}" get nodes -o wide --no-headers=true| awk 'BEGIN{printf("    %-3s%-50s%-16s%-8s%-7s\n","#","FQDN","External IP","ROLE","STATUS")}{printf("    %-3s%-50s%-16s%-8s%-7s\n",NR,$1,$6,$3,$2)}'
     printf "%s\n" ""
     printf "%s\n" ""
     printf "%s\n" "    ${COLOR_GREEN}Console: https://${OCP_CONSOLE}"${COLOR_RESET}
